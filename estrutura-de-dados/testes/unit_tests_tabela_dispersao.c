@@ -7,18 +7,23 @@
 #include <assert.h>
 #include <stdio.h>
 
-void teste_basico_inicial_com_cria_e_algumas_operacoes() {
+char* chaves[] = {
+   "apple", "potatoes",
+   "pineapple",  "strawberry", 
+   "banana", "carrot"
+};
+int* valores[] = { 4, -3, 8, 1, -5 };
+
+void apenas_um_teste_basico() {
    HASH_TABLE m = cria_ht();
    assert(vazia_ht(m));
+   
+   for (int k = 0; k < 5; k++)
+      insere_ht(m, chaves[k], valores[k]);
 
-   insere_ht(m, "apple", 4);
-   insere_ht(m, "potatoes", -3);
-   insere_ht(m, "pineapple", 8);
-   insere_ht(m, "strawberry", 1);
-   insere_ht(m, "banana", -5);
    assert(tamanho_ht(m) == 5);
 
-   insere_ht(m, "carrot", 13);
+   insere_ht(m, chaves[5], valores[5]);
    assert(tamanho_ht(m) == 6);
 
    visualizacao_debug_ht(m);
@@ -50,6 +55,7 @@ void teste_basico_inicial_com_cria_e_algumas_operacoes() {
 }
 
 void contagem_de_instancias() {
+   puts("teste-unitário iniciado com sucesso.");
    HASH_TABLE m = cria_ht();
    insere_ht(m, "apple", 4);
    insere_ht(m, "potatoes", -3);
@@ -77,6 +83,7 @@ void contagem_de_instancias() {
 }
 
 void desenvolvendo_iterador() {
+   puts("criando um iterador...");
    HASH_TABLE m = cria_ht();
 
    insere_ht(m, "apple", 4);
@@ -124,31 +131,6 @@ void visualizacao_da_tabela_modo_debug() {
    destroi_ht(m);
 }
 
-void clonagem_da_tabela() {
-   char* chaves[] = {
-      "banana", "morango", "uva", 
-      "maçã", "pêra", "laranja",
-      "melância", "cereja", "manga"
-   };
-   int64_t valores[] = {-3, 8, 1, 10, 2, -5, -19, 7, 4};
-   HashTable t = cria_ht();
-
-   for (int k = 0; k < 9; k++)
-      insere_ht(t, chaves[k], valores[k]);
-
-   HashTable T = clona_ht(t);
-   printf(
-      "original: %s\nclone: %s\n", 
-      ht_to_str(t), ht_to_str(T)
-   );
-
-   // destruindo para mostrar indepedência.
-   destroi_ht(t);
-   puts(ht_to_str(T));
-   // agora assim destruindo ambas...
-   destroi_ht(T);
-}
-
 #include <stdlib.h>
 
 void remocao_sistematica_da_tabela() {
@@ -177,32 +159,38 @@ void remocao_sistematica_da_tabela() {
    assert(vazia_ht(t));
 }
 
+void operacao_de_clonagem(void) {
+   HashTable T = cria_ht();
+
+   for (int k = 0; k < 5; k++)
+      insere_ht(T, chaves[k], valores[k]);
+   visualizacao_debug_ht(T);
+
+   HashTable clone_t = clona_ht(T);
+   assert (tamanho_ht(clone_t) == tamanho_ht(T));
+   printf("original: %s\nclone: %s\n", ht_to_str(T), ht_to_str(clone_t));
+}
+
 
 // execução dos testes:
-void main(int argc, char** argv) {
-   executa_teste_interruptor(
-      "teste antigo básico com criação/destruição, e algumas operações",
-      teste_basico_inicial_com_cria_e_algumas_operacoes, true
-   );
-   
-   executa_teste_interruptor(
-      "contabilização das instâncias desta estrutura de dados",
-      contagem_de_instancias, true
-   );
-
-   executa_teste_interruptor(
-      "ainda desenvolvendo e testando o iterador",
-      desenvolvendo_iterador, true
-   );
-
-   executa_teste_interruptor(
-      "testando uma visualização de debug da hashtable",
+int main(int argc, char** argv) {
+   executa_testes(
+      4, contagem_de_instancias, true,
+      desenvolvendo_iterador, true,
+      remocao_sistematica_da_tabela, true,
       visualizacao_da_tabela_modo_debug, true
    );
 
+   // tais testes conflitam com o teste de clonagem abaixo.
    executa_teste_interruptor(
-      "clonagem da HashTable",
-      clonagem_da_tabela, true
+      "uma instância básica e algumas operações",
+      apenas_um_teste_basico, true
    );
-   executa_testes(1, remocao_sistematica_da_tabela, true);
+
+   executa_teste_interruptor(
+      "testando método de clonagem",
+      operacao_de_clonagem, true
+   );
+
+   return EXIT_SUCCESS;
 }

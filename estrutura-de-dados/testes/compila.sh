@@ -13,13 +13,6 @@ gcc -o ut_dado unit_tests_dado.c \
 ../../terminal.c ../../tempo.c ../../legivel.c
 echo "unit-test do 'dado.c' compilado."
 
-# compila o conjunto.
-# compila a tabela-de-dispersão(hashtable).
-gcc -o ut_conjunto unit_tests_conjunto.c \
-../tabeladispersao/*.c ../conjunto.c  ../tabela_dispersao.c \
-../../teste.c ../../terminal.c ../../tempo.c ../../legivel.c
-echo "unit-test da 'conjunto.c' compilado."
-
 # compila os testes da deque.
 gcc -o ut_deque unit_tests_deque.c ../dado.c ../deque.c \
 ../../aleatorio.c -lm \
@@ -40,8 +33,17 @@ gcc -Wall -Wno-main -o ut_fila_ligada unit_tests_fila_ligada.c \
 echo "unit-test do 'fila_ligada.c' compilado."
 
 # compila os testes da fila-ligada.
-gcc -o ut_tabela_dispersao unit_tests_tabela_dispersao.c \
-../tabela_dispersao.c ../tabeladispersao/*.c \
+gcc -o ut_tabela_dispersao \
+unit_tests_tabela_dispersao.c ../tabela_dispersao.c \
+../tabeladispersao/deque_ligada.c ../tabeladispersao/dado.c \
 ../../teste.c ../../terminal.c ../../tempo.c ../../legivel.c \
--Wall -lm -Wno-main
+-Wall -lm -Wno-main -Wno-int-conversion
 echo "unit-test do 'tabela_dispersao.c' compilado."
+
+# compila o conjunto.
+gcc -o ut_conjunto unit_tests_conjunto.c \
+../conjunto.c  ../tabela_dispersao.c \
+../tabeladispersao/deque_ligada.c ../tabeladispersao/dado.c \
+../../teste.c ../../terminal.c ../../tempo.c ../../legivel.c 
+echo "unit-test da 'conjunto.c' compilado."
+
