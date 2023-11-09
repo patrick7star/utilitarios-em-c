@@ -1,70 +1,16 @@
 
 #include "dado.h"
 
-// nome curto para o tipo de 'dado' abaixo.
-typedef struct node* No;
 
-/* Tipo de objeto que, armazena o objeto na memória
- * e aponta para mais dois objetos do próprio tipo
- * de "maneira bidirecional". */
-struct node {
-   // dado que ele contém. Lembrando que pode haver nenhum também.
-   Dado dado;
-
-   // duas direções do modelo.
-   No proximo;
-   No anterior;
-
-   /* se é um tipo especial de 'nó', onde o dado que ele contém
-    * é inexistente, e se houver algo lá, é irrelevante para a 
-    * aplicação. */
-   bool e_sentinela;
-};
-#define SIZE_NODE sizeof(struct node)
-
-#include <stdlib.h>
-#include <stdio.h>
-
-/* recebe tipo de 'dado' como argmento, absorve
- * tal 'dado', e referência outros 'nós'(nada
- * por enquanto). */
-No cria_no(Dado d) {
-   No no = malloc(sizeof(struct node));
-   if (no != NULL) {
-      no->dado = d;
-      no->proximo = NULL;
-      no->anterior = NULL;
-      no->e_sentinela = false;
-      return no;
-   }
-   return NULL;
-}
-No cria_sentinela(void) {
-   No no = malloc(SIZE_NODE);
-   if (no != NULL) {
-      no->dado = cria_dado_branco();
-      no->proximo = NULL;
-      no->anterior = NULL;
-      no->e_sentinela = true;
-      return no;
-   }
-   return NULL;
-}
-// destrói o tipo de 'dado' alocado acima.
-void destroi_no(No no) {
-   if ( no != NULL ) {
-      destroi_dado(no->dado);
-      no->proximo = NULL;
-      no->anterior = NULL;
-      free(no);
-   }
-}
+/* implementação de 'nó' usado como auxiliar para a estrutura de dados
+ * principal. Novamente, "importação" na mesma posição que foi removido
+ * pois componentes abaixo dependem dele. */
+#include "dequeligada/nodulo.c"
 
 #include <stdint.h>
-/* Basico na sua modelagem: o total de 
- * itens líquido(inserções menos remoções),
- * a referência ao começo da 'lista', e 
- * uma referência ao seu fim. */
+/* Basico na sua modelagem: o total de itens líquido(inserções menos
+ * remoções), a referência ao começo da 'lista', e uma referência ao 
+ * seu fim. */
 struct deque_ligada {
    // contador de itens.
    uint64_t qtd;
@@ -79,10 +25,8 @@ typedef struct deque_ligada* DequeLigada;
 // tamanho deste tipo de estrutura.
 #define DL_SIZE sizeof(struct deque_ligada)
 
-/* Aloca uma instancia ao objeto, inicia 
- * o 'total líquido de itens' em zero,
- * e as referências as suas pontas para
- * nada. */
+/* Aloca uma instancia ao objeto, inicia o 'total líquido de itens' em 
+ * zero, e as referências as suas pontas para nada. */
 DequeLigada cria_dl() {
    size_t tamanho = sizeof(DL_SIZE);
    DequeLigada l = (DequeLigada) malloc(tamanho);
@@ -108,8 +52,8 @@ uint64_t tamanho_dl(DequeLigada l)
 // se a contabilização está em zero, ela está vázia.
 bool vazia_dl(DequeLigada l) 
    { return l->qtd == 0; }
-/* verifica se a 'lista' passada é válida, ou seja
- * se ela existe. */
+
+/* verifica se a 'lista' passada é válida, ou seja se ela existe. */
 bool deque_valida(DequeLigada d)
    { return d != NULL; }
 
@@ -154,9 +98,8 @@ Dado remove_entre(No no_central) {
    return dado_interno;
 }
 
-/* Encapsula o 'dado' em um 'nó', faz com este
- * 'nó' ao primeiro elemento da 'lista', então
- * faz este 'nó' a nova referência ao primeiro
+/* Encapsula o 'dado' em um 'nó', faz com este 'nó' ao primeiro elemento
+ * da 'lista', então faz este 'nó' a nova referência ao primeiro 
  * elemento, como foi desenhado o ADT. */
 bool insere_comeco_dl(DequeLigada l, Dado d) {
    // falha ao alocar recurso, implica falha na inserção.
@@ -191,12 +134,11 @@ bool insere_traseira_dl(DequeLigada l, Dado d) {
    return true;
 }
 
-/* Impressão detalhada da 'lista', onde ambas pontas
- * que são operadas nela estão bem referênciadas,
- * para uma diferenciação dos demais. A lista também
- * tem um nome inicial. Basicamente o que acontece
- * aqui é atrevessar a lista, via referência, e 
- * imprimir tais valores de forma organizada. */
+/* Impressão detalhada da 'lista', onde ambas pontas que são operadas 
+ * nela estão bem referênciadas, para uma diferenciação dos demais. A 
+ * lista também tem um nome inicial. Basicamente o que acontece aqui é 
+ * atrevessar a lista, via referência, e imprimir tais valores de 
+ * forma organizada. */
 void imprime_dl(DequeLigada l) {
    No atual = l->comeco->proximo;
    printf("Deque Ligada: [");
@@ -216,11 +158,9 @@ void imprime_dl(DequeLigada l) {
       puts("\b\b]");
 }
 
-/* O processo é pegar a referência da ponta
- * que está sendo operada, e fazer seu 'nó'
- * referênciar o 'próximo' dele, enquanto 
- * mantém com um ponteiro auxiliar a referência
- * deste para futuro retorno. */
+/* O processo é pegar a referência da ponta que está sendo operada, e 
+ * fazer seu 'nó' referênciar o 'próximo' dele, enquanto mantém com um 
+ * ponteiro auxiliar a referência deste para futuro retorno. */
 Dado remove_comeco_dl(DequeLigada l) {
    if (vazia_dl(l)) 
       { perror("não é possível remover uma 'lista' vázia."); }
@@ -247,10 +187,9 @@ Dado remove_traseira_dl(DequeLigada l) {
    return remove_entre(l->traseira->anterior);
 }
 
-/* libera os 'dados' alocados do objeto, removendo
- * em alguma ponta continuamente até o total
- * chegue à zero. O objeto obtido é simplesmente
- * destruído também. */
+/* libera os 'dados' alocados do objeto, removendo em alguma ponta 
+ * continuamente até o total chegue à zero. O objeto obtido é 
+ * simplesmente destruído também. */
 void destroi_dl(DequeLigada l) {
    if (l != NULL) {
       while (!vazia_dl(l)) 
@@ -258,12 +197,13 @@ void destroi_dl(DequeLigada l) {
 
       // remove também os 'nós' sentinelas.
       free(l);
+      l = NULL;
    }
 }
 
-/* obtem referência do primeiro item da 'lista',
- * o objeto da ponta esquerda. Se houver algum
- * é claro, pois se não, um 'null' será passado. */
+/* obtem referência do primeiro item da 'lista', o objeto da ponta 
+ * esquerda. Se houver algum é claro, pois se não, um 'null' será 
+ * passado. */
 Dado frente_dl(DequeLigada l) {
    // a lista tem que ter algo.
    if (vazia_dl(l)) 
@@ -342,25 +282,17 @@ bool remove_dl(DequeLigada d, Dado e) {
    return false;
 }
 
-#define SIZE_ARRAY_DL sizeof(DequeLigada)
-typedef DequeLigada* ARRAY_DL;
-
-// cria uma array de 'n' tamanho com deques-ligadas.
-ARRAY_DL cria_array_dl(uint32_t n) {
-   ARRAY_DL array = (ARRAY_DL)calloc(n, SIZE_ARRAY_DL);
-
-   for(uint32_t i = 0; i < n; i++)
-      array[i] = cria_dl();
-
-   return array;
-}
-
-// destrói uma array-de-deque-ligadas de 'n' tamanho.
-void destroi_array_dl(ARRAY_DL array, uint32_t n) {
-   for(uint32_t i = 0; i < n; i++)
-      destroi_dl(array[i]);
-   free(array);
-}
+/* adicionando o trecho de iteração, exatamente onde foi retirado, para
+ * não bagunçar o código, há componentes que foram escritos usando 
+ * ele depois desta linha. E veja, a maravilha, qualquer método ou 
+ * função que use tal utilitário, também será antecedido por novos 
+ * métodos do iterador, que ainda nem foram pensados, muito menos qual
+ * iniciativa de criação.
+ * Também incluindo os trechos das arrays, pois estão exatamente depois
+ * deste.
+ */
+#include "dequeligada/iterador.c"
+#include "dequeligada/array.c"
 
 /* o mesmo que a impressão acima, porem como debug, ou seja, algumas
  * features podem ser acionadas ou desativas, de acordo como o desejado. 
@@ -377,77 +309,6 @@ void destroi_dl_debug(DequeLigada d, bool com_info) {
    free(d);
    if (com_info)
       printf("todos %lu itens foram destruídos\n", t);
-}
-
-/* iterador que referência todos dados internos nos 'nós' da lista.
- * Quando chega ao fim simplesmente retorna 'null', muito parecido
- * com outras linguagens. */
-struct iterador_deque_ligada {
-   // quantidade de 'dados' na lista na geração deste.
-   uint64_t total;
-
-   /* posição na iteração, tanto a númerica baseado no tamanho dela,
-    * quanto o 'nó' atual apontado. */
-   uint64_t indice;
-   No atual;
-
-   // referência da própria 'deque' para verifica o total de elementos.
-   DequeLigada referencia;
-};
-
-// Nome mais curto para 'codificação' com também 'importação'.
-typedef struct iterador_deque_ligada* IterDequeLigada;
-typedef IterDequeLigada IterDL;
-
-#define ITER_SIZE sizeof(struct iterador_deque_ligada)
-
-IterDequeLigada cria_iter_dl(DequeLigada d) {
-   IterDequeLigada I = malloc(ITER_SIZE);
-
-   // se tiver alocado corretamente ...
-   if (I != NULL) {
-      I->total = tamanho_dl(d);
-      I->indice = 0;
-      I->atual = d->comeco->proximo;
-      I->referencia = d;
-   }
-
-   // retorna instâncias criada e inicilizada, ou a falhar disso.
-   return I;
-}
-
-// função de iteração, sempre dá o próximo elemento dele.
-Dado next_dl(IterDequeLigada iter) {
-   /* se houve alguma mudança interna na lista, não será possível
-    * continuar a iteração mesmo que ainda não tenha finalizado. */
-   if (iter->total != tamanho_dl(iter->referencia))
-      return NULL;
-
-   // se tiver chegado no 'nó sentinela' não é possível mais iterar.
-   if (!iter->atual->e_sentinela) {
-      // estamos no elemento ...
-      iter->indice++;
-      Dado dataref = iter->atual->dado;
-      // indo para frente.
-      iter->atual = iter->atual->proximo;
-      // pegando atual dado.
-      return dataref;
-   }
-
-   // alcançou a outra ponta, ou pode nem ter saído dela.
-   return NULL;
-}
-
-uint64_t iter_tamanho_dl(IterDequeLigada iter)
-   { return iter->total - iter->indice; }
-
-void destroi_iter_dl(IterDL iter) {
-   // acando linque de referência para estrutura de dado.
-   iter->referencia = NULL;
-   // assim também como para o 'nó'.
-   iter->atual = NULL;
-   // então libera a estrutura.
-   free(iter);
 }
 
 typedef DequeLigada DL;
