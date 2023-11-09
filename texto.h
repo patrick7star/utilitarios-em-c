@@ -51,7 +51,7 @@
    /* criação e destruição do tipo de dado
     * 'Matriz de Texto'. 
     */
-   extern MT cria_matriz_texto(Dimensao d, enum PlanoFundo f); 
+   extern MT cria_matriz_texto(Dimensao d, PlanoFundo f); 
    extern void destroi_matriz_texto(MT m); 
 
    /* altera a posição no 'ponto', se este for 

@@ -9,23 +9,30 @@
 /* imprime o separador entre os testes
  * executados. */
 static void nome_do_teste(char *nome) {
-   //char barra[] = "-------------------";
    uint8_t str_length = strlen(nome);
    Dimensao d = dimensao_terminal();
    uint8_t largura = d[1] - 3;
-   char* barra = (char*)calloc(largura, 1);
+   char* barra = calloc(largura, 1);
+
    // fazendo separador.
    for (uint8_t k = 0; k <= largura; k++) 
       { barra[k] = '-'; }
+
    // margens do texto.
    barra[5] = ' ';
    barra[5 + str_length + 1] = ' ';
+
    // colocando título no separado.
    for (uint8_t k = 0; k < str_length; k++) {
       if (k < str_length && nome[k] != '\0')
          { barra[k + 6] = nome[k]; }
    }
+
    printf("\n%s\n\n", barra);
+   // não é preciso mais desta string, já foi impressa, então libera.
+   // A dimensão criada também não é mais necessária.
+   destroi_dimensao(d);
+   free(barra);
 }
 
 /* string vázia dizendo que não quer que 
@@ -240,12 +247,10 @@ void executa_teste_interruptor(char* descricacao,
       nome_do_teste(descricacao);
 
    if (acionado)
-      { funcao(); }
+      // quebra-de-linha no final.
+      { funcao(); puts(""); }
    else
       puts("DESATIVADO TEMPORIAMENTE!");
-
-   // quebra-de-linha no final.
-   puts("");
 }
 
 const char* bool_to_str(bool valor) {

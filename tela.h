@@ -31,6 +31,7 @@
    extern void risca_tela(TELA t, Ponto A, Ponto B); 
    extern void circunscreve_retangulo(Tela, Ponto, Ponto);
    extern void escreve_string(Tela, Ponto, char*, enum sentido);
+   extern bool desfaz_alteracao(Tela t); 
 
    /* a contagem de alterações feitas numa Tela; e também o número 
     * ativo delas. */

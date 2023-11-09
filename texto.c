@@ -62,7 +62,7 @@ typedef MatrizTexto MT;
 #define OPACO '~'
 #define TRANSPARENTE ' '
 
-MT cria_matriz_texto(Dimensao d, enum PlanoFundo f) {
+MT cria_matriz_texto(Dimensao d, PlanoFundo f) {
    size_t size = sizeof(struct matriz_texto);
    MT matriz = (MT)malloc(size);
    uint32_t a = d[0], l = d[1];

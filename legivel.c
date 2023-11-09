@@ -87,3 +87,33 @@ char* tamanho_legivel(uint64_t bytes) {
    sprintf(resultado_str, "%0.1f %s", valor, peso_str);
    return resultado_str;
 }
+
+char* valor_legivel(uint64_t unidades) {
+   char* peso;
+   double potencia;
+   char* resultado_str = malloc(10 * sizeof(char));
+   uint64_t u = unidades;
+
+   if (u >= 1000 && u < pow(10, 6)) {
+      peso = "mil";
+      potencia = 1000;
+   } else if (u >= pow(10, 6) && u < pow(10, 9)) {
+      peso = "mi";
+      potencia = pow(10, 6);
+   } else if (u >= pow(10, 9) && u < pow(10, 12)) {
+      peso = "bi";
+      potencia = pow(10, 9);
+   } else if (u >= pow(10, 12) && u < pow(10, 15)) {
+      potencia = pow(10, 12);
+      peso = "tri";
+   } else 
+      { return "none"; }
+
+   double novo_valor = (double)unidades /(double)potencia;
+   // double fracao = (uint16_t)novo_valor - novo_valor;
+   if (novo_valor < 0.1)
+      sprintf(resultado_str, "%d %s", (uint16_t)novo_valor, peso);
+   else
+      sprintf(resultado_str, "%0.1f %s", novo_valor, peso);
+   return resultado_str;
+}

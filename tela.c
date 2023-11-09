@@ -7,10 +7,13 @@
 
 #include "terminal.h"
 #include "texto.h"
+#include "tela/pilha_ligada.h"
+#include "tela/dado.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 
 /* Nunca serão criadas na ordem de milhares ou milhões de Telas, no
  * máximo, algumas dezenas, então apenas um byte é o suficiente para 
@@ -26,11 +29,7 @@ struct tela {
    MT grade;
 
    // contabilização de modificações feitas nele.
-   uint16_t modificacoes;
-   // apenas a última alteração é gravada por enquanto.
-   // ARRAY_PONTO alteracoes;
-   // total de pontos da array acima.
-   uint16_t qtd_pontos;
+   PILHA_LIGADA modificacoes;
 };
 
 // nome curto do tipo de dado.
@@ -55,9 +54,7 @@ TELA cria_tela() {
       );
       puts("Matriz Texto criada com sucesso.");
       // nenhuma array referênciada inicialmente.
-      // screen->alteracoes = NULL;
-      screen->qtd_pontos = 0;
-      screen->modificacoes = 0;
+      screen->modificacoes = cria_pl();
       puts("Tela criada com sucesso.");
    }
 
@@ -70,8 +67,9 @@ void destroi_tela(TELA t) {
       destroi_matriz_texto(t->grade);
       puts("destrói tupla da Dimensao.");
       puts("finalmente, libera a 'Tela'.");
-      // destroi_array_de_pontos(t->alteracoes, t->qtd_pontos);
+      destroi_pl(t->modificacoes);
       free(t);
+      t = NULL;
    } else 
       puts("valor inválido, então nada foi liberado.");
 }
@@ -83,6 +81,7 @@ void visualiza_tela_debug(TELA t) {
 }
 
 #include "ponto.h"
+#include <assert.h>
 
 // faz uma linha reta entre os pontos não-colineares, com o
 // símbolo dado, que tem que ser um caractére ASCII.
@@ -90,8 +89,10 @@ static void risca_linha(Tela t, Ponto a, Ponto b, char simbolo) {
    // coordenadas mais legíveis.
    uint8_t ya = a[0], yb = b[0];
    uint8_t xa = a[1], xb = b[1];
+   uint8_t d = distancia_ponto(a, b);
+   ArrayPonto coordenadas = cria_array_de_pontos(d);
 
-   for (uint8_t p = 0; p < distancia_ponto(a, b); p++) {
+   for (uint8_t p = 0; p < d; p++) {
       uint8_t y, x;
       // rabisco horizontal
       if (ya == yb) 
@@ -114,11 +115,13 @@ static void risca_linha(Tela t, Ponto a, Ponto b, char simbolo) {
       }
       Ponto ponto = cria_ponto(y, x);
       set(t->grade, ponto, simbolo);
-      destroi_ponto(ponto);
+      // registrando ponto, ou seja, não libera mais imediatamente.
+      coordenadas[p] = ponto;
    }
 
-   // contabilizando modificação.
-   t->modificacoes++;
+   // inserindos pontos modificados.
+   Dado dt = cria_dado(coordenadas, d);
+   assert(coloca_pl(t->modificacoes, dt));
 }
 
 void risca_tela(TELA t, Ponto A, Ponto B) {
@@ -128,10 +131,27 @@ void risca_tela(TELA t, Ponto A, Ponto B) {
 }
 
 uint16_t alteracoes_tela(TELA t)
-   { return t->modificacoes; }
+   { return quantidade_pl(t->modificacoes); }
 
 uint16_t instancias_tela(void)
    { return total_de_instancias_da_tela; }
+
+Dado mesclando_quatro_ap(Dado x, Dado y, Dado z, Dado w) {
+   uint16_t qtd = x->qtd + y->qtd + z->qtd + w->qtd;
+   ArrayPonto a = cria_array_de_pontos(qtd);
+
+   uint16_t k = 0;
+   for (uint16_t i = 0; i < x->qtd; i++, k++) 
+      a[k] = x->dado[i];
+   for (uint16_t i = 0; i < y->qtd; i++, k++) 
+      a[k] = y->dado[i];
+   for (uint16_t i = 0; i < z->qtd; i++, k++) 
+      a[k] = z->dado[i];
+   for (uint16_t i = 0; i < w->qtd; i++, k++) 
+      a[k] = w->dado[i];
+
+   return cria_dado(a, qtd);
+}
 
 void circunscreve_retangulo(TELA t, Ponto a, Ponto b) {
    ARRAY_PONTO vtcs = retangulo_vertices(a, b);
@@ -147,6 +167,16 @@ void circunscreve_retangulo(TELA t, Ponto a, Ponto b) {
    // lateral direita.
    risca_linha(t, vtcs[1], vtcs[2], char_v);
 
+   // remove para colocar numa só array, portanto mescla últimas alterações.
+   Dado modificacao = mesclando_quatro_ap(
+      retira_pl(t->modificacoes),
+      retira_pl(t->modificacoes),
+      retira_pl(t->modificacoes),
+      retira_pl(t->modificacoes)
+   );
+   // inserindo na pilha o aglomerado das quatros modificações acima.
+   coloca_pl(t->modificacoes, modificacao);
+
    destroi_array_de_pontos(vtcs, 4);
 }
 
@@ -157,6 +187,7 @@ static void escreve_string_horizontal(Tela t, Ponto p, char* s) {
    uint8_t x = p[1], y = p[0];
    uint8_t L = t->dimensao[1];
    uint8_t c = strlen(s);
+   ArrayPonto coords = cria_array_de_pontos(c);
 
    if (x + strlen(s) > L)
       abort();
@@ -164,13 +195,18 @@ static void escreve_string_horizontal(Tela t, Ponto p, char* s) {
    for (uint8_t i = 0; i < c; i++) { 
       Ponto np = cria_ponto(y, i + x);
       set(t->grade, np, s[i]);
+      coords[i] = np;
    }
+   // inserindo tais modificações na pilha.
+   Dado datum = cria_dado(coords, c);
+   assert(coloca_pl(t->modificacoes, datum));
 }
 
 static void escreve_string_vertical(Tela t, Ponto p, char* s) {
    uint8_t x = p[1], y = p[0];
    uint8_t L = t->dimensao[0];
    uint8_t c = strlen(s);
+   ArrayPonto coords = cria_array_de_pontos(c);
 
    if (y + strlen(s) > L)
       abort();
@@ -178,7 +214,10 @@ static void escreve_string_vertical(Tela t, Ponto p, char* s) {
    for (uint8_t i = 0; i < c; i++) { 
       Ponto np = cria_ponto(i + y, x);
       set(t->grade, np, s[i]); 
+      coords[i] = np;
    }
+   Dado datum = cria_dado(coords, c);
+   assert(coloca_pl(t->modificacoes, datum));
 }
 
 enum sentido { Horizontal, Vertical };
@@ -195,4 +234,29 @@ void escreve_string(Tela t, Ponto p, char* s, SENTIDO onde) {
    }
 }
 
+/* O algoritimo para isso está quase todo construído. É preciso apenas
+ * retirar da pilha a array de pontos onde foi modificado a tela, e
+ * fazer destes pontos a tela branca novamente, dependendo se ela é
+ * invisível ou pincelada. */
+bool desfaz_alteracao(Tela t) {
+   // última alteração retirada da 'pilha' de modificações.
+   Dado dado_ua = retira_pl(t->modificacoes);
+   ArrayPonto aP = dado_ua->dado;
+   uint16_t n = dado_ua->qtd;
 
+   if (dado_ua == NULL)
+      // nenhum dado retirado, pelo motivo que seja, então confirmar
+      // como "nado feito".
+      return false;
+
+   for (uint16_t p = 1; p <= n; p++)
+      set(t->grade, aP[p - 1], ' ');
+
+   // no momento, tal array de pontos é apenas liberada. Futuramente,
+   // será colocada numa outra pilha para desfazer, o que foi desfeito.
+   destroi_dado(dado_ua);
+   // confirma operação com feita.
+   return true;
+}
+
+// visualização da tela, sem o debug.
