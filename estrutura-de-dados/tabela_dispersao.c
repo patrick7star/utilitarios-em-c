@@ -1,5 +1,8 @@
 
 
+/* Porquê eu copiar uma versão nova do deque-ligada para o próprio 
+ * "caixote" da tabela de dispersão é, pois o arquivo de 'dado' é 
+ * diferenciado do original usado pela estrutura. */
 #include "tabeladispersao/dado.h"
 #include "tabeladispersao/deque_ligada.h"
 #include <inttypes.h>
@@ -26,9 +29,10 @@ typedef HASH_TABLE HT;
 static uint8_t instancias_ht = 0;
 
 #include <stdlib.h>
+#include <stdio.h>
 
-HASH_TABLE cria_ht() {
-   HASH_TABLE tabela = (HASH_TABLE)malloc(HT_SIZE);
+HashTable cria_ht() {
+   HashTable tabela = malloc(HT_SIZE);
 
    // se tiver sido alocado com sucesso.
    if (tabela != NULL) {
@@ -59,9 +63,16 @@ bool vazia_ht(HASH_TABLE d)
 uint64_t tamanho_ht(HASH_TABLE d)
    { return d->total; }
 
+/* cálculo hash baseado no comprimento da string dada. Está havendo 
+ * uma terceirização para esta função, porque dependendo do dado 
+ * tal cálculo muda, então em caso de mudança, ao invés de ficar
+ * varrendo no código para mudar, apenas muda aqui, e já funciona
+ * para todas funções que utilizam este algoritimo. */
+static uint32_t funcao_hash(CHAVE ch)
+   { return strlen(ch); }
+
 bool insere_ht(HASH_TABLE d, CHAVE ch, VALOR v) {
-   /* cálculo hash baseado no comprimento da string dada. */
-   uint32_t indice = strlen(ch);
+   uint32_t indice = funcao_hash(ch);
 
    // para aqui, tal 'hash' não "bate" com a tabela.
    if (indice > d->capacidade)
@@ -87,8 +98,8 @@ bool deleta_ht(HASH_TABLE d, CHAVE ch) {
    if (vazia_ht(d))
       return false;
 
-   /* cálculo hash baseado no comprimento da string dada. */
-   uint32_t indice = strlen(ch);
+   // índice que ela está na array.
+   uint32_t indice = funcao_hash(ch);
    
    if (vazia_dl(d->locais[indice]))
       /* se a lista dada pelo hash aponta para uma lista vázia, isso
@@ -113,8 +124,8 @@ bool contem_ht(HASH_TABLE d, CHAVE ch) {
    if (vazia_ht(d))
       return false;
 
-   /* cálculo hash baseado no comprimento da string dada. */
-   uint32_t indice = strlen(ch);
+   // índice o qual ela está na 'array de deque'.
+   uint32_t indice = funcao_hash(ch);
    
    if (vazia_dl(d->locais[indice]))
       /* se a lista dada pelo hash aponta para uma lista vázia, isso
@@ -131,6 +142,11 @@ bool contem_ht(HASH_TABLE d, CHAVE ch) {
    }
 }
 
+/* ao invés de vasculhar, achar, e atualizar, usando trechos do
+ * algoritimo acima, apenas deleta, e insere nova entrada. Claro,
+ * isso é basicamente o dobro de operações, porém ainda é uma 
+ * operação linear. Futuramente, talvez seja necessário fazer como
+ * os algoritimos acima. */
 bool atualiza_ht(HASH_TABLE d, CHAVE ch, VALOR vl) {
    deleta_ht(d, ch);
    return insere_ht(d, ch, vl);
@@ -141,125 +157,23 @@ bool atualiza_ht(HASH_TABLE d, CHAVE ch, VALOR vl) {
 uint8_t total_de_instancias_ht() 
    { return instancias_ht; }
 
-/* iterador para a estrutura de dados. Essencial, pois servirá de 
- * base para impressão de tal estrutura, além de outros que precisam
- * verificar todos dados internos.
- */
-struct iteracao_tabela_de_dispersao {
-   // iterador da atual lista com itens.
-   IterDL atual;
-
-   // referência da array de deques.
-   ARRAY_DL listas;
-   // qtd. de deques na array.
-   uint32_t* tamanho;
-   // índice na array de listas.
-   uint32_t cursor;
-
-   // contagem de itens válidos iterados.
-   uint64_t contagem;
-   // referência ao total inicial de itens na tabela.
-   uint64_t total_de_itens;
-   /* referência ao atual tamanho de itens na tabela, se houver alguma
-    * variação, este 'iterador' torna-se imediatamente inválido. */
-   uint64_t* total_inicial;
-};
-
-typedef struct iteracao_tabela_de_dispersao* IterHT;
-
-#define ITER_HT_SIZE sizeof(struct iteracao_tabela_de_dispersao)
-
-#include <stdio.h>
-#include <assert.h>
-
-IterHT iter_ht(HASH_TABLE m) {
-   if (m == NULL) {
-      puts("'tabela de dispersão' inválida!");
-      abort();
-   }
-
-   IterHT iterador = (IterHT)malloc(ITER_HT_SIZE);
-
-   if (iterador != NULL) {
-      // assumindo nenhum problema inicialmente.
-      iterador->contagem = 0;
-      iterador->listas = m->locais;
-      iterador->cursor = 0;
-      iterador->tamanho = &m->capacidade;
-      iterador->total_de_itens = m->total;
-      iterador->total_inicial = &m->total;
-      iterador->atual = iter_dl(iterador->listas[0]);
-   } else {
-      perror("houve problema na alocação para 'IterHT'!");
-      abort();
-   }
-
-   return iterador;
-}
-
-// mexe no cursor do iterador, passando listas que não possuem itens.
-bool pula_ate_lista_nao_vazia(IterHT i) {
-   // diz que não é possível encontrar mais listas vázias.
-   if (i->cursor >= *(i->tamanho))
-      return false;
-
-   while (vazia_dl(i->listas[i->cursor])) 
-      { i->cursor++; }
-   // diz que uma lista não vázia foi achada.
-   return true;
-}
-
-Dado next_ht(IterHT i) {
-   if (i == NULL) {
-      puts("iterador 'IterHT' inválido!");
-      abort();
-   }  else if (i->total_de_itens != *(i->total_inicial)) {
-      puts("iterador ficou inválido, pois números de itens na tabela foi modificado!");
-      abort();
-   } else if ( i->contagem == i->total_de_itens ) {
-      // puts("todos itens válidos consumidos.");
-      // todos itens válidos consumidos.
-      return NULL;
-   }
-
-   Dado item = next_dl(i->atual);
-   // cria iteração da pŕoxima lista na array de DL.
-   if (item == NULL) {
-      pula_ate_lista_nao_vazia(i);
-      if (pula_ate_lista_nao_vazia(i)) {
-         // destroi iterador vázio da última listas.
-         destroi_iter_dl(i->atual);
-         // se achou alguma, então cria novo iterador.
-         i->atual = iter_dl(i->listas[i->cursor]);
-         i->cursor++;
-         // então faz uma nova iteração.
-         item = next_dl(i->atual);
-      } else 
-         // caso contrário, apenas retorna inválido imediatamente.
-         return NULL;
-   }
-
-   // contabilizando um item válido consumido, e rotornando-o.
-   i->contagem++;
-   return item;
-}
-
-void destroi_iter_ht(IterHT iterador) {
-   // se desfaz de tais referências.
-   iterador->listas = NULL;
-   iterador->tamanho = NULL;
-   iterador->total_inicial = NULL;
-   free(iterador);
-}
+// função de iteração da tabela, criação, desalocação e seus métodos.
+#include "tabeladispersao/iteracao.c"
 
 void visualizacao_debug_ht(HashTable m) {
    IterHT iterador_a_consumir = iter_ht(m);
    Dado item = next_ht(iterador_a_consumir);
 
-   printf("HashTable: {");
+   if (tamanho_ht(m) <= 5)
+      printf("HashTable: {\n");
+   else
+      printf("HashTable: {");
    while (item != NULL) { 
       // visualizando-o...
-      printf("%s, ", dado_para_string(item)); 
+      if (tamanho_ht(m) <= 5)
+         printf("\t%s,\n", dado_para_string(item)); 
+      else
+         printf("%s, ", dado_para_string(item)); 
       // próximo item do iterador.
       item = next_ht(iterador_a_consumir);
    }
@@ -270,14 +184,23 @@ void visualizacao_debug_ht(HashTable m) {
 }
 
 char* ht_to_str(HashTable m) {
-   /* assumindo uma chave com 20 caractéres, e um valor, com 5 digitos,
-    * contando também o sinal,... em média então um valor razoável 
-    * seria 29 caractéres por entrada -- claro, contabilizando o 
-    * separador, mais espaços, vírgula, sem falar as aspas da chave 
-    * string; no fim também contabiliza-se os "parentêses" que envolvem 
-    * toda  formatação. */
-   uint64_t tamanho_str = (20 + 5 + 1 + 2 + 2 + 1) * tamanho_ht(m) + 2;
-   char*  resultado_fmt = (char*)calloc(tamanho_str, sizeof(char));
+   /* realizando uma iteração antes, descobrindo o comprimento da
+    * formatação string de cada 'dado', então acumulando o comprimento
+    * de cada dado específico. O que pode ser computador inicialmente,
+    * são os delitadores(dois), e espaços e separadores(dois somado) 
+    * multiplicados pela quantia de itens, dando mais dois espaços
+    * reservas para evitar qualquer overflow.
+    */
+   uint64_t tamanho_str = 2 * tamanho_ht(m) + (2 + 3);
+   IterHT I = iter_ht(m);
+
+   for (Dado e = next_ht(I); e != NULL; e = next_ht(I)) {
+      char* dado_str = dado_para_string(e);
+      tamanho_str += strlen(dado_str);
+   }
+   destroi_iter_ht(I);
+
+   char*  resultado_fmt = calloc(tamanho_str, sizeof(char));
    IterHT iterador = iter_ht(m);
    Dado item = next_ht(iterador);
    bool foi_iterador = false;
@@ -308,18 +231,18 @@ char* ht_to_str(HashTable m) {
 }
 
 /* cria uma nova tabela, iterar os itens da 'tabela' passada, clona-os
- * e adiciona-os na nova 'tabela' a ser retornada.
- */
+ * e adiciona-os na nova 'tabela' a ser retornada.*/
 HashTable clona_ht(HashTable m) {
    // nova 'tabela de dispersão' zerada.
-   HashTable M = cria_ht();
-   // apagando a 'array de deque' vázia, então anexando a um clone.
-   destroi_array_dl(M->locais, M->capacidade);
-   M->locais = clona_array_dl(m->locais, m->capacidade);
-   M->capacidade = m->capacidade;
-   M->total = m->total;
-
-   // verifica se todos itens foram passados.
-   assert(tamanho_ht(m) == tamanho_ht(M));
-   return M;
+   HashTable copia = cria_ht();
+   puts("tabela clone criada.");
+   destroi_array_dl(copia->locais, copia->capacidade);
+   // visualizacao_array_dl(m->locais, m->capacidade);
+   copia->locais = clona_array_dl(m->locais, m->capacidade);
+   /* copiando também numero de listas da array, e o tanto de
+    * elementos, para consistência da clonagem. */
+   copia->capacidade = m->capacidade;
+   copia->total = m->total;
+   return copia;
 }
+ 
