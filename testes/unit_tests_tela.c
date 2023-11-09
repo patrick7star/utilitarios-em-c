@@ -142,6 +142,47 @@ void escrevendo_strings_na_tela() {
    destroi_tela(t);
 }
 
+void desfazendo_riscos_e_escritas() {
+   srand(time(NULL));
+   Dimensao D = dimensao_terminal();
+   TELA t = cria_tela();
+
+   // desenhando retângulos:
+   Ponto m = cria_ponto(13, 2);
+   Ponto n = cria_ponto(17, 19);
+   circunscreve_retangulo(t, m, n);
+   // riscos consecutivos:
+   Ponto a = cria_ponto(5, 5);
+   Ponto c = cria_ponto(5, 57);
+   Ponto b = cria_ponto(18, 57);
+   risca_tela(t, a, c);
+   risca_tela(t, c, b);
+   // texto escrito.
+   Ponto x = cria_ponto(15, 81); 
+   escreve_string(t, x, "watermelon", Vertical);
+   destroi_ponto(x);
+   visualiza_tela_debug(t);
+
+   puts("primeiro comando 'desfazer' executado.");
+   assert(desfaz_alteracao(t));
+   visualiza_tela_debug(t);
+
+   puts("segundo 'desfazer' executado.");
+   assert(desfaz_alteracao(t));
+   visualiza_tela_debug(t);
+
+   puts("terceiro...");
+   assert(desfaz_alteracao(t));
+   visualiza_tela_debug(t);
+
+   puts("quarto...");
+   assert(desfaz_alteracao(t));
+   visualiza_tela_debug(t);
+
+   destroi_tela(t);
+   destroi_dimensao(D);
+}
+
 void main(int argc, char** argv) {
    executa_teste_interruptor(
       "cria uma simples instâncias",
@@ -162,11 +203,12 @@ void main(int argc, char** argv) {
    );
 
    executa_testes(
-      5, riscos_gerados_aleatorio, true,
+      6, riscos_gerados_aleatorio, false,
       simples_riscos_na_tela, false,
       cria_uma_instancia_simples, false,
-      fazendo_varios_retangulos, true,
-      escrevendo_strings_na_tela, true
+      fazendo_varios_retangulos, false,
+      escrevendo_strings_na_tela, false,
+      desfazendo_riscos_e_escritas, true
    );
 }
 

@@ -88,11 +88,7 @@ void criacao_de_forma_manual_da_array_de_pontos(void) {
       7, 8, 10, 5, 19, 0, 7, 5, 25, 9, 10,
       15, 3, 20, 20
    );
-   for (int i = 0; i < 7; i++) {
-      Ponto p = (Ponto)array[i];
-      printf("%s\t", ponto_to_str(p));
-   }
-
+   printf("%s\n", ap_to_str(array, 7));
    destroi_array_de_pontos(array, 7);
 }
 

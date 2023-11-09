@@ -52,6 +52,59 @@ void amostra_gigante_inteiros_positivos() {
    puts("todos máximos e mínimos também foram selecionados.");
 }
 
+uint64_t conta_valor(uint64_t valor, uint64_t* a, uint64_t n) {
+   uint64_t contagem = 0;
+   for (uint64_t i = 1; i <=  n; i++) {
+      if (valor == a[i - 1])
+         contagem++;
+   }
+   return contagem;
+}
+
+#include <math.h>
+
+void visualiza_array(uint64_t* a, uint64_t n) {
+   for (uint64_t i = 1; i <= n; i++) {
+      if (i % 19 == 0)
+         puts("\b\b");
+      else 
+         printf("%lu, ", a[i - 1]);
+   }
+   puts("\narray visualizada.");
+}
+
+void geracao_de_arrays_de_inteiros_aleatorios() {
+   uint64_t t = 500;
+   uint64_t* array = array_inteiro_aleatoria(t, 26, 52);
+   uint64_t a = conta_valor(29, array, t); 
+   uint64_t b = conta_valor(43, array, t); 
+   float pa =  (float)a / (float)t;
+   float pb = (float)b / (float)t;
+
+   visualiza_array(array, t);
+   printf("'%d':%lu e '%d':%lu\n", 29, a, 43, b);
+   printf("percentuais %0.2f%% e %0.2f%%\n",  pa * 100, pb * 100);
+
+   // devem ter, aproximadamente, um mesmo percentual.
+   assert ( fabs(pa - pb) < 0.05 );
+   free(array);
+}
+
+void distribuicao_de_valores_logicos() {
+   uint16_t t = 6800;
+   uint16_t c = 0;
+
+   for (uint16_t k = 1; k <= t; k++) {
+      if (logico()) c += 1;
+   }
+   float p = (float)c / (float)t;
+   printf(
+      "verdadeiros: %0.2f%%\nfalso: %0.2f%%\n", 
+      p * 100.0, (1.0 - p) * 100
+   );
+   assert (fabs(p - 0.50) < 0.01);
+}
+
 // execução de todas hipóteses dadas:
 void main(int argc, char** argv) {
    executa_teste(
@@ -62,8 +115,12 @@ void main(int argc, char** argv) {
       "função 'inteiro positivo' com pequena amostra",
       amostra_pequena_inteiros_positivos
    );
-   executa_teste(
+   executa_teste_interruptor(
       "função 'inteiro positivo' com amostra gigante",
-      amostra_gigante_inteiros_positivos
+      amostra_gigante_inteiros_positivos, false
+   );
+   executa_testes(
+      2, geracao_de_arrays_de_inteiros_aleatorios, true,
+      distribuicao_de_valores_logicos, true
    );
 }
