@@ -1,9 +1,8 @@
 
 
 /* Grandezas mais legíveis:
-
-   Faz conversões de grandezas referentes a dados utilizados em 
-   computação, ou outros campos. 
+ * Faz conversões de grandezas referentes a dados utilizados em 
+ * computação, ou outros campos. 
 */
 
 #include <stdio.h>
@@ -37,11 +36,11 @@ char* tempo_legivel(double segundos) {
          perror("não implementado para tal grandeza");
    } else {
       if (s >= MILISEG)
-         sprintf(resultado, "%0.1lf ms", s * 1000.0);
+         sprintf(resultado, "%0.0lf ms", s * 1000.0);
       else if (s >= MICROSEG)
-         sprintf(resultado, "%0.1lf \u03bcs", s * powf(10, 6));
+         sprintf(resultado, "%0.0lf \u03bcs", s * powf(10, 6));
       else if (s >= NANOSEG)
-         sprintf(resultado, "%0.1lf ns", s * powf(10, 9));
+         sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
       else
          perror("não implementado para tal grandeza");
    }
@@ -66,7 +65,6 @@ char* tamanho_legivel(uint64_t bytes) {
    float valor;
 
    if (bytes >= KILO && bytes < MEGA) {
-      // peso_str = "KiB";
       memcpy(&peso_str, "KiB", 3);
       valor = (float)bytes / (float)KILO;
    } else if (bytes >= MEGA && bytes < GIGA) {
@@ -107,11 +105,11 @@ char* valor_legivel(uint64_t unidades) {
       potencia = pow(10, 12);
       peso = "tri";
    } else 
-      { return "none"; }
+      { peso = ""; potencia = 1; }
 
    double novo_valor = (double)unidades /(double)potencia;
    // double fracao = (uint16_t)novo_valor - novo_valor;
-   if (novo_valor < 0.1)
+   if (novo_valor < 1.0)
       sprintf(resultado_str, "%d %s", (uint16_t)novo_valor, peso);
    else
       sprintf(resultado_str, "%0.1f %s", novo_valor, peso);
