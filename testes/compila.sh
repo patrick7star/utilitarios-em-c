@@ -13,3 +13,7 @@ echo "compilação dos testes unitários de 'ponto.c'"
 
 gcc -o ut_legivel unit_tests_legivel.c ../tempo.c ../teste.c ../terminal.c
 echo "compilação dos testes unitários de 'legivel.c'"
+
+gcc -o ut_tempo unit_tests_tempo.c ../tempo.c ../teste.c ../terminal.c ../legivel.c -Wall -Wno-main 
+echo "compilação dos testes 'tempo.c'"
+

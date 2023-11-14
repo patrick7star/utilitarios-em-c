@@ -113,6 +113,26 @@ void formatacao_do_cronometro() {
    puts(cronometro_to_str(c));
 }
 
+void varias_instancias_ao_mesmo_tempo() {
+   Temporizador t = cria_temporizador(Segundo, 15);
+   Temporizador T = cria_temporizador(Segundo, 7);
+   assert (instancias_temporizador() == 2);
+   Temporizador X = cria_temporizador(Miliseg, 900);
+   assert (instancias_temporizador() == 3);
+
+   while (!esgotado(t) || !esgotado(T)) {
+      printf("t = %3.0f%%\tT = %3.0f%%\tX=%4.0f%%\n", 
+         percentual(t) * 100.0, 
+         100.0 * percentual(T),
+         100.0 * percentual(X)
+      );
+      breve_pausa(Miliseg, 400);
+   }
+   destroi_temporizador(T);
+   destroi_temporizador(t);
+   destroi_temporizador(X);
+}
+
 void main(int argc, char** argv) {
    /*
    executa_teste(
@@ -141,7 +161,7 @@ void main(int argc, char** argv) {
    );
    executa_teste_interruptor(
       "proibição, temporária, da criação de vários Temporizadores",
-      limitacao_de_temporizadores_por_vez, true
+      limitacao_de_temporizadores_por_vez, false
    );
 
    executa_teste_interruptor(
@@ -152,6 +172,11 @@ void main(int argc, char** argv) {
    executa_teste_interruptor(
       "formatação de string do Cronômetro",
       formatacao_do_cronometro, true
+   );
+
+   executa_teste_interruptor(
+      "várias instâncias simultâneas do Temporizador",
+      varias_instancias_ao_mesmo_tempo, true
    );
 }
 
