@@ -9,7 +9,7 @@
 #include "ponto.h"
 
 #ifndef TELA_H
-# define TELA_H
+#define TELA_H
    // nome curto do tipo de dado.
    typedef struct tela* TELA;
    typedef TELA Tela;
@@ -32,6 +32,9 @@
    extern void circunscreve_retangulo(Tela, Ponto, Ponto);
    extern void escreve_string(Tela, Ponto, char*, enum sentido);
    extern bool desfaz_alteracao(Tela t); 
+   extern Ponto centro_tela(Tela t);
+   extern bool marca_ponto(Tela t, Ponto a, unsigned char simbolo); 
+   ArrayPonto espiral(Ponto p, uint8_t T);
 
    /* a contagem de alterações feitas numa Tela; e também o número 
     * ativo delas. */

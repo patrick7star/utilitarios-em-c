@@ -260,3 +260,38 @@ bool desfaz_alteracao(Tela t) {
 }
 
 // visualização da tela, sem o debug.
+
+#include "tela/pontos_de_ligamentos.c"
+
+Ponto centro_tela(Tela t) {
+   uint8_t y = t->dimensao[0] / 2;
+   uint8_t x = t->dimensao[1] / 2;
+   Ponto central = cria_ponto(y, x);
+   return central;
+}
+
+static bool ponto_pertence_a_tela(Tela t, Ponto p) 
+   { return (p[0] < t->dimensao[0]) && (p[1] < t->dimensao[1]); }
+
+void desenha_simples_ponto(Tela t, Ponto p, unsigned char ch) {
+   ArrayPonto coord = cria_array_de_pontos(1);
+   coord[0] = p;
+   set(t->grade, p, ch);
+   Dado dt = cria_dado(coord, 1);
+   assert(coloca_pl(t->modificacoes, dt));
+}
+
+bool marca_ponto(Tela t, Ponto a, unsigned char simbolo) {
+   // verifica se o ponto dado é válido.
+   if (ponto_pertence_a_tela(t, a)) {
+      desenha_simples_ponto(t, a, simbolo);
+      return true;
+   }
+   return false;
+}
+
+bool marca_pontos(Tela t, ArrayPonto pts, size_t q, 
+  unsigned char simbolo) 
+{
+   return false;   
+}

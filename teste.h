@@ -10,6 +10,11 @@
    // de função.
    typedef void(*Fn)(void);
 
+   /* string vázia dizendo que não quer que o teste tem um nome 
+   * própria, ou uma mensagem explicando-o. */
+   #define SEM_MENSAGEM ""
+   #define SEM_NOME SEM_MENSAGEM
+
    extern void executa_teste(char* nome, Fn);
    extern void debug_aqui();
    extern void executa_teste_interruptor(char* , Fn, bool);

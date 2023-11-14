@@ -34,21 +34,11 @@ static void nome_do_teste(char *nome) {
    destroi_dimensao(d);
    free(barra);
 }
-
-/* string vázia dizendo que não quer que 
- * o teste tem um nome própria, ou uma
- * mensagem explicando-o .*/
-#define SEM_MENSAGEM ""
-#define SEM_NOME SEM_MENSAGEM
-
-/* contabilizando testes sem nomes/ ou 
- * mensagens passadas. */
+/* contabilizando testes sem nomes/ ou mensagens passadas. */
 static uint8_t testes_contagem = 0;
 
-/* executa o teste, dado a função que o 
- * faz; também é preciso do nome que ele
- * tem, pode ser o nome da função, ou não.
- */
+/* executa o teste, dado a função que o faz; também é preciso do nome 
+ * que ele tem, pode ser o nome da função, ou não. */
 void executa_teste(char* nome, void (*funcao)()) {
    // imprime o nome do programa.
    if (strlen(nome) == 0) { 
@@ -71,8 +61,8 @@ void executa_teste(char* nome, void (*funcao)()) {
 
 // conta quantos usos a função abaixo tem.
 static uint8_t contagem_de_usos = 0;
-/* ótima ferramenta de 'debug', onde indica a linha
- * e o arquivo onde possível erro pode está. */
+/* ótima ferramenta de 'debug', onde indica a linha e o arquivo onde 
+ * possível erro pode está. */
 void debug_aqui() {
    //puts("o erro está bem... ... ...aqui!");
    printf("o erro está bem ... ... ...aqui!(%d)\n", contagem_de_usos + 1);
@@ -80,9 +70,8 @@ void debug_aqui() {
    //printf("[%s]:o erro está bem ... ... ...aqui!\n", __FILE__);
 }
 
-/* computando o número de substrings que podem
- * se geradas, dada a string(na verdade seu
- * comprimento, que será calculado internamente). 
+/* computando o número de substrings que podem se geradas, dada a 
+ * string(na verdade seu comprimento, que será calculado internamente). 
  */
 uint64_t total_substrings(char* str) {
    uint64_t n = strlen(str);
@@ -133,13 +122,12 @@ StringArray todas_substrings(char* str) {
    return array;
 }
 
-/* "bate" a correspodência entre duas strings,
- * tenha elas ou não o mesmo comprimento. */
+/* "bate" a correspodência entre duas strings, tenha elas ou não o 
+ * mesmo comprimento. */
 bool strings_correspodentes(char *str1, char *str2) {
-  /* o modo aqui de achar alguma correspodência é,
-   * verificar todas fatias da menor string, com
-   * a maior. Estas fatias a serem verificadas, sempre
-   * partem do começo de ambas até a menor. */ 
+  /* o modo aqui de achar alguma correspodência é, verificar todas 
+   * fatias da menor string, com a maior. Estas fatias a serem 
+   * verificadas, sempre partem do começo de ambas até a menor. */ 
    /* supõe que a primeira é menor.*/
    uint8_t c = strlen(str1); 
    uint8_t C = strlen(str2);
@@ -156,8 +144,7 @@ bool strings_correspodentes(char *str1, char *str2) {
          return true;
       }
    }
-   // se chegar aqui, não há qualquer 
-   // correspodência entre as strings.
+   // se chegar aqui, não há qualquer correspodência entre as strings.
    return false;
 }
 
@@ -339,11 +326,3 @@ bool str_to_bool(char* s) {
    else
       { perror("a string não é válida!"); abort(); }
 }
-
-/*
-#pragma GCC diagnostic ignored "-Wunused-function"
-void main() {
-   executa_teste(SEM_MENSAGEM, espera_pouco_segundos);
-   executa_teste(SEM_NOME, intervalo_de_milisegundos);
-}
-*/
