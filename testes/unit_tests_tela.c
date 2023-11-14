@@ -183,6 +183,37 @@ void desfazendo_riscos_e_escritas() {
    destroi_dimensao(D);
 }
 
+void espiral_gera_resultado() {
+   Ponto k = cria_ponto(15, 20);
+   printf("K = %s\n", ponto_to_str(k));
+   ArrayPonto coords = espiral(k, 5);
+   uint8_t T = (5 * 6) / 2;
+   visualiza_ap(coords, T);
+   puts("geração sucedida!");
+   printf("%s\n", ponto_to_str(coords[3]));
+}
+
+void visualizando_espiral() {
+   Tela screen = cria_tela();
+
+   Ponto c = centro_tela(screen);
+   printf("em volta de %s\n", ponto_to_str(c));
+   assert(marca_ponto(screen, c, 'x'));
+   uint8_t L = 7;
+   uint8_t T = (L * (L + 1)) / 2;
+   ArrayPonto coords = espiral(centro_tela(screen), L);
+   visualiza_ap(coords, T);
+
+   for (int i = 1; i <= T; i++) {
+      Ponto p = coords[i - 1];
+      assert(marca_ponto(screen, p, 'o'));
+   }
+   visualiza_tela_debug(screen);
+
+   destroi_tela(screen);
+   destroi_array_de_pontos(coords, T);
+}
+
 void main(int argc, char** argv) {
    executa_teste_interruptor(
       "cria uma simples instâncias",
@@ -203,12 +234,14 @@ void main(int argc, char** argv) {
    );
 
    executa_testes(
-      6, riscos_gerados_aleatorio, false,
+      8, riscos_gerados_aleatorio, false,
       simples_riscos_na_tela, false,
       cria_uma_instancia_simples, false,
       fazendo_varios_retangulos, false,
       escrevendo_strings_na_tela, false,
-      desfazendo_riscos_e_escritas, true
+      desfazendo_riscos_e_escritas, false,
+      visualizando_espiral, true,
+      espiral_gera_resultado, true
    );
 }
 

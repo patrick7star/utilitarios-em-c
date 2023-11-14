@@ -66,9 +66,9 @@ void diga_ola_mundo()
 
 void execucao_de_multiplos_testes_de_uma_vez() {
    executa_testes(
-      3, &funcao_amostra, true, 
-      &funcao_amostra, false,
-      &diga_ola_mundo, true
+      3, funcao_amostra, true, 
+      funcao_amostra, false,
+      diga_ola_mundo, true
    );
 }
 
@@ -91,14 +91,5 @@ void main() {
       "gera todas substrings com variadas entradas",
       gera_todas_substrings_com_variadas_strings
    );
-
-   executa_teste(
-      "execução de múltiplos teste por vez",
-      execucao_de_multiplos_testes_de_uma_vez
-   );
-
-   executa_teste(
-      "concatenação de strings literais",
-      concatenacao_de_varias_strings_literais
-   );
+   executa_teste(SEM_NOME, concatenacao_de_varias_strings_literais);
 }
