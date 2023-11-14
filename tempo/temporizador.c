@@ -64,17 +64,10 @@ thrd_start_t altera_status(TuplaThread* args) {
     return thrd_success;
 }
 
-// atributo da estrutura, porém agora em escala global.
-bool unico_temporizador_esgotado = false;
-
 TEMPORIZADOR cria_temporizador(TEMPO_TIPO  tipo, uint16_t n) {
    /* Por usar concorrência que disputam o mesmos dados, serão permitidos
     * apenas uma instância deste tipo de dado por vez. 
     */
-   if (instancias_timer != 0) {
-      puts("não é possível criar vários na memória(por enquanto).");
-      return NULL;
-   }
    TEMPORIZADOR timer = malloc(TIMER_SIZE);
 
    timer->reutilizacoes = 0;
