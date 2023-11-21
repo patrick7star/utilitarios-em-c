@@ -11,8 +11,7 @@
 
 /* Progresso Simples. */
 
-/* A impressão da barra se dá por dada
- * variação percentual. */
+/* A impressão da barra se dá por dada variação percentual. */
 struct progresso {
    /* valores atual e o que têm que ser 
     * atingido para ser finalizado. */
@@ -197,3 +196,12 @@ void atualiza_bpt(PT p, uint64_t novo) {
    if (p->esgotado) { return; }
    p->atual = novo; 
 }
+
+extern void destroi_bps(Progresso bp) { free(bp); }
+extern void destroi_bpt(PT p) { free(p); }
+
+// aceita qualquer um dos temporizadores.
+extern bool esgotado_bpt(PT bp) 
+   { return bp->esgotado; }
+extern bool esgotado_bps(Progresso bp) 
+   { return bp->esgotado; }
