@@ -17,3 +17,6 @@ echo "compilação dos testes unitários de 'legivel.c'"
 gcc -o ut_tempo unit_tests_tempo.c ../tempo.c ../teste.c ../terminal.c ../legivel.c -Wall -Wno-main 
 echo "compilação dos testes 'tempo.c'"
 
+gcc -o ut_progresso unit_tests_barra_progresso.c ../barra_de_progresso.c \
+ ../teste.c ../terminal.c ../tempo.c ../legivel.c -Wall
+echo "compilação dos testes 'barra_de_progresso.c'"

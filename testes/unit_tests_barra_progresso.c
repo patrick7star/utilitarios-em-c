@@ -15,7 +15,7 @@ void progresso_simples() {
       visualiza_bps(p); 
       sleep(1); 
    }
-   assert(p->esgotado);
+   assert(esgotado_bps(p));
 }
 
 void progresso_simples_varios_tamanhos() {
@@ -27,7 +27,8 @@ void progresso_simples_varios_tamanhos() {
       visualiza_bps(pI); 
       sleep(1); 
    }
-   assert(pI->esgotado);
+   // assert(pI->esgotado);
+   assert(esgotado_bps(pI));
 
    ProgressoSimples pII = novo_bps(limite, 10);
    for (uint64_t k = 0; k <= limite; k++) { 
@@ -35,7 +36,7 @@ void progresso_simples_varios_tamanhos() {
       visualiza_bps(pII); 
       sleep(1); 
    }
-   assert(pII->esgotado);
+   assert(esgotado_bps(pII));
 
    ProgressoSimples pIII = novo_bps(limite, 20);
    for (uint64_t k = 0; k <= limite; k++) { 
@@ -43,7 +44,7 @@ void progresso_simples_varios_tamanhos() {
       visualiza_bps(pIII); 
       sleep(1); 
    }
-   assert(pIII->esgotado);
+   assert(esgotado_bps(pIII));
 }
 
 void progresso_temporal() {
