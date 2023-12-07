@@ -326,3 +326,88 @@ bool str_to_bool(char* s) {
    else
       { perror("a string não é válida!"); abort(); }
 }
+
+/* transforma um algarismo(valor de 0 à 9) na sua versão caractére. Se
+ * o valor passado exceder isso, gerará um erro. */
+char algarismo(uint8_t alg) {
+   switch (alg) {
+      case 0:
+         return '0';
+      case 1:
+         return '1';
+      case 2:
+         return '2';
+      case 3:
+         return '3';
+      case 4:
+         return '4';
+      case 5:
+         return '5';
+      case 6:
+         return '6';
+      case 7:
+         return '7';
+      case 8:
+         return '8';
+      case 9:
+         return '9';
+      default:
+         perror("não é válido para tal número(apenas 0 à 9).");
+         abort();
+   }
+}
+
+#include <assert.h>
+/* verifica se um número inteiro positivo é potência de 2, por
+ * obviamente, divisões sucessivas de dois. */
+static bool potencia_de_dois(size_t n) {
+   // o valor zero não é válido aqui.
+   assert (n > 0);
+
+   while (n > 0) {
+      // se houver um que 2 não divide, então n não é potência de 2.
+      if (n % 2 != 0)
+         return false;
+      n /= 2;
+   }
+   // se chegar até aqui, então todas divisões por dois foram bem sucedidas, logo é uma potência de 2.
+   return true;
+}
+
+#include <tgmath.h>
+/* O modo de computar os digitos binários são seguinte: Pegado o valor
+ * decimal(um inteiro de base 10), nós contabilizando o total de 
+ * dígitos na base dois que seu valor produziria. Criamos uma array
+ * com mais ou menos este tamanho para colocar todos dígitos binários
+ * correspodentes. Então criamos uma string dinâmica, com o mesmo 
+ * tamanho da array com dígitos obviamente, iteramos todos valores
+ * que representam dígitos na array, porém, acessando primeiro o último
+ * elemento da array(o mais a direita), pois o modo de acha-lôs é 
+ * invertido, colocando último "dígito" acessado na array como o 
+ * primeiro na array de caractéres(string), e o primeiro dígito na 
+ * array como o último "dígito" na string. 
+ */
+extern char* binario_str(size_t decimal) {
+   if (decimal == 0) return &"0000";
+   uint8_t qtd_digitos = floor(log2(decimal)) + 1;
+   /* criando a VLA depois de calcular a quantidade de dígitos exata.*/
+   uint8_t digitos[qtd_digitos];
+   // acrescenta mais uma 'vagão' na string para o caractére nulo.
+   char* bitpattern = malloc((qtd_digitos + 1) * sizeof(char));
+   // já marcando a string com o caractére 'nulo'.
+   bitpattern[qtd_digitos] = '\0';
+
+   /* os retos da divisão por 2 dão o equivalente em binário, porém
+    * numa ordem inversa. Também é necessário dividir o valor inicial
+    * por 2, já que deixando inalterado, produziria sempre o mesmo
+    * dígito. */
+   for (size_t i = 0; i < qtd_digitos; i++, decimal /= 2) 
+      digitos[i] = decimal % 2; 
+
+   /* o primeiro na string é o último na 'array de dígitos', e assim em
+    * diante. */
+   for (size_t k = 0; k < qtd_digitos; k++) 
+      bitpattern[k] = algarismo(digitos[qtd_digitos - (k + 1)]);
+
+   return bitpattern;
+}
