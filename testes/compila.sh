@@ -20,3 +20,8 @@ echo "compilação dos testes 'tempo.c'"
 gcc -o ut_progresso unit_tests_barra_progresso.c ../barra_de_progresso.c \
  ../teste.c ../terminal.c ../tempo.c ../legivel.c -Wall
 echo "compilação dos testes 'barra_de_progresso.c'"
+
+gcc -o ut_teste unit_tests_teste.c ../teste.c -lm \
+ ../legivel.c ../tempo.c ../terminal.c  \
+  -Wno-incompatible-pointer-types
+echo "compilação dos testes 'teste.c'"

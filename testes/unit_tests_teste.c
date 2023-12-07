@@ -82,6 +82,25 @@ void concatenacao_de_varias_strings_literais() {
    assert(!strcmp(entrada, saida));
 }
 
+void conversao_em_binario() {
+   puts("primeiros 20 inteiros positivos:");
+   for (size_t c = 0; c <= 20; c++)
+      printf("\t%02ld ===> %6s\n", c, binario_str(c));
+
+   size_t entradas[] = { 
+      102, 512, 988392, 1293, 15, 9, 20933, 4, 0, 
+      500, 1024, 2048
+   };
+
+   puts("\nvalores arbitrários, porém bem selecionados:");
+   for (size_t p = 0; p < 12; p++)
+      printf(
+         "\t%8lu ===> %20s\n", 
+         entradas[p], 
+         binario_str(entradas[p])
+      );
+}
+
 void main() {
    executa_teste(
       "gera todas substrings",
@@ -91,5 +110,6 @@ void main() {
       "gera todas substrings com variadas entradas",
       gera_todas_substrings_com_variadas_strings
    );
-   executa_teste(SEM_NOME, concatenacao_de_varias_strings_literais);
+   // executa_teste(SEM_NOME, concatenacao_de_varias_strings_literais);
+   executa_teste(SEM_NOME, conversao_em_binario);
 }
