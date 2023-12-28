@@ -388,7 +388,7 @@ static bool potencia_de_dois(size_t n) {
  * array como o último "dígito" na string. 
  */
 extern char* binario_str(size_t decimal) {
-   if (decimal == 0) return &"0000";
+   if (decimal == 0) return "0000";
    uint8_t qtd_digitos = floor(log2(decimal)) + 1;
    /* criando a VLA depois de calcular a quantidade de dígitos exata.*/
    uint8_t digitos[qtd_digitos];
@@ -411,3 +411,133 @@ extern char* binario_str(size_t decimal) {
 
    return bitpattern;
 }
+
+static void imprime_debug(uint8_t* array, size_t t) {
+   if (t == 0) 
+      { printf("[]\n"); return; }
+
+   printf("[");
+   for (size_t k = 0; k < t; k++)
+      printf("%d, ", array[k]);
+   printf("\b\b]\n");
+}
+
+/* Descobre mesmo o padrão binário do valor, provavelmente escrito em
+ * complemento de dois, para especificamente 8-bits.*/
+uint8_t* binario_complemento_de_dois_oito_bits(uint8_t n) {
+   uint8_t* lista_de_bits = malloc(8 * sizeof(uint8_t));
+   // mascaras necessárias para operações AND com todos bits.
+   uint8_t mascaras[] = { 
+      0x01, 0x02, 0x04, 0x08, 
+      0x10, 0x20, 0x40, 0x80
+   };
+
+   /* A captura de bits será feita da direita para esquerda. */
+   for (size_t i = 0; i < 8; i++) {
+      /* extração do bit é simples, uso a máscara compatível ao seu 
+       * atual algarismo para manter o valor apenas do algarismo desejado
+       * e zerar os demais, então aplico um shift à direita, de acordo
+       * quanto tal algarismo está da ponta direita. 
+       * A indexação inversa é necessária pois está maquina, e as demais
+       * usadas são todas little-endian.
+       */
+      // indexando na última casa, já que a CPU é 'little-endian'.
+      lista_de_bits[8 - (i + 1)] = (n & mascaras[i]) >> i;
+   }
+   return lista_de_bits;
+}
+
+/* inverte a ordem dos itens na array. O algoritmo para fazer tal coisa
+ * é o seguinte: executa o swap entre todos pares de pontas da array,
+ * tipo, primeira troca com a última, a segunda com a penúltima, a 
+ * terceira com a antipenúltima e assim em diante. O total de swaps
+ * é metade da array obviamente. 
+ */
+static void inverte_array(uint8_t* array, size_t t) {
+   for (size_t p = 0; p < (t / 2); p++) {
+      uint8_t salvo = array[p];
+      array[p] = array[t - (p + 1)];
+      array[t - (p + 1)] = salvo;
+   }
+}
+
+uint8_t* binario_complemento_de_dois(size_t n) {
+   // computando o total de dígitos binários necessários.
+   uint8_t qtd = floor(log2(n)) + 1;
+   /* Todos valores serão armazenados numa array de bytes, pois os 
+    * únicos valores que serão extraídos estão são 0 e 1. */
+   uint8_t* lista_de_bits = malloc(qtd * sizeof(uint8_t));
+   // mascaras necessárias para operações AND com todos bits.
+   size_t mascaras[qtd]; 
+
+   // complementando máscaras...
+   for (size_t p = 1; p <= qtd; p++)
+      mascaras[p - 1] = (size_t)pow(2, p - 1);
+
+   /* A captura de bits será feita da direita para esquerda. */
+   for (size_t i = 0; i < qtd; i++) {
+      /* extração do bit é simples, uso a máscara compatível ao seu 
+       * atual algarismo para manter o valor apenas do algarismo desejado
+       * e zerar os demais, então aplico um shift à direita, de acordo
+       * quanto tal algarismo está da ponta direita. 
+       * A indexação inversa é necessária pois está maquina, e as demais
+       * usadas são todas little-endian.
+       */
+      // indexando na última casa, já que a CPU é 'little-endian'.
+      lista_de_bits[i] = (n & mascaras[i]) >> i;
+   }
+   // faz uma inversão...
+   return lista_de_bits;
+}
+
+#ifdef UT_TESTE
+#include "teste.h"
+
+void teste_conversao_binaria_antiga_implementacao() {
+   for (uint8_t i = 0; i <= 16; i++)
+      printf("%d ===> %s\n",i, binario_str(i));
+}
+
+void amostra_da_nova_implementacao_de_binario() {
+   for (uint8_t n = 1; n < 16; n++) {
+      uint8_t* resultado =  binario_complemento_de_dois_oito_bits(n);
+      imprime_debug(resultado, 8);
+   }
+}
+
+void extracao_de_bits_implementacao_geral() {
+   for (uint8_t n = 1; n < 16; n++) {
+      uint8_t* resultado =  binario_complemento_de_dois_oito_bits(n);
+      uint8_t* outro_resultado = binario_complemento_de_dois(n);
+      printf("antiga: ");
+      imprime_debug(resultado, 8);
+      inverte_array(outro_resultado, 8);
+      printf(" atual: ");
+      imprime_debug(outro_resultado, 8);
+      puts("");
+   }
+}
+
+void verificando_obtendo_de_potencias_de_dois() {
+   // mascaras necessárias para operações AND com todos bits.
+   uint8_t qtd = 30;
+   // complementando máscaras...
+   for (size_t p = 1; p <= qtd; p++) {
+      size_t n = (size_t)pow(2, p - 1);
+      printf("%2luº ---> %9lu -->%31s\n", p, n, binario_str(n));
+   }
+}
+
+int main(int qtd, char* argumentos[], char* envp[]) {
+   executa_testes(
+      4, teste_conversao_binaria_antiga_implementacao, false,
+      amostra_da_nova_implementacao_de_binario, false,
+      extracao_de_bits_implementacao_geral, true,
+      // iteração para gerar máscaras funciona!
+      verificando_obtendo_de_potencias_de_dois, false
+   );
+
+   return EXIT_SUCCESS;
+}
+#endif 
+

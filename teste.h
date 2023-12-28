@@ -39,16 +39,17 @@ extern void executa_testes(uint8_t total, ...);
  * A outra função faz exatamente o reverso, pega uma string que
  * representa um valor verdade, então retorna o valor-verdade em sí.
  */
- extern const char* bool_str(bool valor); // nome antigo.
+ extern const char* bool_str(bool valor); // [será descontinuado]
  extern const char* bool_to_str(bool valor); 
  extern bool str_to_bool(char* s);
 
 /*
- * 
- *       Ainda em fase
- *         de testes
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
  *
- * --- --- --- --- --- --- --- --- --- ---
+ *                         Ainda em fase
+ *                            de testes
+ *
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
  */
  extern bool strings_correspodentes(char* str1, char* str2);
  extern StringArray todas_substrings(char *str);
