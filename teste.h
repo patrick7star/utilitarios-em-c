@@ -51,10 +51,10 @@ extern void executa_testes(uint8_t total, ...);
  *
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
  */
- extern bool strings_correspodentes(char* str1, char* str2);
- extern StringArray todas_substrings(char *str);
- extern uint64_t total_substrings(char* str);
- extern StringArray forma_strings(const char* str);
+//  extern bool strings_correspodentes(char* str1, char* str2);
+// extern StringArray todas_substrings(char *str);
+// extern uint64_t total_substrings(char* str);
+// extern StringArray forma_strings(const char* str);
 /* converte um inteiro, qualquer que seja seu tamanho, na sua forma
  * binária. */
  extern char* binario_str(size_t);

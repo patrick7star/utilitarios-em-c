@@ -148,6 +148,8 @@ bool strings_correspodentes(char *str1, char *str2) {
    return false;
 }
 
+// para não compilar no Windows, assim mantém compatibilidade
+#ifndef _WIN64
 #include <time.h>
 
 enum submultiplo_de_tempo { NANOSEG, MICROSEG, MILISEG, SEG };
@@ -211,6 +213,7 @@ void intervalo_de_milisegundos() {
       pausa(MILISEG, 300);
    }
 }
+#endif
 
 /* o mesmo que o 'executa_teste', porém este pode ser facilmente
  * desativado se for preciso, apenas mudando o parâmetro. 
@@ -252,8 +255,11 @@ const char* bool_str(bool valor)
    { return bool_to_str(valor); }
 
 #include <stdarg.h>
+// para não compilar no Windows, assim mantém compatibilidade
+#ifndef _WIN64
 #include "tempo.h"
 #include "legivel.h"
+#endif
 
 typedef void(*Fn)(void);
 
@@ -278,6 +284,8 @@ void executa_testes(const uint8_t total, ...) {
 
    va_end(args);
 
+   // para não compilar no Windows, assim mantém compatibilidade
+   #ifndef _WIN64
    // informando tempo total da execução.
    double tempo_total = marca(medicao);
    if (tempo_total <= 0)
@@ -287,6 +295,7 @@ void executa_testes(const uint8_t total, ...) {
          "\ntodos testem levaram %s\n", 
          tempo_legivel(tempo_total)
       );
+   #endif
 }
 
 char* concatena_literais_str(const uint8_t total, ...) {
