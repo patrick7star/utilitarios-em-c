@@ -421,15 +421,6 @@ extern char* binario_str(size_t decimal) {
    return bitpattern;
 }
 
-static void imprime_debug(uint8_t* array, size_t t) {
-   if (t == 0) 
-      { printf("[]\n"); return; }
-
-   printf("[");
-   for (size_t k = 0; k < t; k++)
-      printf("%d, ", array[k]);
-   printf("\b\b]\n");
-}
 
 /* Descobre mesmo o padrão binário do valor, provavelmente escrito em
  * complemento de dois, para especificamente 8-bits.*/
@@ -499,8 +490,21 @@ uint8_t* binario_complemento_de_dois(size_t n) {
    return lista_de_bits;
 }
 
+// versão estringue do endereço NULL.
+#define null_to_str(PTR) ( (bool)PTR ? "none": "válido")
+
 #ifdef UT_TESTE
 #include "teste.h"
+
+static void imprime_debug(uint8_t* array, size_t t) {
+   if (t == 0) 
+      { printf("[]\n"); return; }
+
+   printf("[");
+   for (size_t k = 0; k < t; k++)
+      printf("%d, ", array[k]);
+   printf("\b\b]\n");
+}
 
 void teste_conversao_binaria_antiga_implementacao() {
    for (uint8_t i = 0; i <= 16; i++)

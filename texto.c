@@ -285,5 +285,8 @@ char* mt_to_str(MatrizTexto m) {
    return string;
 }
 
+// incluído testes unitários do módulo.
+#include "texto/unitarios.c"
+
 
 

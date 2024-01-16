@@ -41,7 +41,7 @@ extern void executa_testes(uint8_t total, ...);
  */
  extern const char* bool_str(bool valor); // [será descontinuado]
  extern const char* bool_to_str(bool valor); 
- extern bool str_to_bool(char* s);
+ extern bool str_to_bool(const char* s);
 
 /*
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
