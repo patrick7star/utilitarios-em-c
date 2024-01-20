@@ -29,19 +29,20 @@
  *
  * Lembre-se que todos pares tem que bater com a seguinte função e
  * valor verdade, além de bate com o total de argumentos declarados
- * inicialmente.
- */
+ * inicialmente. */
 extern void executa_testes(uint8_t total, ...);
 
-/* Converte um valor lógico para uma string, em português, dizendo
- * o que ele representa. Nome similires, mas fazem a mesma coisas
- * também estão dados abaixo, por motivos de compatibilidade.
- * A outra função faz exatamente o reverso, pega uma string que
- * representa um valor verdade, então retorna o valor-verdade em sí.
+/* Converte um valor lógico para uma string, em português, dizendo o que 
+ * ele representa. Nome similires, mas fazem a mesma coisas também estão 
+ * dados abaixo, por motivos de compatibilidade. A outra função faz 
+ * exatamente o reverso, pega uma string que representa um valor verdade, 
+ * então retorna o valor-verdade em sí. 
  */
- extern const char* bool_str(bool valor); // [será descontinuado]
- extern const char* bool_to_str(bool valor); 
- extern bool str_to_bool(const char* s);
+ extern bool str_to_bool(char* s);
+
+ // macros importantes para melhorar a visualização:
+ #define bool_to_str(VL) ((bool)VL) ? "verdadeiro": "falso"
+ #define null_to_str(PTR) ( (bool)PTR ? "none": "válido")
 
 /*
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---

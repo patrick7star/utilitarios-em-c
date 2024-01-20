@@ -1,13 +1,16 @@
 
-#include "terminal.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "terminal.h"
+/* incluindo aqui por quê? Primeiro, tem macros importantes definidos lá,
+ * que é preciso também usar aqui; segundo, o 'header guards' garantem que 
+ * não entra-se num loop de inclusão. */
+#include "teste.h"
 
-/* imprime o separador entre os testes
- * executados. */
+/* imprime o separador entre os testes executados. */
 static void nome_do_teste(char *nome) {
    uint8_t str_length = strlen(nome);
    Dimensao d = dimensao_terminal();
@@ -37,8 +40,8 @@ static void nome_do_teste(char *nome) {
 /* contabilizando testes sem nomes/ ou mensagens passadas. */
 static uint8_t testes_contagem = 0;
 
-/* executa o teste, dado a função que o faz; também é preciso do nome 
- * que ele tem, pode ser o nome da função, ou não. */
+/* executa o teste, dado a função que o faz; também é preciso do nome que 
+ * ele tem, pode ser o nome da função, ou não. */
 void executa_teste(char* nome, void (*funcao)()) {
    // imprime o nome do programa.
    if (strlen(nome) == 0) { 
@@ -122,12 +125,14 @@ StringArray todas_substrings(char* str) {
    return array;
 }
 
-/* "bate" a correspodência entre duas strings, tenha elas ou não o 
- * mesmo comprimento. */
 bool strings_correspodentes(char *str1, char *str2) {
-  /* o modo aqui de achar alguma correspodência é, verificar todas 
-   * fatias da menor string, com a maior. Estas fatias a serem 
-   * verificadas, sempre partem do começo de ambas até a menor. */ 
+   /*   "Bate" a correspodência entre duas strings, tenha elas ou não o 
+    * mesmo comprimento.
+    *   O modo aqui de achar alguma correspodência é, verificar todas fatias
+    * da menor string, com a maior. Estas fatias a serem verificadas, sempre
+    * partem do começo de ambas até a menor. 
+    */ 
+
    /* supõe que a primeira é menor.*/
    uint8_t c = strlen(str1); 
    uint8_t C = strlen(str2);
@@ -155,9 +160,9 @@ bool strings_correspodentes(char *str1, char *str2) {
 enum submultiplo_de_tempo { NANOSEG, MICROSEG, MILISEG, SEG };
 typedef enum submultiplo_de_tempo ORDEM;
 
-/* modificação da função 'sleep' para aceitar de 
- * forma facil todos arrangos possíveis de tempo
- * do sistema. */
+/* modificação da função 'sleep' para aceitar de forma facil todos 
+ * arrangos possíveis de tempo do sistema. 
+ */
 static void pausa(ORDEM escala, uint16_t t) {
    size_t tamanho = sizeof(struct timespec);
    struct timespec* duracao;
@@ -215,12 +220,11 @@ void intervalo_de_milisegundos() {
 }
 #endif
 
-/* o mesmo que o 'executa_teste', porém este pode ser facilmente
- * desativado se for preciso, apenas mudando o parâmetro. 
- */
-void executa_teste_interruptor(char* descricacao, 
-  void (*funcao)(), bool acionado) 
+void executa_teste_interruptor(char* descricacao, void (*funcao)(), 
+  bool acionado) 
 {
+   /* o mesmo que o 'executa_teste', porém este pode ser facilmente
+    * desativado se for preciso, apenas mudando o parâmetro. */
    // não executa nada se for falso.
    if (strlen(descricacao) == 0) { 
       testes_contagem += 1;
@@ -242,17 +246,6 @@ void executa_teste_interruptor(char* descricacao,
    else
       puts("DESATIVADO TEMPORIAMENTE!");
 }
-
-const char* bool_to_str(bool valor) {
-   if (valor)
-      return "verdadeiro";
-   else
-      return "falso";
-}
-
-// por motivos de compatibilidade, deixaremos o nome antigo.
-const char* bool_str(bool valor)
-   { return bool_to_str(valor); }
 
 #include <stdarg.h>
 // para não compilar no Windows, assim mantém compatibilidade
@@ -314,18 +307,65 @@ char* concatena_literais_str(const uint8_t total, ...) {
    return resultado;
 }
 
-bool str_to_bool(char* s) {
-   bool e_verdadeiro = {
-      !strcmp(s, "v") || 
-      !strcmp(s, "true") || 
-      !strcmp(s, "t") || 
-      !strcmp(s, "verdadeiro")
-   };
+#include <ctype.h>
 
+static bool string_esta_minuscula(char* string) {
+   /* verifica se uma string está minúscula, ou seja, todos seus caractéres
+    * são minúsculos. 
+    */
+   char* atual = string;
+   while ((bool)*atual) {
+      char _char = atual[0];
+      if (isupper(_char))
+         return false;
+      atual++;
+   } 
+   return true;
+}
+
+static char* string_minuscula(char* original) {
+   size_t i = 0, t = strlen(original);
+   char* lowercase = malloc((t + 1) * sizeof(char));
+
+   while ((bool)*original) {
+      char _char = original[0];
+      lowercase[i] = tolower(_char);
+      original++;
+      i++;
+   }
+   lowercase[t] = '\0';
+   return lowercase;
+}
+
+bool str_to_bool(char* s) {
+   char* nova_str;
+
+   #ifdef _DEBUG_STR_TO_BOOL
+   bool resultado = string_esta_minuscula(s);
+   printf(
+      "string minúscula? %s\n\n",
+      bool_to_str(resultado)
+   );
+   #endif
+
+   if (!string_esta_minuscula(s)) {
+      nova_str = string_minuscula(s);
+      #ifdef _DEBUG_STR_TO_BOOL
+      printf("antiga: %s\t>>\tnova: %s\n", s, nova_str);
+      #endif
+   } else 
+      nova_str = s;
+
+   bool e_verdadeiro = {
+      !strcmp(nova_str, "v") || 
+      !strcmp(nova_str, "true") || 
+      !strcmp(nova_str, "t") || 
+      !strcmp(nova_str, "verdadeiro")
+   };
    bool e_falso = {
-      !strcmp(s, "f") || 
-      !strcmp(s, "false") || 
-      !strcmp(s, "falso")
+      !strcmp(nova_str, "f") || 
+      !strcmp(nova_str, "false") || 
+      !strcmp(nova_str, "falso")
    };
 
    if (e_verdadeiro)
@@ -336,9 +376,9 @@ bool str_to_bool(char* s) {
       { perror("a string não é válida!"); abort(); }
 }
 
-/* transforma um algarismo(valor de 0 à 9) na sua versão caractére. Se
- * o valor passado exceder isso, gerará um erro. */
 char algarismo(uint8_t alg) {
+   /* transforma um algarismo(valor de 0 à 9) na sua versão caractére. Se
+    * o valor passado exceder isso, gerará um erro. */
    switch (alg) {
       case 0:
          return '0';
@@ -367,9 +407,10 @@ char algarismo(uint8_t alg) {
 }
 
 #include <assert.h>
-/* verifica se um número inteiro positivo é potência de 2, por
- * obviamente, divisões sucessivas de dois. */
+
 static bool potencia_de_dois(size_t n) {
+   /* verifica se um número inteiro positivo é potência de 2, por
+    * obviamente, divisões sucessivas de dois. */
    // o valor zero não é válido aqui.
    assert (n > 0);
 
@@ -384,19 +425,20 @@ static bool potencia_de_dois(size_t n) {
 }
 
 #include <tgmath.h>
-/* O modo de computar os digitos binários são seguinte: Pegado o valor
- * decimal(um inteiro de base 10), nós contabilizando o total de 
- * dígitos na base dois que seu valor produziria. Criamos uma array
- * com mais ou menos este tamanho para colocar todos dígitos binários
- * correspodentes. Então criamos uma string dinâmica, com o mesmo 
- * tamanho da array com dígitos obviamente, iteramos todos valores
- * que representam dígitos na array, porém, acessando primeiro o último
- * elemento da array(o mais a direita), pois o modo de acha-lôs é 
- * invertido, colocando último "dígito" acessado na array como o 
- * primeiro na array de caractéres(string), e o primeiro dígito na 
- * array como o último "dígito" na string. 
- */
+
 extern char* binario_str(size_t decimal) {
+   /* O modo de computar os digitos binários são seguinte: Pegado o valor
+    * decimal(um inteiro de base 10), nós contabilizando o total de 
+    * dígitos na base dois que seu valor produziria. Criamos uma array
+    * com mais ou menos este tamanho para colocar todos dígitos binários
+    * correspodentes. Então criamos uma string dinâmica, com o mesmo 
+    * tamanho da array com dígitos obviamente, iteramos todos valores
+    * que representam dígitos na array, porém, acessando primeiro o último
+    * elemento da array(o mais a direita), pois o modo de acha-lôs é 
+    * invertido, colocando último "dígito" acessado na array como o 
+    * primeiro na array de caractéres(string), e o primeiro dígito na 
+    * array como o último "dígito" na string. 
+    */
    if (decimal == 0) return "0000";
    uint8_t qtd_digitos = floor(log2(decimal)) + 1;
    /* criando a VLA depois de calcular a quantidade de dígitos exata.*/
@@ -421,10 +463,10 @@ extern char* binario_str(size_t decimal) {
    return bitpattern;
 }
 
-
-/* Descobre mesmo o padrão binário do valor, provavelmente escrito em
- * complemento de dois, para especificamente 8-bits.*/
 uint8_t* binario_complemento_de_dois_oito_bits(uint8_t n) {
+   /* Descobre mesmo o padrão binário do valor, provavelmente escrito em
+    * complemento de dois, para especificamente 8-bits.
+    */
    uint8_t* lista_de_bits = malloc(8 * sizeof(uint8_t));
    // mascaras necessárias para operações AND com todos bits.
    uint8_t mascaras[] = { 
@@ -447,13 +489,13 @@ uint8_t* binario_complemento_de_dois_oito_bits(uint8_t n) {
    return lista_de_bits;
 }
 
-/* inverte a ordem dos itens na array. O algoritmo para fazer tal coisa
- * é o seguinte: executa o swap entre todos pares de pontas da array,
- * tipo, primeira troca com a última, a segunda com a penúltima, a 
- * terceira com a antipenúltima e assim em diante. O total de swaps
- * é metade da array obviamente. 
- */
 static void inverte_array(uint8_t* array, size_t t) {
+   /* inverte a ordem dos itens na array. O algoritmo para fazer tal coisa
+    * é o seguinte: executa o swap entre todos pares de pontas da array,
+    * tipo, primeira troca com a última, a segunda com a penúltima, a 
+    * terceira com a antipenúltima e assim em diante. O total de swaps
+    * é metade da array obviamente. 
+    */
    for (size_t p = 0; p < (t / 2); p++) {
       uint8_t salvo = array[p];
       array[p] = array[t - (p + 1)];
@@ -490,12 +532,12 @@ uint8_t* binario_complemento_de_dois(size_t n) {
    return lista_de_bits;
 }
 
-// versão estringue do endereço NULL.
-#define null_to_str(PTR) ( (bool)PTR ? "none": "válido")
-
+/* Testando todos estrutura, métodos e funções declarados e implementados
+ * acima. Esta parte abaixo pode futuramente ser colocada em outra arquivo
+ * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
+ * mais limpo. 
+ */
 #ifdef UT_TESTE
-#include "teste.h"
-
 static void imprime_debug(uint8_t* array, size_t t) {
    if (t == 0) 
       { printf("[]\n"); return; }
@@ -541,13 +583,73 @@ void verificando_obtendo_de_potencias_de_dois() {
    }
 }
 
+void stringficacao_de_valores_primitivos() {
+   printf("\t%-5d ==> %10s\n", 15, bool_to_str(15));
+   printf("\t%-5c ==> %10s\n", 'M', bool_to_str('M'));
+   printf("\t%-5d ==> %10s\n", 0, bool_to_str(0));
+   printf("\t%-5s ==> %10s\n", "false", bool_to_str(false));
+}
+
+void converte_strings_de_valores_logicos() {
+   struct par {
+      char* entrada;
+      bool saida;
+   };
+
+   struct par matches[] = {
+      {"verdadeiro", true }, { "true", true }, { "falso", false }, 
+      { "false", false }, { "FALSO", false }, { "FALse", false }, 
+      { "TRUE", true }, { "vErDaDeiRO", true }, { "Falso", false }, 
+      { "TrUe", true }, { "True", true }, {"T", true}, {"V", true}, 
+      {"f", false}, {"F", false}
+   };
+
+   for (size_t p = 0; p < 15; p++) {
+      char* e = matches[p].entrada;
+      bool s = matches[p].saida;
+      printf(
+         "%luº)\t%-13s==>%13s\n", 
+         (p + 1), e, bool_to_str(s)
+      );
+      assert (str_to_bool(e) == s);
+   }
+}
+
+void percorrendo_string() {
+   char* entrada = "this planet is prettly BLUE!";
+   char* atual = entrada;
+   while (*atual) {
+      printf("|%c| ", atual[0]);
+      atual++;
+   }
+   puts("");
+}
+
+void transforma_toda_string_em_minuscula() {
+   char* entradas[] = {
+      "jogo legal!", "Capital", "The United States of America",
+      "brazil", "cachorro", "Diego", "tEsTe MaIs DIScarAdO"
+   };
+
+   for (size_t i = 0; i < 7; i++)
+      printf(
+         "%s ===> %s\n", entradas[i], 
+         string_minuscula(entradas[i])
+      );
+}
+
 int main(int qtd, char* argumentos[], char* envp[]) {
    executa_testes(
-      4, teste_conversao_binaria_antiga_implementacao, false,
-      amostra_da_nova_implementacao_de_binario, false,
+      8, teste_conversao_binaria_antiga_implementacao, true,
+      amostra_da_nova_implementacao_de_binario, true,
       extracao_de_bits_implementacao_geral, true,
       // iteração para gerar máscaras funciona!
-      verificando_obtendo_de_potencias_de_dois, false
+      verificando_obtendo_de_potencias_de_dois, true,
+      stringficacao_de_valores_primitivos, true,
+      converte_strings_de_valores_logicos, true,
+      // [teste da função interna]
+      percorrendo_string, false,
+      transforma_toda_string_em_minuscula, false
    );
 
    return EXIT_SUCCESS;
