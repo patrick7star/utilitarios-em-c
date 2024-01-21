@@ -102,15 +102,6 @@ uint64_t* array_inteiro_aleatoria(uint64_t n, uint64_t a, uint64_t b) {
    return array;
 }
 
-char* palavra_aleatoria() {
-#ifdef _POSIX_SOURCE
-	perror("também não implementado em LINUX(ainda)!");
-#else
-   perror("não implementado para não Linux!");
-   abort();
-#endif
-}
-
 struct par { size_t j; size_t i; };
 
 bool par_distinto(struct par P, struct par* array, size_t t) {
@@ -135,9 +126,9 @@ static struct par selecao_randomica(size_t i, size_t f) {
 	return (struct par) { p, q};
 }
 
-/* O algoritmo consiste em realizar o total de swaps em metade do
- * tamanho da array, sendo tais posições escolhidas aleatóriamente. */
 extern void embaralha(uint8_t* array, size_t t) {
+   /* O algoritmo consiste em realizar o total de swaps em metade do
+    * tamanho da array, sendo tais posições escolhidas aleatóriamente. */
 	size_t total = t / 2;
 	printf("total de swaps à fazer: %lu\n", total);
 	size_t inicio = 0;
@@ -164,8 +155,96 @@ extern void embaralha(uint8_t* array, size_t t) {
 	}
 }
 
-// todos testes unitários do módulo.
-#ifdef UT_ALEATORIO
+#ifdef _POSIX_SOURCE
+#include <unistd.h>
+#include <string.h>
+
+char* palavra_aleatoria() {
+   /*   O algoritmo para ser eficiente fará da seguinte forma, ao invés de 
+    * carregar todas palavras na memória, contabilizará o tamanho do 
+    * arquivo(em bytes) e sorteará um número entre 0(o ínicio) e o total 
+    * de bytes(o tamanho do arquivo mencionado). Este número sorteado 
+    * randomicamente será onde começará a lê caractéres. Com a ajuda de
+    * dois demarcadores, um para a primeira quebra-de-linha, e o outro para
+    * segunda. Feito isso, o que restá é posicionar o cursor do arquivo
+    * onde foi marcado a primeira quebra-de-linha, e lê até a segunda. E
+    * pronto, aí está a palavra lida, apenas resta retorna-lá. 
+    *
+    *   NOTA: ainda precisa-se de uma abordagem para tratar como pegar as 
+    * palavras no começo e no final do arquivo, digo, literalmente, a
+    * primeira e a última palavra. O algoritmo apresentado não cuida deste
+    * caso. */
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   puts("a função 'palavra_aleatoria' iniciou.");
+
+   void letra_lida_e_onde(size_t p, char _char) {
+      printf("cursor: %lu\tcaractére: '%c'\n", p, _char);
+      sleep(1);
+   }
+   #endif
+
+   const char caminho[] = "/usr/share/dict/american-english";
+   FILE* arquivo = fopen(caminho, "rt");
+   size_t inicio, fim, nl = 0;
+   size_t cursor = inteiro_positivo(0, 900000);
+   char letra;
+   bool bloco_executado = false;
+
+   // sorteio um byte aleatoriamente no arquivo.
+   fseek(arquivo, cursor, SEEK_SET);
+
+   // buscando dois caractéres de quebra-de-linha.
+   while (nl  < 2) {
+      letra = getc(arquivo);
+      #ifdef _DEBUG_PALAVRA_ALEATORIA
+      letra_lida_e_onde(ftell(arquivo), letra);
+      #endif
+
+      if (letra == '\n') {
+         if (!bloco_executado) {
+            // marca o ínicio da palavra.
+            inicio = ftell(arquivo);
+            bloco_executado = true;
+         } else
+            // marca o fim dela.
+            fim = ftell(arquivo);
+         // conta uma quebra-de-linha.
+         nl++;
+      }
+   }
+
+   // extraindo o conteúdo entre tais posições...
+   size_t byte = sizeof(char);
+   /* como estamos tratando de palavras aqui, cinquenta bytes é mais do que 
+    * o necessário,... ou você conhece uma palavra(em inglês) que necessite
+    * mais do que isso. 
+    */
+   char* buffer = malloc(50 * byte);
+   memset(buffer, '\0', 50);
+   size_t qtd = fim - (inicio + 1);
+
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   printf("serão lidos %lu caractéres\n", qtd);
+   #endif
+   // lendo entre o que foi marcado pelas iterações...
+   fseek(arquivo, inicio, SEEK_SET);
+   fread(buffer, byte, qtd, arquivo);
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   printf("o que foi lido: '%s'\n", buffer);
+   #endif
+
+   fclose(arquivo);
+   return buffer;
+}
+#endif
+
+/* Testando todos estrutura, métodos e funções declarados e implementados
+ * acima. Esta parte abaixo pode futuramente ser colocada em outra arquivo
+ * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
+ * mais limpo. 
+ */
+#ifdef _UT_ALEATORIO
+// bibliotecas necessárias.
 
 static void imprime_array_uint8_t(uint8_t* a, const size_t t) {
 	printf("[");
@@ -189,8 +268,77 @@ void funcao_de_embaralho() {
 	imprime_array_uint8_t(array, t);
 }
 
-int main(int qtd, char** argumentos, char* envp[]) {
-	funcao_de_embaralho();
+void todos_caracteres(char* string) {
+   // visualização de caractére-por-caractére.
+   while ((bool)*string) {
+      char ch = string[0];
+      if (ch == '\n')
+         printf("|\\n|  ");
+      else if (ch == '\0')
+         printf("|#|  ");
+      else if (ch == ' ')
+         printf("|.|  ");
+      else
+         printf("|%c|  ", ch);
+      string++;
+   }
+   puts("\b\b");
+}
+
+void sorteio_de_palavra() {
+   for (size_t i = 1; i <= 10; i++) {
+      char* resultado = palavra_aleatoria();
+      todos_caracteres(resultado);
+      printf("conteúdo: %s\n\n", resultado);
+   }
+}
+
+void testando_funcao_getc() {
+   FILE* arq = fopen("aleatorio.c", "rt");
+   size_t cursor = inteiro_positivo(50, 100);
+   printf("posição selecionada: %lu\n", cursor);
+
+   fseek(arq, cursor, SEEK_SET);
+
+   for (size_t k = 1; k <= 50; k++) {
+      char _char; 
+      fread(&_char, sizeof(char), 1, arq);
+      if (_char != '\n')
+         printf("caractére: '%c'\tcursor: %lu\n", _char, ftell(arq));
+      else
+         printf("caractére: '\\n'\tcursor: %lu\n", ftell(arq));
+   }
+   fclose(arq);
+}
+
+#ifdef _POSIX_SOURCE
+#include "teste.h"
+#include "tempo.h"
+
+void obtendo_tempo_de_sorteio_da_palavra() {
+   Cronometro contagem = cria_cronometro();
+
+   for (size_t k = 1; k <= 45000; k++) {
+      char* p = palavra_aleatoria(); 
+   }
+   marca(contagem);
+   printf("decorrido: %s\n",cronometro_to_str(contagem));
+
+}
+#endif
+
+int main(int qtd, char* args[], char* vars[]) 
+{
+   #ifdef _WIN64
+   puts("funções compatíveis com o Windows.");
+   #elif _POSIX_SOURCE
+   executa_testes(
+      3, testando_funcao_getc, false,
+      sorteio_de_palavra, true,
+      // consome muito CPU e memória, sempre deixe desabilitada:
+      obtendo_tempo_de_sorteio_da_palavra, true
+   );
+   #endif
    return EXIT_SUCCESS;
 }
 #endif
