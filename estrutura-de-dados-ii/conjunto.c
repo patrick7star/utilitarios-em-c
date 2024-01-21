@@ -222,6 +222,7 @@ static void visualizacao_interna_set(conjunto_t* s) {
 
 size_t tamanho_set(conjunto_t* s)
    { return s->quantidade;}
+
 bool vazia_set(conjunto_t* s) 
    { return tamanho_set(s) == 0; }
 
@@ -258,6 +259,52 @@ char* set_to_str(conjunto_t* s) {
    return string;
 }
 
+#include <assert.h>
+bool deleta_set(conjunto_t* s, dado_t e) {
+   // primeiro caso do 'dado' não existir, se o 'conjunto' estiver vázio.
+   if (vazia_set(s))
+      return false;
+
+   // se apontar índice inválido na array, então tal dado não existe.
+   size_t indice = hash(s, e);
+
+   /* se a referência na array for 'nula', então não tem como deletar o
+    * item no 'conjunto', pois ele não faz parte dele. */
+   if (s->array[indice] == NULL) return false;
+
+   if (dado_eq(s->array[indice]->dado, e)) {
+      // se estiver no ínicio da lista-ligada.
+      struct nodulo* aux = s->array[indice];
+      s->array[indice] = s->array[indice]->seta;
+      s->quantidade -= 1;
+      return true;
+   } else {
+      struct nodulo* anterior = NULL;
+      struct nodulo* cursor = s->array[indice];
+      bool encontrou_algo = false;
+
+      // iterando buscando por uma combinação...
+      while (cursor->seta != NULL) {
+	 if (dado_eq(cursor->dado, e)) { 
+	    encontrou_algo = true;
+	    break; 
+	 }
+	 anterior = cursor;
+	 cursor = cursor->seta;
+      }
+      if (encontrou_algo) {
+	 // remoção porque está em qualquer outro ponto.
+	 anterior->seta = cursor->seta;
+	 s->quantidade -= 1;
+	 return true;
+      }
+   }
+   /* último é percorrer toda array do índice, e comparar com cada item
+    * do caminho, se não houver encontrado nada é porque o 'dado' passado
+    * não está neste 'conjunto'. */
+   return false;
+}
+
 #ifdef _UT_CONJUNTO
 #include <assert.h>
 
@@ -285,8 +332,18 @@ void operacoes_basicas_na_estrutura() {
    visualizacao_interna_set(S);
    
    insere_set(S, 2);
-
    printf("show it in the end:\n%s\n", set_to_str(S));
+
+   size_t inicialmente = tamanho_set(S);
+   assert(deleta_set(S, 173));
+   assert(deleta_set(S, 89));
+   printf("%s\n", set_to_str(S));
+   assert (tamanho_set(S) + 2 == inicialmente);
+   visualizacao_interna_set(S);
+
+   // tentar remover inexistentes!
+   assert(!deleta_set(S, 173));
+   assert(!deleta_set(S, 89));
 
    assert (destroi_set(S));
 }
