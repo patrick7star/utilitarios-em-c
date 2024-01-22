@@ -259,7 +259,7 @@ char* set_to_str(conjunto_t* s) {
    return string;
 }
 
-#include <assert.h>
+// #include <assert.h>
 bool deleta_set(conjunto_t* s, dado_t e) {
    // primeiro caso do 'dado' não existir, se o 'conjunto' estiver vázio.
    if (vazia_set(s))
@@ -277,6 +277,10 @@ bool deleta_set(conjunto_t* s, dado_t e) {
       struct nodulo* aux = s->array[indice];
       s->array[indice] = s->array[indice]->seta;
       s->quantidade -= 1;
+      destroi_nodulo(aux);
+      #ifdef _DEBUG_DELETA_SET
+      puts("this node was deleted at first of the list.");
+      #endif
       return true;
    } else {
       struct nodulo* anterior = NULL;
@@ -296,8 +300,37 @@ bool deleta_set(conjunto_t* s, dado_t e) {
 	 // remoção porque está em qualquer outro ponto.
 	 anterior->seta = cursor->seta;
 	 s->quantidade -= 1;
+	 destroi_nodulo(cursor);
+	 #ifdef _DEBUG_DELETA_SET
+	 puts("remove item after iteration, thus it wasn't at first.");
+	 #endif
 	 return true;
       }
+   }
+   /* último é percorrer toda array do índice, e comparar com cada item
+    * do caminho, se não houver encontrado nada é porque o 'dado' passado
+    * não está neste 'conjunto'. */
+   return false;
+}
+
+bool pertence_set(conjunto_t* s, dado_t k) {
+   /* O algoritmo para verificar pertencimento é o mesmo trecho usado no
+    * interno das operações básicas acima, computa o índice hash para,
+    * então varre toda a lista(se houver uma) em busca do nódulo com o 
+    * dado correspondente, daí então, se achar um confirmar pertencimento,
+    * pois no pior caso(não havendo um dado), retorna um valor lógico 
+    * falso. */
+   // primeiro caso do 'dado' não existir, se o 'conjunto' estiver vázio.
+   if (vazia_set(s)) return false;
+
+   // se apontar índice inválido na array, então tal dado não existe.
+   size_t indice = hash(s, k);
+   struct nodulo* cursor = s->array[indice];
+
+   // iterando buscando por uma combinação...
+   while (cursor != NULL) {
+      if (dado_eq(cursor->dado, k)) { return true; }
+      cursor = cursor->seta;
    }
    /* último é percorrer toda array do índice, e comparar com cada item
     * do caminho, se não houver encontrado nada é porque o 'dado' passado
@@ -323,8 +356,11 @@ void operacoes_basicas_na_estrutura() {
    insere_set(S, 2);
    insere_set(S, 89);
    visualizacao_interna_set(S);
+   assert (pertence_set(S, 2));
+   assert (!pertence_set(S, 7));
    insere_set(S, 13);
    insere_set(S, 7);
+   assert (pertence_set(S, 7));
    visualizacao_interna_set(S);
 
    puts("second batch of insections:");
@@ -335,8 +371,11 @@ void operacoes_basicas_na_estrutura() {
    printf("show it in the end:\n%s\n", set_to_str(S));
 
    size_t inicialmente = tamanho_set(S);
+   assert (pertence_set(S, 89));
    assert(deleta_set(S, 173));
    assert(deleta_set(S, 89));
+   assert (!pertence_set(S, 173));
+   assert (!pertence_set(S, 89));
    printf("%s\n", set_to_str(S));
    assert (tamanho_set(S) + 2 == inicialmente);
    visualizacao_interna_set(S);
