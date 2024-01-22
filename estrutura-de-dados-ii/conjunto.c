@@ -13,12 +13,12 @@
  * subjacentes a ele. Se for necessário alterar o tipo de dado, é está 
  * parte somente que é recomendado mudar, tanto seu apelido, como alguns 
  * métodos, depedendo de como o dado está sendo projejado. */
-typedef uint8_t dado_t;
+typedef int64_t dado_t;
 
 char* dado_to_str(dado_t x) {
    // converte ele numa string para impressão abaixo.
    char* resultado_fmt = malloc(4 * sizeof(char));
-   sprintf(resultado_fmt, "%d", x);
+   sprintf(resultado_fmt, "%ld", x);
    return resultado_fmt;
 }
 
@@ -229,6 +229,7 @@ bool vazia_set(conjunto_t* s)
 #include <string.h>
 
 char* set_to_str(conjunto_t* s) {
+#ifdef _WIN64 // para Windows somente.
    rsize_t total = 1000;
    char* string = calloc(total,  sizeof(char));
    size_t capacidade = s->capacidade;
@@ -257,6 +258,33 @@ char* set_to_str(conjunto_t* s) {
    }
    strcat_s(string, total, "\b\b}");
    return string;
+#elif _POSIX_SOURCE // para linux e outros.
+   char* string = calloc(1000,  sizeof(char));
+   size_t capacidade = s->capacidade;
+   struct nodulo* atual;
+
+   strcat(string, "conjunto: {");
+   if (vazia_set(s)) {
+      strcat(string, "}");
+      return string;
+   }
+
+   for (size_t k = 0; k < capacidade; k++) {
+      atual = s->array[k];
+      if (atual == NULL)
+	 continue;
+      else {
+	 while (atual != NULL) {
+	    char* dadostr = dado_to_str(atual->dado);
+	    strcat(string, dadostr);
+	    strcat(string, ", ");
+	    atual = atual->seta;
+	 }
+      }
+   }
+   strcat(string, "\b\b}");
+   return string;
+#endif
 }
 
 // #include <assert.h>
@@ -340,10 +368,12 @@ bool pertence_set(conjunto_t* s, dado_t k) {
 
 #ifdef _UT_CONJUNTO
 #include <assert.h>
+#include <time.h>
 
 void insercoes_randomicas(conjunto_t* s, size_t qtd) {
-   time_t sistema_clock = 0;
+   time_t sistema_clock = time(NULL);
    srand(sistema_clock);
+
    for (size_t n = 1; n <= qtd; n++)
       insere_set(s, rand() % 256);
 }
@@ -372,9 +402,9 @@ void operacoes_basicas_na_estrutura() {
 
    size_t inicialmente = tamanho_set(S);
    assert (pertence_set(S, 89));
-   assert(deleta_set(S, 173));
+   assert(deleta_set(S, 7));
    assert(deleta_set(S, 89));
-   assert (!pertence_set(S, 173));
+   assert (!pertence_set(S, 7));
    assert (!pertence_set(S, 89));
    printf("%s\n", set_to_str(S));
    assert (tamanho_set(S) + 2 == inicialmente);
@@ -387,8 +417,90 @@ void operacoes_basicas_na_estrutura() {
    assert (destroi_set(S));
 }
 
+void insercoes_randomicas_i(conjunto_t* s, size_t qtd) {
+   time_t sistema_clock = time(NULL);
+   srand(sistema_clock);
+
+   for (size_t n = 1; n <= qtd; n++) {
+      if (rand() % 2 == 0)
+         insere_set(s, rand() % RAND_MAX);
+      else 
+         insere_set(s, (-1) * rand() % RAND_MAX);
+   }
+}
+
+void taxa_de_insercao_e_remocao() {
+   conjunto_t* S = cria_set();
+   // tamanho antes de mais inserções:
+   size_t inseridos = tamanho_set(S);
+   // variação de inserções:
+   size_t variacao = 0;
+   double decorrido = 0;
+   double antigo_decorrido = 0.0;
+
+   for (size_t i = 1; i <= 9; i++) {
+      inseridos = tamanho_set(S);
+      // cronometrando...
+      time_t inicio = time(NULL);
+      insercoes_randomicas_i(S, 41000);
+      time_t final = time(NULL);
+      antigo_decorrido = decorrido;
+      decorrido = difftime(final, inicio);
+
+      printf(
+         "%lu/41000 em %3.0fseg [%4.1f%%]\n", 
+         tamanho_set(S) - inseridos, decorrido,
+         (antigo_decorrido / decorrido * 100)
+      );
+   }
+
+   destroi_set(S);
+}
+
+size_t _tamanho_da_lista_encadeada_aleatoria(conjunto_t* set) {
+   // pausa para pegar o seed do timestamp.
+   // nanosleep(&(struct timespec){ 0, 325000000 }, NULL);
+   srand(time(NULL));
+   size_t linha = rand() % set->capacidade;
+   struct nodulo* atual = set->array[linha];
+   size_t contagem = 0;
+
+   while (atual != NULL) {
+      contagem++;
+      atual = atual->seta;
+   }
+   return contagem;
+}
+
+size_t _media_de_tamanho_da_lista(conjunto_t* set) { 
+   size_t quantidade = 0, total = (set->capacidade / 2);
+   for (size_t k = 1; k <= total; k++) 
+      quantidade += _tamanho_da_lista_encadeada_aleatoria(set);
+   return quantidade / total; 
+}
+
+void crescimento_da_lista_encadeada_interna() {
+   conjunto_t* S = cria_set();
+   size_t q = tamanho_set(S);
+
+   for (size_t i = 1; i <= 19; i++) {
+      insercoes_randomicas_i(S, 24000);
+      size_t T = _media_de_tamanho_da_lista(S);
+      printf(
+         "relação 'total de itens' e 'comprimento da lista interna'" 
+         "\b\b\b: %7lu/%5lu\n", tamanho_set(S), T
+      );
+      q = T;
+   }
+
+   destroi_set(S);
+}
+
 int main(int total, char* args[], char* vars[]) {
-   operacoes_basicas_na_estrutura();
+   // operacoes_basicas_na_estrutura();
+   // testes abaixo consumem imensa quantidade de tempo e CPU.
+   // taxa_de_insercao_e_remocao();
+   crescimento_da_lista_encadeada_interna();
    return EXIT_SUCCESS;
 }
 #endif
