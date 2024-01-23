@@ -9,10 +9,11 @@
 
 struct cronometro {
    time_t inicio; 
-   time_t marcos[TOTAL_REGISTROS];
-
+   time_t* marcos;
+   // capacidade inicial da array.
+   size_t capacidade;
    // quantos registros foram feitos.
-    uint8_t qtd;
+   size_t qtd;
 };
 // tamanho da 'struct' acima.
 #define CLOCK_SIZE sizeof(struct cronometro)
@@ -26,6 +27,8 @@ Cronometro cria_cronometro() {
    if (novo != NULL) {
       novo->inicio = time(NULL);
       novo->qtd = 0;
+      novo->capacidade = TOTAL_REGISTROS;
+      novo->marcos = malloc(TOTAL_REGISTROS * sizeof(time_t));
       #ifdef _DEBUG_CRIA_CRONOMETRO
       puts("cronômetro foi alocado com sucesso.");
       #endif
@@ -61,9 +64,34 @@ void destroi_cronometro(Cronometro c, bool info) {
    }
 }
 
+static void ajusta_container_de_registros(Cronometro c) {
+   size_t Q = c->capacidade;
+   size_t t = c->qtd;
+
+   // verificando a necessidade de expansão.
+   if (t < Q) {
+      #ifdef MARCA_CRONOMETRO
+      printf("não necessária uma expansão há %lu\n", Q - t);
+      puts("abandonando rotina...");
+      #endif
+      return;
+   }
+
+   // régra básica(e quebra-galho) de amortização, dobra o atual.
+   size_t nova = 2 * Q;
+   /* assume que a realocação sempre é sucedida, caso contrário pode 
+    * haver "vazamento de memória". Como o uso pensado para tal estrutura
+    * é bem restrito e controlado, mesmo um vazamento de memória não seria
+    * algo que causaria problema descontrolado a aplicação. */
+   time_t* nova_array = realloc(c->marcos, nova);
+   c->capacidade = nova;
+   c->marcos = nova_array;
+}
+
 double marca(Cronometro c) {
-   if (c->qtd >= TOTAL_REGISTROS) 
-      perror("não é possível mais fazer registros.");
+   // if (c->qtd >= TOTAL_REGISTROS) 
+   //   perror("não é possível mais fazer registros.");
+   ajusta_container_de_registros(c);
    
    c->marcos[c->qtd] = time(NULL);
    c->qtd++;
@@ -108,7 +136,7 @@ char* cronometro_to_str(Cronometro c) {
 
    sprintf(
       resultado_fmt, 
-      "cronômetro (%s, %3d)", 
+      "cronômetro (%s, %3ld)", 
       tempo_legivel(t), c->qtd
    );
    // retornando a slice-string transformada.
