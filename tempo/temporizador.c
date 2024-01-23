@@ -5,8 +5,8 @@
 
 #include "tupla.c"
 
-/* Este código não precisa de bibliotecas para funcionar pois será 
- * incluída no código principal via diretivas de compilação. */
+/* Este código não precisa de bibliotecas para funcionar pois será incluída
+ * no código principal via diretivas de compilação. */
 
 struct contador_regressivo {
    // tempo que ele durará.
@@ -31,37 +31,38 @@ struct contador_regressivo {
 };
 
 // tamanho(em bytes) e nome curto para codificação:
-typedef struct contador_regressivo* TEMPORIZADOR;
+typedef struct contador_regressivo *TEMPORIZADOR;
 # define TIMER_SIZE sizeof(struct contador_regressivo)
 
 /* contabiliza as várias instâncias que foram criadas deste tipo.*/
-uint8_t instancias_timer = 0;
+static uint8_t instancias_timer = 0;
 
 #include "computa_percentil.c"
 
-/* Muda o valor da variável lógica da estrutura para 'verdadeira', depois
- * de certo período de tempo.
- */
-thrd_start_t altera_status(TuplaThread* args) {
-   /* Ao invés de uma chamada de pausa, faz cem delas, assim pode-se
+static thrd_start_t altera_status(TuplaThread* args) {
+   /*   Muda o valor da variável lógica da estrutura para 'verdadeira', 
+    * depois de certo período de tempo.
+    *   Ao invés de uma chamada de pausa, faz cem delas, assim pode-se
     * acompanhar o progresso percentual do 'temporizador'. Por ser
     * apenas 100 chamadas, não é esperado que isso prejudique o
     * desempenho,e consequemente funcionamento da estrutura.
     */
-   Duracao T = centesima_unidade(
-      (*args).grandeza, 
-      (*args).unidades
-   );
-   // printf("\ntipo: '%s'\tunidades: %lu\n", tempotipo_str(T.t), T.n);
+   Duracao T = centesima_unidade((*args).grandeza, (*args).unidades);
+
+   #ifdef _DEBUG_ALTERA_STATUS
+   printf("\ntipo: '%s'\tunidades: %lu\n", tempotipo_str(T.t), T.n);
+   #endif
 
    for (int k = 100; k > 0; k--) {
       *args->porcentagem += 1;
       breve_pausa(T.t, T.n);
    }
 
-    *args->estado = true;
-    // puts("tempo esgotado, 'estado' foi alterado.");
-    return thrd_success;
+   *args->estado = true;
+   #ifdef _DEBUG_ALTERA_STATUS
+   puts("tempo esgotado, 'estado' foi alterado.");
+   #endif
+   return thrd_success;
 }
 
 TEMPORIZADOR cria_temporizador(TEMPO_TIPO  tipo, uint16_t n) {
@@ -69,6 +70,15 @@ TEMPORIZADOR cria_temporizador(TEMPO_TIPO  tipo, uint16_t n) {
     * apenas uma instância deste tipo de dado por vez. 
     */
    TEMPORIZADOR timer = malloc(TIMER_SIZE);
+
+   // se a alocação falhar, então interromper o programa.
+   if (timer == NULL) {
+      perror(
+         "[error 1]:devido a não alocação do temporizador, não será "
+         "possível o programa está sendo interrompindo!"
+      );
+      abort();
+   }
 
    timer->reutilizacoes = 0;
    // arranjando tempo demandado...
@@ -109,16 +119,22 @@ TEMPORIZADOR cria_temporizador(TEMPO_TIPO  tipo, uint16_t n) {
 }
 
 void destroi_temporizador(TEMPORIZADOR t, bool info) {
+   // (na verdade não sei o porquê disso aqui, porém deixar inicialmente para não arranjar problema.)
    // quando destruído, o status esgotado se vai.
-   t->esgotado = false;
-   if (info)
+   // t->esgotado = false;
+
+   #ifdef _DEBUG_DESTROI_TEMPORIZADOR
       printf("a liberação do 'temporizador'... ");
+   #endif
+
    free(t);
    // se passou no passo acima, então foi liberado com sucesso.
    // agora é sobre descontabiliza a instâncias liberada.
    instancias_timer--;
-   if (info)
+
+   #ifdef _DEBUG_DESTROI_TEMPORIZADOR
       puts("foi concluída.");
+   #endif
 }
 
 uint8_t instancias_temporizador()
@@ -127,7 +143,6 @@ uint8_t instancias_temporizador()
 bool esgotado(TEMPORIZADOR t)
    { return t->esgotado; }
 
-float percentual(TEMPORIZADOR t) {
-   return (float)t->percentual / 100.0;
-}
+float percentual(TEMPORIZADOR t) 
+   { return (float)t->percentual / 100.0; }
 

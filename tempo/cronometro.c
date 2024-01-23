@@ -16,19 +16,23 @@ struct cronometro {
 };
 // tamanho da 'struct' acima.
 #define CLOCK_SIZE sizeof(struct cronometro)
-typedef struct cronometro* CRONOMETRO;
-typedef CRONOMETRO Cronometro;
+// nomes melhores para estrutura.
+typedef struct cronometro *Cronometro;
 
-CRONOMETRO cria_cronometro() {
-   CRONOMETRO novo = malloc(CLOCK_SIZE);
+Cronometro cria_cronometro() {
+   Cronometro novo = malloc(CLOCK_SIZE);
 
    // se alocado corretamente.
    if (novo != NULL) {
       novo->inicio = time(NULL);
       novo->qtd = 0;
-   } else 
-      { perror("cronômetro não foi criado corretamente."); }
-
+      #ifdef _DEBUG_CRIA_CRONOMETRO
+      puts("cronômetro foi alocado com sucesso.");
+      #endif
+   } else { 
+      perror("cronômetro não foi criado corretamente."); 
+      abort();
+   }
    return novo;
 }
 
@@ -37,20 +41,23 @@ CRONOMETRO cria_cronometro() {
 #include "../legivel.h"
 
 void destroi_cronometro(Cronometro c, bool info) {
-   if (info) {
+   //if (info) {
+   #ifdef _DEBUG_DESTROI_CRONOMETRO
       time_t fim = time(NULL);
       double diferenca = difftime(fim, c->inicio);
       printf(
          "\ntempo decorrido: %s\nregistros feitos: %d\n",
          tempo_legivel(diferenca), c->qtd
       );
-   }
+   // }
+   #endif
 
    if (c != NULL)
       free(c);
    else {
-      if (info)
-         puts("o tal cronômetro não existe!");
+      #ifdef _DEBUG_DESTROI_CRONOMETRO
+      puts("o tal cronômetro não existe!");
+      #endif
    }
 }
 
@@ -81,8 +88,8 @@ void visualiza_marcos(Cronometro c) {
    puts("\b\b");
 }
 
-// quanto variou do último registro marcado, se houver algum é claro.
 double variacao(Cronometro c) {
+   // quanto variou do último registro marcado, se houver algum é claro.
    if (c->qtd == 0)
       perror("nenhum registro foi marcado.");
 
@@ -91,8 +98,8 @@ double variacao(Cronometro c) {
    return difftime(f, i);
 }
 
-/* transforma o cronômetro num formato string. */
 char* cronometro_to_str(Cronometro c) {
+   /* transforma o cronômetro num formato string. */
    char* resultado_fmt = (char*)calloc(30, sizeof(char));
    double t = marca(c);
 
