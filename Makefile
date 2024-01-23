@@ -39,12 +39,10 @@ tempo: testes/unit_tests_tempo.c
 	echo "lincando artefatos para 'unit_tests_tempo.c'..."
 	gcc $(TEMPO_VERBOSE) -o ut_tempo \
 	testes/unit_tests_tempo.c $(TEMPO_DEPEDENCIAS) \
-	-I '.' -std=gnu18 -lm -Wall -Wno-main
+	-I '.' -std=gnu18 -lm -Wall -Wno-main -Wno-unused-functions
 
 
 clean:
 	echo "executaveis aleatorios inicialmente."
-	rm -fv string teste_exe ut_teste ut_ponto \
-	ut_aleatorio
-	echo "removendo todos objetos..."
-	rm -fv *.o
+	echo "removendo todos objetos e executáveis ..."
+	rm -fv *.o ut*
