@@ -85,3 +85,51 @@ void breve_pausa(TEMPO_TIPO tipo, uint16_t qtd) {
  */
 #include "tempo/cronometro.c"   // primeiro
 #include "tempo/temporizador.c" // segundo.
+
+#if defined(_UT_TEMPO)
+
+void alocacao_e_desalocacao() {
+   Cronometro c = cria_cronometro();
+   // pausa.
+   breve_pausa(Segundo, 2);
+   breve_pausa(Miliseg, 700);
+   destroi_cronometro(c, true);
+
+   Cronometro c1 = cria_cronometro();
+   breve_pausa(Miliseg, 26);
+   destroi_cronometro(c1, true);
+}
+
+void visualizacao_dos_marcos() {
+   Cronometro clock = cria_cronometro();
+   breve_pausa(Segundo, 1);
+
+   for (int i = 0; i < 95; i++) { 
+      marca(clock);
+      if (i % 6 != 0)
+         printf("registrado\t");
+      else
+         puts("");
+      breve_pausa(Miliseg, rand() % 150 + 50); 
+   }
+   // invocando a função que faz a listagem.
+   puts("\nregistros feitos:");
+   visualiza_marcos(clock);
+}
+
+int main(int qtd, char* argumentos[], char* envp[]) 
+{
+   clock_t inicio = clock();
+   alocacao_e_desalocacao();
+   // [aviso!]função consome muito tempo, e bastante verbosa também.
+   // visualizacao_dos_marcos();
+   clock_t fim = clock();
+
+   double tempo_do_processo = (fim - inicio) / CLOCKS_PER_SEC;
+   printf("clocks por seg: %ld\ndecorrido: %lf\n", 
+   CLOCKS_PER_SEC, tempo_do_processo);
+   
+   return EXIT_SUCCESS;
+}
+
+#endif
