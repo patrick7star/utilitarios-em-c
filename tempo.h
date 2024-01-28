@@ -11,9 +11,7 @@
     Microseg, Nanoseg 
  }TempoTipo, TEMPO_TIPO;
  
- struct cronometro;   
  typedef struct cronometro *CRONOMETRO, *Cronometro, cronometro_t;
- typedef CRONOMETRO Cronometro;
 
  /* executa uma pausa no programa dado a grandeza do tempo, e o total de 
   * unidades daquela grandeza. */
@@ -31,26 +29,36 @@
 
  // visualização de registros feitos no 'cronômetro'.
  extern void visualiza_marcos(CRONOMETRO c); 
- // retorna a formatação string do cronômetro, sendo o nome do 
- // tipo de dado, o tempo decorrido até então, e o total de 
- // marcações até agora.
+ /* retorna a formatação string do cronômetro, sendo o nome do 
+  * tipo de dado, o tempo decorrido até então, e o total de 
+  * marcações até agora. */
  extern char* cronometro_to_str(Cronometro c); 
 
 
  /* Apelidos da estruturas -- por mais que os métodos só exaltem apenas um,
   * os demais também são válidos; todos seus métodos e funções relacionadas
-  * com a estrutura. */
- typedef struct contador_regressivo *Temporizador, *TEMPORIZADOR, temporizador_t;
+  * com a estrutura.
+  *   Todos respectivos apelidos para o tipo de dado também são postos
+  * abaixo. Os dois primeiros "incorporam" o ponteiro para você não se 
+  * preocupar com isso, já o último é preciso específicar-lô. */
+ typedef struct contador_regressivo 
+  *Temporizador, 
+  *TEMPORIZADOR, 
+  temporizador_t;
 
  // construtor e destrutor do 'temporizador'.
- extern TEMPORIZADOR cria_temporizador(TEMPO_TIPO  tipo, uint16_t n); 
- extern void destroi_temporizador(TEMPORIZADOR t); 
+ extern TEMPORIZADOR cria_temporizador(TEMPO_TIPO, uint16_t); 
+ extern void destroi_temporizador(TEMPORIZADOR); 
 
  // total de instância de 'Temporizadores' na memória.
  extern uint8_t instancias_temporizador();
 
  // verificação de o Temporizador terminou sua contagem-regressiva.
- extern bool esgotado(TEMPORIZADOR t);
- extern float percentual(TEMPORIZADOR t);
+ extern bool esgotado(TEMPORIZADOR);
+ extern float percentual(TEMPORIZADOR);
+
+ // ainda em fase de testes:
+ extern char* temporizador_to_str(TEMPORIZADOR);
+ extern void recomecar(TEMPORIZADOR);
 
 #endif //TEMPO_H

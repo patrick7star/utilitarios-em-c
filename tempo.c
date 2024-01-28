@@ -12,14 +12,14 @@
 
 // todos pesos necessários para passar um tempo preciso.
 enum tipo_de_tempo { 
-   // tempois inteiros:
-   Segundo, 
-   Minuto, 
-   Hora, 
-   // frações de segundos:
-   Miliseg,
-   Microseg, 
-   Nanoseg 
+  // tempois inteiros:
+  Segundo, 
+  Minuto, 
+  Hora, 
+  // frações de segundos:
+  Miliseg,
+  Microseg, 
+  Nanoseg 
 };
 
 // nome mais curto e visível.
@@ -85,6 +85,7 @@ void breve_pausa(TEMPO_TIPO tipo, uint16_t qtd) {
  */
 #include "tempo/cronometro.c"   // primeiro
 #include "tempo/temporizador.c" // segundo.
+// #include "tempo/temporizador_i.c" // segundo.
 
 #if defined(_UT_TEMPO)
 
@@ -117,8 +118,45 @@ void visualizacao_dos_marcos() {
    visualiza_marcos(clock);
 }
 
-int main(int qtd, char* argumentos[], char* envp[]) 
-{
+void stringficacao_do_temporizador() {
+   TEMPORIZADOR timer = cria_temporizador(Microseg, 20);
+
+   breve_pausa(Microseg, 9);
+   breve_pausa(Nanoseg, 500);
+   puts(temporizador_to_str(timer));
+
+   breve_pausa(Microseg, 6);
+   breve_pausa(Nanoseg, 100);
+   puts(temporizador_to_str(timer));
+
+   recomecar(timer);
+
+   breve_pausa(Microseg, 3);
+   puts(temporizador_to_str(timer));
+
+   breve_pausa(Microseg, 12);
+   puts(temporizador_to_str(timer));
+
+   breve_pausa(Microseg, 8);
+   puts(temporizador_to_str(timer));
+
+   destroi_temporizador(timer);
+
+   TEMPORIZADOR timer_seg = cria_temporizador(Segundo, 8);
+
+   breve_pausa(Segundo, 3);
+   puts(temporizador_to_str(timer_seg));
+
+   breve_pausa(Segundo, 4);
+   puts(temporizador_to_str(timer_seg));
+
+   breve_pausa(Segundo, 2);
+   puts(temporizador_to_str(timer_seg));
+
+   destroi_temporizador(timer_seg);
+}
+
+void teste_desconhecido_i() {
    clock_t inicio = clock();
    alocacao_e_desalocacao();
    // [aviso!]função consome muito tempo, e bastante verbosa também.
@@ -128,6 +166,24 @@ int main(int qtd, char* argumentos[], char* envp[])
    double tempo_do_processo = (fim - inicio) / CLOCKS_PER_SEC;
    printf("clocks por seg: %ld\ndecorrido: %lf\n", 
    CLOCKS_PER_SEC, tempo_do_processo);
+}
+
+int main(int qtd, char* argumentos[], char* envp[]) 
+{
+   // stringficacao_do_temporizador();
+
+   clockid_t tipo = CLOCK_MONOTONIC;
+   struct timespec inicio, fim;
+
+   clock_getres(tipo, &inicio);
+   nanosleep(&(struct timespec){7, 15000}, NULL);
+   clock_getres(tipo, &fim);
+
+   printf("inicio: %ldseg %ldns\nfim: %ldseg %ldns\n",
+      inicio.tv_sec, inicio.tv_nsec, fim.tv_sec, fim.tv_nsec);
+   size_t decorrido_seg = fim.tv_sec - inicio.tv_sec;
+   size_t decorrido_nano = fim.tv_nsec - inicio.tv_nsec;
+   printf("%ldseg %ldns\n", decorrido_seg, decorrido_nano);
    
    return EXIT_SUCCESS;
 }

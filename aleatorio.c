@@ -5,18 +5,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdbool.h>
+#include <math.h>
+#include <assert.h>
 
+/* é atribuído futuramente valores tirados de diferentes formas, 
+ * depedendo do OS. */
+static size_t semente;
+static bool acionado = false;
 
 #ifdef _POSIX_SOURCE // apenas para Linux.
-uint8_t byte_aleatorio() {
-   FILE *arq = fopen("/dev/urandom", "rb");
-   uint8_t b = 0;
-   if (arq != NULL) 
-      { fread(&b, sizeof(uint8_t), 1, arq); }
-   fclose(arq);
-   return b;
-}
-
 uint8_t* lendo_64_bits() {
    FILE *arq = fopen("/dev/urandom", "rb");
    uint8_t* bytes = calloc(8, sizeof(uint8_t));
@@ -24,69 +22,66 @@ uint8_t* lendo_64_bits() {
    if (arq != NULL) { 
       int total_lido;
       total_lido = fread(bytes, sizeof(uint8_t), 8, arq); 
-      if (total_lido != 8)
-         { perror("não foi lido 8 bytes"); }
+      // tem que ser garantido que foi 8 bytes.
+      assert (total_lido == 8);
       if (bytes == NULL)
          { perror("não foi possível lê nada."); }
    }
    fclose(arq);
    return bytes;
+   return NULL;
 }
 #endif
 
-unsigned char ascii_char_aleatorio() {
-	uint8_t byte;
-	#if defined(_POSIX_SOURCE)
-   byte = byte_aleatorio();
-	#elif defined(_WIN64)
-	srand(time(NULL));
-	byte = rand() % 256;
-	#endif
-   // selecionando só caractéres válidos.
-   // ou seja, aqueles acima de 32.
-   return (unsigned char)(byte % (126-33) + 33);
+static void alimenta_semente() {
+   // pega oito bytes da entropia do sistema no Linux("inicialmente" mais lento).
+   // abandona função em caso de já acionamento desta 'alimentação'.
+   if (acionado) return;
+
+   #ifdef _POSIX_SOURCE
+   uint64_t acumulador = 0;
+   uint8_t* bytes = lendo_64_bits();
+
+   for(uint64_t p = 1; p <= 8; p++) {
+      uint64_t potencia = (uint64_t)pow(2.0, (double)p);
+      acumulador = bytes[p - 1] * potencia;
+   }
+   srand(acumulador);
+   #elif _WIN64
+   // alimenta com o próprio endereço da variável ou função.
+   srand((size_t)&semente);
+   #endif
+
+   // dizendo que função já foi chamada anteriormente.
+   acionado = true;
 }
 
-#include <math.h>
+size_t inteiro_positivo(size_t a, size_t b) {
+   alimenta_semente();
 
-uint64_t inteiro_positivo(uint64_t a, uint64_t b) {
    if (a > b)
       return inteiro_positivo(b, a);
    else if (a == b)
       return b;
-   uint8_t* bytes = lendo_64_bits();
-   if (bytes == NULL)
-      perror("array de bytes inválida(null)");
-   uint64_t acumulador = 0;
-   for(uint64_t p = 0; p < 8; p++) {
-      uint64_t potencia = (uint64_t)pow(2.0, (double)p);
-      acumulador = bytes[p] * potencia;
-   }
-   return (acumulador % (b - a + 1)) + a;
+
+   return ((rand() % SIZE_MAX) % (b - a + 1)) + a;
 }
 
-#include <stdbool.h>
+unsigned char ascii_char_aleatorio() {
+   alimenta_semente();
 
-bool logico() {
-	#if defined (_WIN64)
-	// sorteio de 5 até 9(incluso) são verdadeiro.
-	srand(time(NULL));
-	return (rand() % 10) >= 5;
-	#elif defined(_POSIX_SOURCE)
-   if (byte_aleatorio() > 256/2) 
-      { return true; }
-   else 
-      { return false; }
-	#else
-	perror("sistema desconhecido!");
-	abort();
-	#endif 
+	unsigned char byte = rand() % 256;
+   /* selecionando só caractéres válidos. ou seja, aqueles acima de 32. */
+   return (unsigned char)(byte % (126-33) + 33);
 }
+
+bool logico() { alimenta_semente(); return rand() % 10 >= 5; }
 
 #include <ctype.h>
 
 unsigned char alfabeto_aleatorio() {
    uint8_t code = ascii_char_aleatorio();
+
    if (isalpha(code))
       { return (unsigned char)code; }
    else
@@ -104,7 +99,7 @@ uint64_t* array_inteiro_aleatoria(uint64_t n, uint64_t a, uint64_t b) {
 
 struct par { size_t j; size_t i; };
 
-bool par_distinto(struct par P, struct par* array, size_t t) {
+static bool par_distinto(struct par P, struct par* array, size_t t) {
 	for (size_t m = 0; m < t; m++) {
 		struct par A = array[m];
 		bool um_par_igual = {
@@ -244,7 +239,6 @@ char* palavra_aleatoria() {
  * mais limpo. 
  */
 #ifdef _UT_ALEATORIO
-// bibliotecas necessárias.
 
 static void imprime_array_uint8_t(uint8_t* a, const size_t t) {
 	printf("[");
@@ -311,6 +305,24 @@ void testando_funcao_getc() {
    fclose(arq);
 }
 
+#include "legivel.h"
+
+void tempo_do_primeiro_inteiro_positivo_sorteado() {
+   size_t total = 45000000;
+   printf("sorteio de %s números aleatórios:\n", valor_legivel(total));
+   time_t inicio = time(NULL), final;
+
+   while (total > 0) {
+      // disparo do número à cada milhão ...
+      if (total % 1000000 == 0)
+         printf("escolha=%lu\n", inteiro_positivo(1, 1000));
+      total--;
+   }
+   final = time(NULL);
+
+   printf("levou %0.1fseg\n", difftime(final, inicio));
+}
+
 #ifdef _POSIX_SOURCE
 #include "teste.h"
 #include "tempo.h"
@@ -325,7 +337,48 @@ void obtendo_tempo_de_sorteio_da_palavra() {
    printf("decorrido: %s\n",cronometro_to_str(contagem));
 
 }
-#endif
+#endif // _POSIX_SOURCE
+
+void distribuicao_de_sorteios() {
+   size_t total = 45000000;
+   size_t um_alg = 0, dois_algs = 0, tres_algs = 0;
+   size_t contagem = total;
+
+   printf(
+      "sorteio de %s números aleatórios de 0 à 500:\n", 
+      valor_legivel(total)
+   );
+
+   while (contagem > 0) {
+      size_t sorteio = inteiro_positivo(0, 500);
+
+      // disparo do número à cada milhão ...
+      if (contagem % 1000000 == 0 && contagem != 0) {
+         char* ja_contabilizado = valor_legivel(total-contagem);
+         printf(
+            "escolha=%03lu (%6s)\n", sorteio, 
+            ja_contabilizado
+         );
+         free(ja_contabilizado);
+      }
+
+      if (sorteio < 10)
+         um_alg++;
+      else if (sorteio < 100)
+         dois_algs++;
+      else if (sorteio < 1000)
+         tres_algs++;
+
+      contagem--;
+   }
+
+   printf(
+      "distribuição:\n\t0-9: %0.1f%%\n\t10-99: %0.1f%%\n\t100-999: %0.1f%%\n",
+      ((double)um_alg / (double)total) * 100.0, 
+      ((double)dois_algs / (double)total) * 100.0, 
+      ((double)tres_algs / (double)total) * 100.0
+   );
+}
 
 int main(int qtd, char* args[], char* vars[]) 
 {
@@ -333,12 +386,15 @@ int main(int qtd, char* args[], char* vars[])
    puts("funções compatíveis com o Windows.");
    #elif _POSIX_SOURCE
    executa_testes(
-      3, testando_funcao_getc, false,
+      5, testando_funcao_getc, false,
       sorteio_de_palavra, true,
       // consome muito CPU e memória, sempre deixe desabilitada:
-      obtendo_tempo_de_sorteio_da_palavra, true
+      obtendo_tempo_de_sorteio_da_palavra, false,
+      // consome muito CPU e tempo, sempre desabilitada:
+      tempo_do_primeiro_inteiro_positivo_sorteado, false,
+      distribuicao_de_sorteios, true
    );
    #endif
    return EXIT_SUCCESS;
 }
-#endif
+#endif // _UT_ALEATORIO

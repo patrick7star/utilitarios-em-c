@@ -1,9 +1,9 @@
 
 
 /* Grandezas mais legíveis:
- * Faz conversões de grandezas referentes a dados utilizados em 
- * computação, ou outros campos. 
-*/
+ * Faz conversões de grandezas referentes a dados utilizados em computação,
+ * ou outros campos. 
+ */
 
 #include <stdio.h>
 #include <math.h>
@@ -89,7 +89,7 @@ char* tamanho_legivel(uint64_t bytes) {
 char* valor_legivel(uint64_t unidades) {
    char* peso;
    double potencia;
-   char* resultado_str = malloc(10 * sizeof(char));
+   char* resultado_str = malloc(15);
    uint64_t u = unidades;
 
    if (u >= 1000 && u < pow(10, 6)) {
@@ -108,10 +108,10 @@ char* valor_legivel(uint64_t unidades) {
       { peso = ""; potencia = 1; }
 
    double novo_valor = (double)unidades /(double)potencia;
-   // double fracao = (uint16_t)novo_valor - novo_valor;
+
    if (novo_valor < 1.0)
-      sprintf(resultado_str, "%d %s", (uint16_t)novo_valor, peso);
+      sprintf(resultado_str, "%d%s", (uint16_t)novo_valor, peso);
    else
-      sprintf(resultado_str, "%0.1f %s", novo_valor, peso);
+      sprintf(resultado_str, "%0.1f%s", novo_valor, peso);
    return resultado_str;
 }
