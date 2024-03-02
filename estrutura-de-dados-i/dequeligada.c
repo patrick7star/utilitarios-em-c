@@ -99,7 +99,6 @@ dequeligada_t* cria_dl(void) {
    return instancia;
 }
 
-
 static void insere_entre(generico_t e, nodulo_t* left, nodulo_t* right) 
 {
    // criação do novo nódulo já conecta as pontas.
@@ -220,14 +219,12 @@ bool destroi_dl(dequeligada_t* l) {
 
 #ifdef _UT_DEQUE_LIGADA
 // bibliotecas necessárias:
-#include "aleatorio.h"
 #include <stdio.h>
 #include <assert.h>
 
-char* entradas[] = {
-   "morango", "banana", "pêra", "uva", "mamão",
-   "laranja", "tomate", "melância"
-};
+#include "dados_testes.h"
+#include "aleatorio.h"
+#include "teste.h"
 
 void criacao_e_destruicao_trivial(void) {
    dequeligada_t* L = cria_dl();
@@ -242,27 +239,29 @@ void aplica_uma_insercao(void) {
    assert (insere_comeco_dl (L, (int*)&valor));
    assert (insere_final_dl (L, &valor_ii));
    printf ("nº. de itens: %lu\n", tamanho_dl(L));
-   destroi_dl (L);
+}
+
+void mostra_fim_e_comeco(dequeligada_t* L) {
+   printf (
+      "começo: '%s' e fim: '%s'\n", 
+      (char*)comeco (L), (char*)final (L)
+   );
 }
 
 void items_das_pontas(void) {
+   char** entradas = girls_names;
    dequeligada_t* L = cria_dl();
    assert (insere_comeco_dl (L, entradas[5]));
-   printf ("começo: '%s' e fim: '%s'\n", (char*)comeco (L), (char*)final (L));
+   mostra_fim_e_comeco (L);
    assert (insere_final_dl (L, entradas[1]));
-   printf ("começo: '%s' e fim: '%s'\n", (char*)comeco (L), (char*)final (L));
+   mostra_fim_e_comeco (L);
    printf ("nº. de itens: %lu\n", tamanho_dl(L));
-   destroi_dl (L);
 }
 
 void items_das_pontas_ii(void) {
-   void mostra_fim_e_comeco(dequeligada_t* L) {
-      printf (
-         "começo: '%s' e fim: '%s'\n", 
-         (char*)comeco (L), (char*)final (L)
-      );
-   }
    dequeligada_t* L = cria_dl();
+   char** entradas = nomes_de_meninas;
+
    assert (insere_comeco_dl (L, entradas[5]));
    mostra_fim_e_comeco (L);
    assert (insere_final_dl (L, entradas[1]));
@@ -277,11 +276,10 @@ void items_das_pontas_ii(void) {
    printf ("\nremovido: %s\n", (char*)remove_comeco_dl (L));
    mostra_fim_e_comeco (L);
    printf ("nº. de itens: %lu\n", tamanho_dl(L));
-
-   destroi_dl (L);
 }
 
 void simples_insercao_e_remocao(void) {
+   char** entradas = frutas;
    dequeligada_t* L = cria_dl();
 
    for (size_t i = 1; i <= 8; i++) {
@@ -289,25 +287,65 @@ void simples_insercao_e_remocao(void) {
          insere_comeco_dl (L, entradas[i - 1]);
       else
          insere_final_dl (L, entradas[i - 1]);
+      printf ("total de itens: %lu\n", tamanho_dl (L));
    }
 
    char* remocao;
-   while (vazia_dl (L)) {
+   while (!vazia_dl (L)) {
       if (logico())
          remocao = remove_final_dl (L);
       else
          remocao = remove_comeco_dl (L);
       printf ("removido: '%s'\n", remocao);
    }
-   destroi_dl (L);
+}
+
+void visualiza_uint8bits_deque (dequeligada_t* D) {
+   size_t t = tamanho_dl (D);
+   printf ("lista: [");
+
+   while (t-- > 0) {
+      generico_t remocao = remove_comeco_dl (D);
+      printf ("%d, ", *((uint8_t*)remocao));
+      insere_final_dl (D, remocao);
+   }
+   puts ("\b\b]");
+}
+
+void visualiza_array_uint8bits (uint8_t* array, uint8_t t) {
+   printf ("array: [");
+
+   for (uint8_t i = 0; i < t; i++) {
+      uint8_t valor = array[i];
+      printf ("%d, ", valor);
+   }
+   puts ("\b\b]");
+}
+
+void ordem_de_insercao_respeitada(void) {
+   uint8_t* entradas = valores_padronizados;
+   dequeligada_t* D = cria_dl();
+
+   visualiza_array_uint8bits (entradas, 10);
+   for (size_t i = 1; i <= 10; i++) {
+      uint8_t* valor = &entradas[i - 1];
+      if (i % 2 != 0)
+         insere_comeco_dl (D, valor);
+      else
+         insere_final_dl (D, valor);
+   }
+   visualiza_uint8bits_deque (D);
 }
 
 int main(int total, char* argumentos[]) {
-   criacao_e_destruicao_trivial();
-   // simples_insercao_e_remocao();
-   // aplica_uma_insercao();
-   // items_das_pontas();
-   items_das_pontas_ii();
+   executa_testes (
+      6, criacao_e_destruicao_trivial, true,
+      simples_insercao_e_remocao, true,
+      aplica_uma_insercao, true,
+      items_das_pontas, true,
+      items_das_pontas_ii, true,
+      ordem_de_insercao_respeitada, true
+   );
    return EXIT_SUCCESS;
 }
 #endif
