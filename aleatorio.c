@@ -11,7 +11,6 @@
 
 /* é atribuído futuramente valores tirados de diferentes formas, 
  * depedendo do OS. */
-static size_t semente;
 static bool acionado = false;
 
 #ifdef _POSIX_SOURCE // apenas para Linux.
@@ -38,6 +37,7 @@ static void alimenta_semente() {
    // abandona função em caso de já acionamento desta 'alimentação'.
    if (acionado) return;
 
+   // versão para Linux:
    #ifdef _POSIX_SOURCE
    uint64_t acumulador = 0;
    uint8_t* bytes = lendo_64_bits();
@@ -47,6 +47,7 @@ static void alimenta_semente() {
       acumulador = bytes[p - 1] * potencia;
    }
    srand(acumulador);
+   // versão para Windows:
    #elif _WIN64
    // alimenta com o próprio endereço da variável ou função.
    srand((size_t)&semente);

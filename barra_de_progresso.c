@@ -1,7 +1,6 @@
 
 
-/* Implementação da famosa barra de 
- * progresso em C. Não será a implementação
+/* Implementação da famosa barra de progresso em C. Não será a implementação
  * completa. */
 
 #include <stdbool.h>
@@ -12,7 +11,7 @@
 /* Progresso Simples. */
 
 /* A impressão da barra se dá por dada variação percentual. */
-struct progresso {
+typedef struct progresso_simples {
    /* valores atual e o que têm que ser 
     * atingido para ser finalizado. */
    uint64_t atual;
@@ -24,15 +23,13 @@ struct progresso {
    /* marca a atual porcentagem do 'progresso'
     * para computar a variação. */
    float marco;
-};
+} *Progresso;
 
-typedef struct progresso* Progresso;
 // criação do progresso da barra.
 Progresso novo_bps(uint64_t total, uint8_t qb) {
-   // desabilitando o buffer da saída padrão.
-   // para futuras impressões.
+   // desabilitando o buffer da saída padrão. para futuras impressões.
    setbuf(stdout, NULL);
-   size_t tamanho = sizeof(struct progresso);
+   size_t tamanho = sizeof(struct progresso_simples);
    Progresso instancia = malloc(tamanho);
    instancia->atual = 0;
    instancia->total = total;
@@ -191,8 +188,7 @@ void visualiza_bpt(PT p) {
 
 // atualiza o valor que está o progresso.
 void atualiza_bpt(PT p, uint64_t novo) { 
-   /* não faz alteração se o progresso 
-    * esgotou-se.*/
+   /* não faz alteração se o progresso esgotou-se.*/
    if (p->esgotado) { return; }
    p->atual = novo; 
 }

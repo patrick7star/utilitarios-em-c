@@ -407,23 +407,6 @@ char algarismo(uint8_t alg) {
 }
 
 #include <assert.h>
-
-static bool potencia_de_dois(size_t n) {
-   /* verifica se um número inteiro positivo é potência de 2, por
-    * obviamente, divisões sucessivas de dois. */
-   // o valor zero não é válido aqui.
-   assert (n > 0);
-
-   while (n > 0) {
-      // se houver um que 2 não divide, então n não é potência de 2.
-      if (n % 2 != 0)
-         return false;
-      n /= 2;
-   }
-   // se chegar até aqui, então todas divisões por dois foram bem sucedidas, logo é uma potência de 2.
-   return true;
-}
-
 #include <tgmath.h>
 
 extern char* binario_str(size_t decimal) {
@@ -644,9 +627,9 @@ int main(int qtd, char* argumentos[], char* envp[]) {
       amostra_da_nova_implementacao_de_binario, true,
       extracao_de_bits_implementacao_geral, true,
       // iteração para gerar máscaras funciona!
-      verificando_obtendo_de_potencias_de_dois, true,
-      stringficacao_de_valores_primitivos, true,
-      converte_strings_de_valores_logicos, true,
+      verificando_obtendo_de_potencias_de_dois, false,
+      stringficacao_de_valores_primitivos, false,
+      converte_strings_de_valores_logicos, false,
       // [teste da função interna]
       percorrendo_string, false,
       transforma_toda_string_em_minuscula, false

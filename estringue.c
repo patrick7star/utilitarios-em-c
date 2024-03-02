@@ -213,7 +213,10 @@ static slice_t* split(unsigned char* string, unsigned char* padrao) {
 
 #ifdef _UT_STRING
 
-char silly_poem[] = "roses are red; violets are blue; i see you big pretty eyes... as a huge cloud comes me soon";
+char silly_poem[] = (
+   "roses are red; violets are blue; i see you big pretty"
+   " eyes... as a huge cloud comes me soon"
+);
 
 unsigned char frase_i[] = "hoje será um bom dia!";
 
