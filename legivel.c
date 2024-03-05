@@ -8,20 +8,21 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 char* tempo_legivel(double segundos) {
    // variável com uma letra para agilizar codificação.
    double s = segundos;
-   char* resultado = (char*)calloc(30, sizeof(char));
+   char* resultado = calloc(30, sizeof(char));
 
    // para comparação ...
-   double MINUTO = 60.0;
-   double HORA = 60 * MINUTO; 
-   double DIA = 24 * HORA;
-   double MES = 30 * DIA;
-   double MILISEG = powf(10, -3);
-   double MICROSEG = powf(10, -6);
-   double NANOSEG = powf(10, -9);
+   const double MINUTO = 60.0;
+   const double HORA = 60 * MINUTO; 
+   const double DIA = 24 * HORA;
+   const double MES = 30 * DIA;
+   const double MILISEG = powf(10, -3);
+   const double MICROSEG = powf(10, -6);
+   const double NANOSEG = powf(10, -9);
 
    if (s >= 1.0) {
       if (s < MINUTO)
@@ -41,10 +42,11 @@ char* tempo_legivel(double segundos) {
          sprintf(resultado, "%0.0lf \u03bcs", s * powf(10, 6));
       else if (s >= NANOSEG)
          sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
-      else
-         perror("não implementado para tal grandeza");
+      else {
+			// qualquer quantia abaixo disso, será considerado zero!
+			strcpy (resultado, "0seg");
+		}
    }
-
    return resultado;
 }
 
@@ -52,7 +54,7 @@ char* tempo_legivel(double segundos) {
 #include <stdint.h>
 #include "legivel/calculo_potencia.c"
 
-char* tamanho_legivel(uint64_t bytes) { 
+char* tamanho_legivel(size_t bytes) { 
    // múltiplos de tamanho(equivalente em bytes).
    uint64_t KILO = potencia(2, 10);  
    uint64_t MEGA = potencia(2, 20); 
@@ -60,7 +62,7 @@ char* tamanho_legivel(uint64_t bytes) {
    uint64_t TERA = potencia(2, 40);
    uint64_t PETA = potencia(2, 50);
 
-   char* resultado_str = (char*)calloc(30, sizeof(char));
+   char* resultado_str = calloc(30, sizeof(char));
    char peso_str[5];
    float valor;
 
@@ -83,10 +85,10 @@ char* tamanho_legivel(uint64_t bytes) {
    }
 
    sprintf(resultado_str, "%0.1f %s", valor, peso_str);
-   return resultado_str;
+   return (char*)resultado_str;
 }
 
-char* valor_legivel(uint64_t unidades) {
+char* valor_legivel(size_t unidades) {
    char* peso;
    double potencia;
    char* resultado_str = malloc(15);
