@@ -7,13 +7,12 @@
 #include <assert.h>
 
 // seus módulos:
-#include "../teste.h"
-#include "../legivel.c"
+#include "teste.h"
+#include "legivel.h"
 
 uint64_t entradas[] = {
    382, 12832, 3842394, 7712340981,
-   111931512, 50123812341, 
-   100030231892377
+   111931512, 50123812341, 100030231892377
 };
 
 double segundos[] = {
@@ -34,12 +33,12 @@ void legibilidade_do_tempo() {
 }
 
 void legibilidade_de_tamanhos() {
-   for(int p = 0; p < 7; p++)
-      printf(
-         "%16lu ===> %s\n", 
-         entradas[p], 
-         tamanho_legivel(entradas[p])
-      );
+   for(size_t p = 1; p <= 7; p++) {
+		uint64_t valor = entradas[p - 1];
+		char* traducao = tamanho_legivel(valor);
+		printf ("%20lu ==> %s\n", valor, traducao);
+		free (traducao);
+	}
 }
 
 void o_grosso_de_grande_valores() {
@@ -54,17 +53,11 @@ void o_grosso_de_grande_valores() {
 
 // execução de todas hipóteses dadas:
 int main(int argc, char** argv) {
-   executa_teste(
-      "função de legibilidade humana do tempo",
-      legibilidade_do_tempo
-   );
-
-   executa_teste(
-      "função de legibilidade humana do tamanho",
-      legibilidade_de_tamanhos
-   );
-
-   executa_testes(1, o_grosso_de_grande_valores, true);
+   executa_testes(
+      3, legibilidade_do_tempo, true,
+      legibilidade_de_tamanhos, true,
+		o_grosso_de_grande_valores, true
+	);
 
    return EXIT_SUCCESS;
 }
