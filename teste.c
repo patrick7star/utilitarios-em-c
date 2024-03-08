@@ -292,15 +292,16 @@ void executa_testes(const uint8_t total, ...) {
 }
 
 char* concatena_literais_str(const uint8_t total, ...) {
-   char juncao[1000];
-   char* resultado = juncao;
+   const size_t maximo = 1000;
+   char* resultado = malloc (maximo * sizeof (char));
+   memset (resultado, '\0', maximo);
 
    va_list strings;
    va_start(strings, total);
 
    for (uint8_t t = 1; t <= total; t++) {
       char* s = va_arg(strings, char*);
-      strcat(juncao, s);
+      strcat(resultado, s);
    }
 
    // retornando referência da string estática criada.
