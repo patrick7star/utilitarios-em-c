@@ -224,10 +224,16 @@ char* palavra_aleatoria() {
    #endif
    // lendo entre o que foi marcado pelas iterações...
    fseek(arquivo, inicio, SEEK_SET);
-   fread(buffer, byte, qtd, arquivo);
+   size_t lido = fread(buffer, byte, qtd, arquivo);
+
    #ifdef _DEBUG_PALAVRA_ALEATORIA
    printf("o que foi lido: '%s'\n", buffer);
    #endif
+
+   if (lido != qtd) {
+      perror ("não leu-se todos bytes demandados.");
+      abort();
+   }
 
    fclose(arquivo);
    return buffer;

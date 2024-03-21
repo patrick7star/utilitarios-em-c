@@ -17,8 +17,11 @@ char** cria_string_array(uint8_t linhas, uint8_t colunas,
 {
    size_t tamanho = sizeof(char*);
    char ** matriz = calloc(linhas, tamanho);
+   const size_t size = sizeof (char);
+
    for(uint8_t k = 0; k < linhas; k++) {
-      matriz[k] = calloc(colunas, sizeof(char));
+      matriz[k] = calloc (colunas, size);
+
       char fundo;
       switch (tipo) {
          case Invisivel:
@@ -27,6 +30,9 @@ char** cria_string_array(uint8_t linhas, uint8_t colunas,
          case Visivel:
             fundo = '.';
             break;
+         default:
+            perror ("enumerador inválido!");
+            abort();
       }
       memset(matriz[k], fundo, colunas);
    }
