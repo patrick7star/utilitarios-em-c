@@ -3,7 +3,7 @@ struct tupla_duracao { TEMPO_TIPO t; uint64_t n; };
 typedef struct tupla_duracao Duracao;
 
 Duracao transforma_para_nanoseg(TEMPO_TIPO t, uint64_t n) {
-   uint64_t unidades;
+   uint64_t unidades = UINT64_MAX;
 
    switch (t) {
       case Segundo:
