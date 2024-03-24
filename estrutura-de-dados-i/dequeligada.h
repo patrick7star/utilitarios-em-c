@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifndef DEQUE_LIGADA_H
-#define DEQUE_LIGADA_H
+#ifndef DEQUE_LIGADA_I_H
+#define DEQUE_LIGADA_I_H
 
  // nomes que estrutura ganha:
  typedef struct lista_duplamente_encadeada dequeligada_t, *DequeLigada, DL;

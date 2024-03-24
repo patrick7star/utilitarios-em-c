@@ -1,15 +1,23 @@
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+// qualquer referência, de qualquer tipo.
+typedef void* generico_t;
+
 typedef struct nodulo {
    // referência de qualquer tipo ao dado.
-   void* dado;
+   generico_t dado;
 
    // referência ao próximo nódulo.
    struct nodulo* seta;
 
 } nodulo_t;
 
-nodulo_t* cria_nodulo(void* dado) {
-   nodulo_t* instancia = malloc(sizeof(nodulo_t));
+nodulo_t* cria_nodulo(generico_t dado) {
+   nodulo_t* instancia = malloc (sizeof(nodulo_t));
    
    if (instancia != NULL) {
       instancia->dado = dado;
@@ -20,11 +28,14 @@ nodulo_t* cria_nodulo(void* dado) {
 
 bool destroi_nodulo(nodulo_t* x) {
    if (x == NULL) return false;
-   // tirando referência ao próximo e ao dado também.
-   x->seta = NULL;
+   /* O dado, que é uma referência, não pode ser desalocado aqui, pois não
+    * sabe-se como ele é formado; pode ser que seja até algo estático. Aqui
+    * apenas desconectamos tal referência. */
    x->dado = NULL;
+   x->seta = NULL;
    // liberando ...
    free(x);
+   x = NULL;
    return true;
 }
 
@@ -37,7 +48,10 @@ typedef struct {
 
 } PilhaLigada;
 
-PilhaLigada* cria_pl() {
+// o tipo void* é uma referência genérica que recebe qualquer outro tipo.
+typedef void* generico_t;
+
+PilhaLigada* cria_pl (void) {
    PilhaLigada* instancia = malloc(sizeof(PilhaLigada));
 
    if (instancia != NULL) {
@@ -62,8 +76,11 @@ bool coloca_pl(PilhaLigada* s, void* dado) {
    return true;
 }
 
-size_t tamanho_pl(PilhaLigada* s) { return s->quantidade; }
-bool vazia_pl(PilhaLigada* s) { return tamanho_pl(s) == 0; }
+size_t tamanho_pl(PilhaLigada* s) 
+   { return s->quantidade; }
+
+bool vazia_pl(PilhaLigada* s) 
+   { return tamanho_pl(s) == 0; }
 
 void visualiza_pl(PilhaLigada* s) {
    if (vazia_pl(s)) { puts("pilha-ligada: []"); return; }
@@ -78,22 +95,19 @@ void visualiza_pl(PilhaLigada* s) {
    puts("\b\b]");
 }
 
-void* retira_pl(PilhaLigada* s) {
+generico_t retira_pl(PilhaLigada* s) {
    // abandona toda operação, não é possível continuar.
    if (vazia_pl(s)) { return NULL; }
-   
-   // referência o começo, a remoção em sí.
-   nodulo_t* remocao = s->topo;
-   // o começo passa então a referênciar o item depois do primeiro.
+
+   nodulo_t* item_removido = s->topo;
+   generico_t dado_extraido = item_removido->dado;
+   // achando novo item no topo...
    s->topo = s->topo->seta;
+   destroi_nodulo (item_removido);
+   // descontabilizando o item removido.
    s->quantidade -= 1;
-   // pegando dado antes de ele ser destruído, se for requisitado.
-   void* dado = remocao->dado;
-
-
-   // confirma remoção.
-   destroi_nodulo(remocao);
-   return dado;
+   
+   return dado_extraido;
 }
 
 void* topo_pl(PilhaLigada* s) {
@@ -117,10 +131,85 @@ void visualiza_pilha_string(PilhaLigada* s) {
    puts("\b\b]");
 }
 
-int main(int total, char* args[], char* vars[]) {
-   // permitindo impressões de caractéres 'latin1'.
-   setlocale(LC_CTYPE, "pt_BR.UTF-8");
+bool destroi_pl (PilhaLigada* s) {
+   /* se a pilha passada for uma referência inválida(nula), confirmar não
+    * desalocação de tal estrutura da memória. */
+   if (s == NULL) return false;
 
+   #ifdef _DESTROI_PL
+   size_t contagem = 0;
+   #endif 
+
+   while (!vazia_pl (s)) {
+      retira_pl (s);
+
+      #ifdef _DESTROI_PL
+      contagem++;
+      #endif 
+   }
+
+   #ifdef _DESTROI_PL
+   printf ("foram removidos %lu itens.\n", contagem);
+   #endif
+
+   free (s);
+   // tudo ocorreu conforme, apenas confirma desalocação.
+   return true;
+}
+#ifdef _DESTROI_PL
+#include <assert.h>
+#include <unistd.h>
+#endif
+
+bool destroi_data_too_pl (PilhaLigada* s) {
+   /* Mesmo fim que o método de desalocação acima, porém aqui também libera
+    * o dado passado junto, ou seja, provavelmente tal pilha contém um 
+    * monte de dado na heap, sendo tal no máximo uma array de algum tipo,
+    * digo de fácil desalocação. */
+
+   /* se a pilha passada for uma referência inválida(nula), confirmar não
+    * desalocação de tal estrutura da memória. */
+   if (s == NULL) return false;
+
+   #ifdef _DESTROI_PL
+   size_t parada = tamanho_pl (s) / 2;
+   size_t cortes = 0;
+   #endif
+
+   while (!vazia_pl (s)) {
+      generico_t dado = retira_pl(s);
+      free (dado);
+      dado = NULL;
+
+      #ifdef _DESTROI_PL
+      assert (dado == NULL);
+      size_t quantia = tamanho_pl (s);
+      bool chegou = quantia < parada;
+      if (chegou) {
+         printf (
+            "%03luº. memória cortada à metade!\n"
+            "qtd. de itens=%8lu\n", 
+            ++cortes, quantia
+         );
+         parada = quantia / 2;
+         sleep (1);
+      }
+      #endif
+   }
+   free (s);
+   // tudo ocorreu conforme, apenas confirma desalocação.
+   return true;
+}
+
+#ifdef _UT_PILHA_LIGADA
+#include <locale.h>
+#include <assert.h>
+#include <tgmath.h>
+#include <limits.h>
+#include <unistd.h>
+#include "barra_de_progresso.h"
+
+void pilha_com_i32s (void) {
    PilhaLigada* stack = cria_pl();
    int array[] = {38, 1, -15};
    int* ptr;
@@ -142,46 +231,132 @@ int main(int total, char* args[], char* vars[]) {
    printf("topo da pilha: %d\n", *qual_o_topo);
 
    assert (tamanho_pl(stack) == 1);
+   assert (destroi_pl (stack));
+}
 
-   PilhaLigada* stack_ii = cria_pl();
+void pilha_de_strings (void) {
+   PilhaLigada* stack = cria_pl();
 
-   coloca_pl(stack_ii, "wealth and taste");
-   visualiza_pilha_string(stack_ii);
-   coloca_pl(stack_ii, "sympathy");
-   visualiza_pilha_string(stack_ii);
-   coloca_pl(stack_ii, "Anastasia screams in vain");
-   visualiza_pilha_string(stack_ii);
-   coloca_pl(stack_ii, "He said so tshirts");
-   visualiza_pilha_string(stack_ii);
+   coloca_pl(stack, "wealth and taste");
+   visualiza_pilha_string(stack);
+   coloca_pl(stack, "sympathy");
+   visualiza_pilha_string(stack);
+   coloca_pl(stack, "Anastasia screams in vain");
+   visualiza_pilha_string(stack);
+   coloca_pl(stack, "He said so tshirts");
+   visualiza_pilha_string(stack);
 
-   assert (tamanho_pl(stack_ii) == 4);
+   assert (tamanho_pl(stack) == 4);
+   assert (destroi_pl (stack));
+}
 
-   PilhaLigada* stack_iii = cria_pl();
-   struct estranho { char letra; uint8_t unidades; };
-   struct estranho d1 = {'F', 3};
-   char d2 = 'M';
-   uint32_t d3 = 9999;
+size_t computa_tamanho_da_pilha (PilhaLigada* s) {
+   size_t T = sizeof (SIZE_MAX);
+   nodulo_t* atual = s->topo;
 
-   coloca_pl(stack_iii, &d1);
-   coloca_pl(stack_iii, &d2);
-   coloca_pl(stack_iii, &d3);
-   assert (tamanho_pl(stack_iii) == 3);
+   do {
+      T += sizeof (nodulo_t); 
+      atual = atual->seta;
+   } while (atual != NULL);
+   return T;
+}
 
-   char* r3;
-   struct estranho* r2;
-   char letra = r2->letra;
-   uint8_t units = r2->unidades;
-   uint32_t* r1;
+size_t unidades_por_megabytes (uint16_t nMB, size_t size) 
+   { return nMB * pow (2, 20) / size; }
 
-   r2 = retira_pl(stack_iii);
-   assert (tamanho_pl(stack_iii) == 2);
-   r3 = retira_pl(stack_iii);
-   assert (tamanho_pl(stack_iii) == 1);
-   r1 = retira_pl(stack_iii);
-   assert (vazia_pl(stack_iii));
+void verificando_vazamento_de_memoria (void) {
+   // inteiros de 4 bytes(int) de 50MiB deles.
+   size_t total_de_unidades = unidades_por_megabytes(50, sizeof (int));
+   PT barra = novo_bpt (total_de_unidades, 40);
+   PilhaLigada* stack = cria_pl();
+   int* X;
 
-   printf("{%c, %i}, %u, %c\n", letra, units, *r1, *r3);
+   // adiciona na array valores randômicos de 0 até 30.
+   srand ((size_t)&cria_pl);
+   puts ("carregando os 50 MiB ...");
 
+   for (size_t i = 1; i <= total_de_unidades; i++) {
+      X = calloc (1, sizeof(int));
+      *X = rand() % (30 + 1); 
+
+      coloca_pl (stack, X);
+      visualiza_e_atualiza_bpt (barra, i);
+   }
+   puts ("destruído, mas ainda na memória?");
+   // uma liberação logo em seguida.
+   destroi_data_too_pl (stack);
+   puts ("destruição completa, a memória foi liberada?");
+   sleep (10);
+   puts ("programa finalizado.");
+}
+
+void estruturas_tamanhos (void) {
+   nodulo_t* no = cria_nodulo ("nada");
+   size_t void_ptr_bytes = sizeof (void*);
+   size_t pl_bytes = sizeof (PilhaLigada);
+   PilhaLigada* stack = cria_pl();
+   size_t instancia_bytes = sizeof stack;
+
+   printf ("um ponteiro 'void*' ocupa %lu bytes.\n", void_ptr_bytes);
+   printf ("o 'nódulo' ocupa %lu bytes.\n", sizeof (nodulo_t));
+   printf ("instância de 'nódulo' ocupa %lu bytes.\n", sizeof no);
+   printf ("uma 'pilha ligada' ocupa %lu bytes.\n", instancia_bytes);
+   assert (coloca_pl (stack, "nada"));
+   assert (coloca_pl (stack, "dado"));
+   assert (coloca_pl (stack, "casa"));
+   printf (
+      "instância vázia de 'pilha ligada'... %lu bytes.\n"
+      "... mesma instância, com alguns elementos ... %lu bytes\n",
+      instancia_bytes, sizeof (stack)
+   );
+   assert (instancia_bytes == sizeof (stack));
+   printf ("instância total é %lu bytes.\n", computa_tamanho_da_pilha(stack));
+   destroi_pl (stack);
+}
+
+#include <string.h>
+
+void verificando_vazamento_de_memoria_i (void) {
+   PilhaLigada* stack = cria_pl();
+   size_t Q = unidades_por_megabytes (300, sizeof (nodulo_t));
+   PT barra = novo_bpt (Q, 40);
+   // char* mesmo_dado = calloc (50, sizeof (char));
+   // strcpy (mesmo_dado,"uma string muito grande, bem grande mesmo.");
+   // um bocado de zeros:
+   int* mesmo_dado = calloc (Q, sizeof (int));
+   puts ("array de 150MB:");
+   for (size_t k = 1; k <= Q; k++) 
+      mesmo_dado[k - 1] = 8;
+
+   // adiciona na array valores randômicos de 0 até 30.
+   srand ((size_t)&cria_pl);
+
+   for (size_t i = 1; i <= Q; i++) {
+      // referênciando o mesmo dado milhões de vezes.
+      coloca_pl (stack, mesmo_dado);
+      visualiza_e_atualiza_bpt (barra, i);
+   }
+   puts ("fazendo todos items na pilha 'dangling points' ...");
+   sleep (15);
+   free (mesmo_dado);
+   puts ("quanto fica a memória?");
+   sleep (10);
+   puts ("removendo item por item...");
+   destroi_pl (stack);
+}
+
+int main(int total, char* args[], char* vars[]) {
+   // permitindo impressões de caractéres 'latin1'.
+   setlocale(LC_CTYPE, "pt_BR.UTF-8");
+
+   // pilha_com_i32s();
+   // pilha_de_strings();
+   // desativada pois consome bastante CPU e memória.
+   verificando_vazamento_de_memoria();
+   // estruturas_tamanhos();
+   // novo_metodo_de_destruir();
+   // verificando_vazamento_de_memoria_i();
    // fim do programa.
    return EXIT_SUCCESS;
 }
+#endif
