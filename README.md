@@ -7,7 +7,7 @@ para construir qualquer outra coisa. Este tem uma diretório só para estrutura 
 
 #### amostras diversas do que ela pode fazer:
 ```C
-assert (tempo_legivel (86400.0) == "1dia");
+assert (tempo_legivel (86400.0) == "1 dia");
 assert (logico() == true || logico() == false);
 assert (str_to_bool ("verdadeiro"));
 assert (bool_to_str (false) == "falso");
