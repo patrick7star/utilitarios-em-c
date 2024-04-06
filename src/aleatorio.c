@@ -246,6 +246,7 @@ char* palavra_aleatoria() {
  * mais limpo. 
  */
 #ifdef _UT_ALEATORIO
+#include "legivel.h"
 
 static void imprime_array_uint8_t(uint8_t* a, const size_t t) {
 	printf("[");
@@ -295,10 +296,10 @@ void sorteio_de_palavra() {
 }
 
 void testando_funcao_getc() {
-   FILE* arq = fopen("aleatorio.c", "rt");
+   char caminho[] = "src/aleatorio.c";
+   FILE* arq = fopen(caminho, "rt");
    size_t cursor = inteiro_positivo(50, 100);
    printf("posição selecionada: %lu\n", cursor);
-
    fseek(arq, cursor, SEEK_SET);
 
    for (size_t k = 1; k <= 50; k++) {
@@ -311,8 +312,6 @@ void testando_funcao_getc() {
    }
    fclose(arq);
 }
-
-#include "legivel.h"
 
 void tempo_do_primeiro_inteiro_positivo_sorteado() {
    size_t total = 45000000;
@@ -337,9 +336,9 @@ void tempo_do_primeiro_inteiro_positivo_sorteado() {
 void obtendo_tempo_de_sorteio_da_palavra() {
    Cronometro contagem = cria_cronometro();
 
-   for (size_t k = 1; k <= 45000; k++) {
-      char* p = palavra_aleatoria(); 
-   }
+   for (size_t k = 1; k <= 45000; k++) 
+       palavra_aleatoria(); 
+
    marca(contagem);
    printf("decorrido: %s\n",cronometro_to_str(contagem));
 
@@ -379,11 +378,13 @@ void distribuicao_de_sorteios() {
       contagem--;
    }
 
+   double t = total;
    printf(
-      "distribuição:\n\t0-9: %0.1f%%\n\t10-99: %0.1f%%\n\t100-999: %0.1f%%\n",
-      ((double)um_alg / (double)total) * 100.0, 
-      ((double)dois_algs / (double)total) * 100.0, 
-      ((double)tres_algs / (double)total) * 100.0
+      "distribuição:\n\t0-9: %0.1f%%" "\n\t10-99: %0.1f%%"
+      "\n\t100-999: %0.1f%%\n",
+      ((double)um_alg / t) * 100.0, 
+      ((double)dois_algs / t) * 100.0, 
+      ((double)tres_algs / t) * 100.0
    );
 }
 
@@ -392,14 +393,15 @@ int main(int qtd, char* args[], char* vars[])
    #ifdef _WIN64
    puts("funções compatíveis com o Windows.");
    #elif _POSIX_SOURCE
+   puts ("testes apenas para Linux:");
    executa_testes(
-      5, testando_funcao_getc, false,
-      sorteio_de_palavra, true,
-      // consome muito CPU e memória, sempre deixe desabilitada:
-      obtendo_tempo_de_sorteio_da_palavra, false,
-      // consome muito CPU e tempo, sempre desabilitada:
-      tempo_do_primeiro_inteiro_positivo_sorteado, false,
-      distribuicao_de_sorteios, true
+      5, testando_funcao_getc, true,
+         sorteio_de_palavra, true,
+         // consome muito CPU e memória, sempre deixe desabilitada:
+         obtendo_tempo_de_sorteio_da_palavra, true,
+         // consome muito CPU e tempo, sempre desabilitada:
+         tempo_do_primeiro_inteiro_positivo_sorteado, false,
+         distribuicao_de_sorteios, false
    );
    #endif
    return EXIT_SUCCESS;

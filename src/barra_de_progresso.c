@@ -9,24 +9,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Progresso Simples. */
+/* ~~~ ~~~ ~~~ ~~~ ~~~   Progresso Simples ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
 
 /* A impressão da barra se dá por dada variação percentual. */
 typedef struct progresso_simples {
-   /* valores atual e o que têm que ser 
-    * atingido para ser finalizado. */
+   /* valores atual e o que têm que ser atingido para ser finalizado. */
    size_t atual;
    size_t total;
-   // informa se o progresso está esgotado.
-   bool esgotado;
+
    // quantos blocos de comprimento têm a 'barra'.
    uint8_t comprimento;
-   /* marca a atual porcentagem do 'progresso'
-    * para computar a variação. */
-   float marco;
-} *Progresso;
 
-// criação do progresso da barra.
+   /* marca a atual porcentagem do 'progresso' para computar a variação. */
+   float marco;
+
+} *Progresso, *PS;
+
+bool esgotado_bps (Progresso p)
+   { return p->atual >= p->total; }
+
 Progresso novo_bps(size_t total, uint8_t qb) {
    // desabilitando o buffer da saída padrão. para futuras impressões.
    setbuf(stdout, NULL);
@@ -34,7 +35,6 @@ Progresso novo_bps(size_t total, uint8_t qb) {
    Progresso instancia = malloc(tamanho);
    instancia->atual = 0;
    instancia->total = total;
-   instancia->esgotado = false;
    if (qb > 1)
       { instancia->comprimento = qb; }
    else
@@ -43,74 +43,73 @@ Progresso novo_bps(size_t total, uint8_t qb) {
    return instancia;
 }
 
-// cria barra que é o símbolo do 'progresso'.
 static char* cria_barra(float percentual, uint8_t limite) {
+   /* cria uma string representando as 'barras' dos progressos, dado o 
+    * percentual de preenchimento. */
    char* barra = calloc (limite + 1, sizeof (char));
    uint8_t q = (uint8_t)(percentual * (float)limite);
 
    for(uint8_t k = 0; k < limite; k++) { 
       if (k < q)
+         // símbolo do preenchimento.
          { barra[k] = 'o'; }
       else
+         // símbolo do vácuo.
          { barra[k] = '.'; }
    }
    return barra;
 }
 
-// impressão da barra, quando necessário.
-void visualiza_bps(Progresso p) {
-   float percentual, diferenca, fronteira;
-   uint8_t x, c, a, t;
-   a = p->atual; t = p->total;
+static void impressao_da_barra_bps (size_t a, size_t T, uint8_t c)
+{
+   float p = (float)a / (float) T;
+   char * barra = cria_barra(p, c);
 
-   percentual = (float)a / (float)t;
+   printf("\r%9lu/%9lu [%s]%5.1f%%", a, T, barra, (p * 100.0));
+   // quebra-de-linha pelo fim do progresso.
+   if (a == T) putchar ('\n');
+   // liberando a string criada da memória depois de impressa.
+   free (barra);
+}
+
+void visualiza_bps(Progresso p) {
+   size_t a = p->atual, t = p->total;
+   float percentual = 100.0 * (float)a / (float)t;
+   // diferença percentual desde da última atualização do 'marco'.
+   float variacao = percentual - p->marco;
+   uint8_t C = p->comprimento;
+   /* cem porcentual percentual dividido pelo número de blocos de barras
+    * disponíveis, assim, achamos qual é o mínimo de variação percentual 
+    * necessário para que permita a impressão. */
+   float fronteira = 100.0 / (float)C;
 
    // última impressão, caso tenha se esgotado.
-   if (percentual >= 1.0)
-   {
-      char * barra = cria_barra(percentual, c);
-      printf(
-         "\r%lu/%lu [%s]100.0%%\n", 
-         p->atual, p->total, barra
-      );
-      p->esgotado = true;
-      return;
-
-   }
-
-   // diferença percentual desde da última 
-   // atualização do 'marco'.
-   diferenca = 100*(percentual - p->marco);
-   c = p->comprimento;
-   /* cem porcentual percentual dividido 
-    * pelo número de blocos de barras
-    * disponíveis, assim, achamos qual 
-    * é o mínimo de variação percentual necessário
-    * para que permita a impressão. */
-   fronteira = 100.0/(float)c;
-
-   /* o mínimo percentual para um bloco
-    * inteiro de barra tenha decorrido,
-    * aí, sim, coloca a visualização. */
-   if (diferenca >= fronteira || p->marco == 0
-     && !p->esgotado) 
-   {
-      // reseta para nova contagem de variação.
-      p->marco = percentual;
-      char * barra = cria_barra(percentual, c);
-      printf(
-         "\r%lu/%lu [%s]%5.1f%%", 
-         p->atual, p->total, 
-         barra, percentual*100
-      );
+   if (percentual >= 100.0) {
+      impressao_da_barra_bps (t, t, C);
+   } else {
+      /* o mínimo percentual para um bloco inteiro de barra tenha decorrido,
+       * aí, sim, coloca a visualização. */
+      if (variacao > fronteira) {
+         impressao_da_barra_bps (a, t, C);
+         // reseta para nova contagem de variação.
+         p->marco = percentual;
+      }
    }
 }
 
-// atualiza o valor que está o progresso.
 void atualiza_bps(Progresso p, size_t novo) 
    { p->atual = novo; }
 
+Progresso cria_bps (size_t total) 
+   /* Mesmo que a criação acima, porém a barra é rearranjada de forma 
+    * automatica, assim é necessário passar apenas o argumento do 'limite
+    * superior'. */
+   { return novo_bps (total, 50); }
+
+
+/* ~~~ ~~~ ~~~ ~~~ ~~~ Progresso Temporal ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
 #include <time.h>
+#include <tgmath.h>
 
 typedef struct progresso_tempo {
    /* valores atual e o que têm que ser atingido para ser finalizado. */
@@ -149,11 +148,8 @@ PT novo_bpt(size_t total, uint8_t qB) {
    return instancia;
 }
 
-#include <tgmath.h>
-
-static uint8_t digitos_necessarios (size_t valor) {
-   return log10 (valor) + 1;
-}
+// static uint8_t digitos_necessarios (size_t valor) 
+//   { return log10 (valor) + 1; }
 
 static void impressao_da_barra (size_t a, size_t T, float p, uint8_t C) 
 {
@@ -216,17 +212,15 @@ void destroi_bpt(PT p) { free(p); }
 bool esgotado_bpt(PT bp) 
    { return bp->esgotado; }
 
-bool esgotado_bps(Progresso bp) 
-   { return bp->esgotado; }
-
 PT cria_bpt (size_t total) 
    /* Novo modo de instânciar a 'barra temporal', aqui não precisa se
     * definir um tamanho aleatóriamente, cabível na tela, portanto é 
     * necessário apenas o parâmetro total para instanciar-la. */
    { return novo_bpt (total, 30); }
 
+/* ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ Testes Unitários ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
 #ifdef _UT_BARRA_DE_PROGRESSO
-#include <tgmath.h>
+#include <unistd.h>
 
 size_t units_MiB (uint8_t n) { return n * pow(2, 20); }
 
@@ -240,7 +234,20 @@ void novos_metodos_do_progresso_temporal (void) {
    destroi_bpt (bP);
 }
 
+void reevendo_bps (void) {
+   size_t total = units_MiB(255);
+   Progresso barra = novo_bps (total, 48);
+
+   for (size_t k = 2; k <= total; k++) {
+      atualiza_bps(barra, k);
+      visualiza_bps(barra);
+   }
+
+   destroi_bps (barra);
+}
+
 void main (void) {
    novos_metodos_do_progresso_temporal();
+   reevendo_bps();
 }
 #endif

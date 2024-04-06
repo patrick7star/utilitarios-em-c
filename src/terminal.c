@@ -109,10 +109,13 @@ Dimensao dimensao_terminal() {
 
    // rodando comando e, lendo o resultado.
    FILE * comando = popen("tput lines cols", "r");
-   int lido = fread_unlocked(&resultado, 1, 8, comando);
+
    #ifdef _DIMENSAO_TERMINAL
+   int lido = fread_unlocked(&resultado, 1, 8, comando);
    printf("foram lido %ld bytes.\n", lido);
    #endif
+
+   fread_unlocked(&resultado, 1, 8, comando);
    pclose(comando);
 
    // repartindo direitinho cada parte.

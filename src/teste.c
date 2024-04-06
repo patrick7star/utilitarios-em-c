@@ -67,10 +67,8 @@ static uint8_t contagem_de_usos = 0;
 /* ótima ferramenta de 'debug', onde indica a linha e o arquivo onde 
  * possível erro pode está. */
 void debug_aqui() {
-   //puts("o erro está bem... ... ...aqui!");
-   printf("o erro está bem ... ... ...aqui!(%d)\n", contagem_de_usos + 1);
+   printf("\no erro está bem ... ... ...aqui!(%d)\n", contagem_de_usos + 1);
    contagem_de_usos++;
-   //printf("[%s]:o erro está bem ... ... ...aqui!\n", __FILE__);
 }
 
 /* computando o número de substrings que podem se geradas, dada a 
@@ -258,8 +256,9 @@ typedef void(*Fn)(void);
 
 void executa_testes(const uint8_t total, ...) {
    Cronometro medicao = cria_cronometro();
-
    va_list args;
+   size_t habilitados = 0;
+
    // como também conta o valor lógico se é para executa-lá no momento.
    va_start(args, total);
 
@@ -272,6 +271,7 @@ void executa_testes(const uint8_t total, ...) {
       if (e_para_executar) {
          executa_teste("", funcao);
          marca(medicao);
+         habilitados++;
       }
    }
 
@@ -289,6 +289,7 @@ void executa_testes(const uint8_t total, ...) {
          tempo_legivel(tempo_total)
       );
    #endif
+   printf ("há %lu testes desativados.\n", total - habilitados);
 }
 
 char* concatena_literais_str(const uint8_t total, ...) {
@@ -473,6 +474,7 @@ uint8_t* binario_complemento_de_dois_oito_bits(uint8_t n) {
    return lista_de_bits;
 }
 
+#ifdef ALLOW_DEAD_CODE
 static void inverte_array(uint8_t* array, size_t t) {
    /* inverte a ordem dos itens na array. O algoritmo para fazer tal coisa
     * é o seguinte: executa o swap entre todos pares de pontas da array,
@@ -486,6 +488,7 @@ static void inverte_array(uint8_t* array, size_t t) {
       array[t - (p + 1)] = salvo;
    }
 }
+#endif
 
 uint8_t* binario_complemento_de_dois(size_t n) {
    // computando o total de dígitos binários necessários.
@@ -625,15 +628,15 @@ void transforma_toda_string_em_minuscula() {
 int main(int qtd, char* argumentos[], char* envp[]) {
    executa_testes(
       8, teste_conversao_binaria_antiga_implementacao, true,
-      amostra_da_nova_implementacao_de_binario, true,
-      extracao_de_bits_implementacao_geral, true,
-      // iteração para gerar máscaras funciona!
-      verificando_obtendo_de_potencias_de_dois, false,
-      stringficacao_de_valores_primitivos, false,
-      converte_strings_de_valores_logicos, false,
-      // [teste da função interna]
-      percorrendo_string, false,
-      transforma_toda_string_em_minuscula, false
+         amostra_da_nova_implementacao_de_binario, true,
+         extracao_de_bits_implementacao_geral, true,
+         // iteração para gerar máscaras funciona!
+         verificando_obtendo_de_potencias_de_dois, false,
+         stringficacao_de_valores_primitivos, true,
+         converte_strings_de_valores_logicos, true,
+         // [teste da função interna]
+         percorrendo_string, false,
+         transforma_toda_string_em_minuscula, false
    );
 
    return EXIT_SUCCESS;
