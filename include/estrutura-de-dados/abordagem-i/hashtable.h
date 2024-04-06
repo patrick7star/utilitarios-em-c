@@ -66,4 +66,29 @@
  bool vazia_ht (hashtable_t*); 
  size_t tamanho_ht (hashtable_t*);
 
-#endif // HASHTABLE_H
+ /* Funções do iterador dela, tanto seu tipo de dado, como os métodos para
+  * que sejam operados. */
+typedef struct iteracao_da_hashtable {
+   // contador de itens iterados.
+   size_t contagem;
+   // posição atual na array.
+   size_t cursor;
+
+   // garantidor de que a 'tabela' não foi alterada.
+   size_t inicialmente;
+   hashtable_t* tabela;
+
+} IterHT, *IteradorHT;
+
+ typedef struct iterator_ouptut_hs {
+   generico_t key; 
+   generico_t value; 
+ } IterOutputHT; 
+
+ // cédula em branco para indicar termino da iteração ou invalidação.
+ extern const IterOutputHT NULO_HT;
+
+ IterHT cria_iter_ht (hashtable_t*);
+ size_t tamanho_iter_ht (IteradorHT); 
+ IterOutputHT next_ht (IteradorHT); 
+#endif
