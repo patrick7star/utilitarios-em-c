@@ -71,6 +71,7 @@ static void destroi_toda_lista_ligada (nodulo_t* lista) {
    }
 }
 
+#ifdef _ALLOW_DEAD_CODE
 static bool destroi_nodulo (nodulo_t* item) {
    if (item != INVALIDA) {
       // apenas some com as referências primeiramente...
@@ -83,6 +84,7 @@ static bool destroi_nodulo (nodulo_t* item) {
    } 
    return false;
 }
+#endif
 
 struct tabela_de_dispersao {
    // array de containers dos dados:
@@ -317,7 +319,7 @@ bool contem_ht(hashtable_t* m,  generico_t ch) {
     */
    size_t posicao = m->__hash__ (ch, m->capacidade);
    nodulo_t* list = m->locais[posicao];
-   bool (*funcao)(generico_t, generico_t) = m->__iguais__;
+   // bool (*funcao)(generico_t, generico_t) = m->__iguais__;
 
    #ifdef _CONTIDO_HT
    if (list == INVALIDA) 
@@ -436,6 +438,102 @@ generico_t obtem_ht(hashtable_t* m,  generico_t ch) {
       return outcome.item->valor;
    return NULL;
 }
+
+
+/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ *   Esta parte é totalmente referente ao 'iterador' da estrutura, é uma 
+ * parte dela, porém para melhor organização e visualização futura ficará
+ * este separador entre eles. Assim fica de fácil localização, e os métodos
+ * de cada um não serão confundidos.
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+typedef struct iteracao_da_hashtable {
+   // contador de itens iterados.
+   size_t contagem;
+   // posição atual na array.
+   size_t cursor;
+
+   // referência ao atual item da 'tabela' referenciado.
+   nodulo_t* atual;
+
+   // garantidor de que a 'tabela' não foi alterada.
+   size_t inicialmente;
+   hashtable_t* tabela;
+
+} IterHT, *IteradorHT;
+
+/* tupla que é produzida na iteração de dados, contendo tanto uma referência
+ * da chave como o valor. */  
+struct iterator_ouptut_hs { generico_t key; generico_t value; }; 
+typedef struct iterator_ouptut_hs IterOutputHT;
+
+// cédula em branco para indicar termino da iteração ou invalidação.
+const IterOutputHT NULO_HT = (IterOutputHT){NULL, NULL};
+
+IterHT cria_iter_ht (hashtable_t* m) {
+   IterHT instancia;
+
+   instancia.contagem = 0;
+   instancia.cursor = 0;
+   instancia.atual = m->locais[0];
+   instancia.inicialmente = tamanho_ht (m);
+   // referência ao próprio mapa, dicio, table,... como quiser chamar.
+   instancia.tabela = m;
+
+   return instancia;
+}
+
+static bool iterador_valido (IteradorHT iter) {
+   /* Para realizar qualquer uma das operações abaixo, é necessário
+    * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
+    * tamanho que na criação da instância. */
+   size_t T = tamanho_ht(iter->tabela);
+   bool referencia_existe = (iter->tabela != NULL);
+   return (iter->inicialmente == T && referencia_existe);
+}
+
+size_t tamanho_iter_ht (IteradorHT iter) {
+   /* O restante de iterações é calculado na seguinte forma:
+    * total de itens na "lista" menos os já iterados. */
+   if (iterador_valido (iter))
+      return iter->inicialmente - iter->contagem;
+
+   // se chegar até aqui é erro na certa.
+   perror ("não é possível determinar o tamanho de um iterador inválido!");
+   abort();
+}
+
+IterOutputHT next_ht (IteradorHT iter) {
+   /* Casos que não retornar qualquer valor válido. */
+   if (!iterador_valido(iter))
+      return NULO_HT;
+   else if (tamanho_iter_ht (iter) == 0)
+      return NULO_HT;
+
+   nodulo_t* atual = iter->atual;
+   if (atual != INVALIDA) {
+      // colhendo dados necessários ...
+      generico_t vl = atual->valor;
+      generico_t ch = atual->chave;
+
+      // movendo pela lista ...
+      iter->atual = iter->atual->seta;
+      // contabiliza iteração.
+      iter->contagem++;
+
+      // retorna item "cholido".
+      return (IterOutputHT){.key = ch, .value=vl };
+   } else  {
+      iter->cursor += 1;
+      /* primeiro 'nódulo' da lista abaixo. */
+      iter->atual = iter->tabela->locais[iter->cursor];
+      // chama a função recursivamente novamente...
+      return next_ht (iter);
+   }
+   // se chegar até aqui é o fim da iteração, se houve alguma. Neste caso
+   // será retornado uma tupla com endereço inválidos.
+   return NULO_HT;
+}
+
 
 /* Testando todos métodos, funções, e dados abstratos acima. Deixando
  * bem referênciado esta parte, pois fica fácil descartar -- além de 
@@ -686,7 +784,7 @@ size_t hash_int (generico_t dt, size_t cp) {
    uint16_t* ptr = dt;
    uint16_t chave = *ptr;
    // este não leva em conta o endereço virtual de memória do argumento.
-   return  chave % cp;
+   return  chave * (chave - chave / 2) % cp;
 }
 
 bool int_eq (generico_t a, generico_t b) 
@@ -723,14 +821,20 @@ void operacoes_negadas (void) {
    assert (tamanho_ht(M) == 8);
 
    puts ("novo lotes de inserções, com mesmas chaves negados:");
-   for (size_t p = 1; p <= 8; p++)
-      insere_ht (M, &amostras[p - 1], frutas[p - 1]);
+   for (size_t p = 1; p <= 8; p++) {
+      char* value = (char*)frutas[p - 1];
+      uint16_t* key =  &amostras[p - 1];
+      insere_ht (M, key, value);
+   }
    assert (tamanho_ht(M) == 8);
 
    puts ("agora, apesar de negações, inserindo algumas...");
    size_t negacoes = 0;
    for (size_t p = 5; p <= 13; p++) {
-      bool foi_inserido = insere_ht (M, &amostras[p], frutas[p - 5]);
+      uint16_t* key =  amostras + p;
+      char* vl = (char*)frutas[p - 5];
+      // bool foi_inserido = insere_ht (M, &amostras[p], frutas[p - 5]);
+      bool foi_inserido = insere_ht (M, key, vl);
       if (!foi_inserido)
          negacoes++;
    }
@@ -812,10 +916,89 @@ void metodo_get_verificacao_basica (void) {
    destroi_ht (M);
 }
 
+// ---...---...---...---... Testes dos iteradores ---...---...---...---...
+void print_item_ht_u16_e_str (IterOutputHT x) {
+   printf (" ==> %u: %s\n", *((uint16_t*)x.key), (char*)x.value);
+}
+
+void print_inner_u16_e_str (hashtable_t* m) {
+   puts ("\nHashtable visualização interna:");
+   size_t C = m->capacidade;
+
+   for (size_t i = 1; i <= C; i++) {
+      nodulo_t* lista = m->locais[i - 1];
+      if (lista == INVALIDA)
+         printf ("\t---\n");
+      else {
+         nodulo_t* atual = lista;
+         printf ("\t<");
+         do {
+            char* vl = atual->valor;
+            uint16_t* key = atual->chave;
+            printf ("%u: '%s', ", *key, vl);
+            atual = atual->seta;
+         } while (atual != NULL);
+         puts ("\b\b>");
+      }
+   }
+}
+
+void uso_simples_da_iteracao (void) {
+   hashtable_t* M = cria_ht(hash_int, int_eq);
+   uint16_t* amostras = valores_padronizados_i;
+
+   for (size_t p = 1; p <= 9; p++)
+      insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+   for (size_t p = 9; p <= 19; p++)
+      insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
+   visualizacao_mapa_u16_e_str (M);
+   print_inner_u16_e_str (M);
+
+   IterHT I = cria_iter_ht (M);
+   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+
+   for (size_t count = tamanho_iter_ht(&I); count > 0; count--) {
+      IterOutputHT i = next_ht (&I);
+      assert (i.key != NULL && i.value != NULL);
+      print_item_ht_u16_e_str (i);
+      printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   }
+
+   printf ("tetando iterar mesmo esgotado ...");
+   IterOutputHT i = next_ht (&I);
+   assert (i.key == NULL && i.value == NULL);
+   i = next_ht (&I);
+   assert (i.key == NULL && i.value == NULL);
+   i = next_ht (&I);
+   assert (i.key == NULL && i.value == NULL);
+   puts ("não funcionou!");
+   destroi_ht (M);
+}
+
+void tentando_iterador_mapa_vazio (void) {
+   hashtable_t* M = cria_ht(hash_int, int_eq);
+   IterHT I = cria_iter_ht (M);
+
+   IterOutputHT i = next_ht (&I);
+   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   assert (i.key == NULL && i.value == NULL);
+
+   i = next_ht (&I);
+   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   assert (i.key == NULL && i.value == NULL);
+
+   i = next_ht (&I);
+   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   assert (i.key == NULL && i.value == NULL);
+
+   puts ("não funcionou com nenhuma!");
+   destroi_ht (M);
+}
+
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
    executa_testes (
-      9, varias_entradas_genericas_diferentes, true,
+      0, varias_entradas_genericas_diferentes, true,
       alocao_e_desacalocao_simples_instancia, true,
       aplicacao_de_simples_insercoes, true,
       verifica_operacao_de_pertencimento, true,
@@ -825,7 +1008,12 @@ void main(void) {
       algumas_remocoes_feitas, true,
       operacoes_negadas, true, 
       metodo_get_verificacao_basica, true
+   );
 
+   // testes apenas do iteradores.
+   executa_testes (
+      2, uso_simples_da_iteracao, true,
+      tentando_iterador_mapa_vazio, true
    );
 }
 #endif

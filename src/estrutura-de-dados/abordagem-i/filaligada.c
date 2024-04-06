@@ -3,25 +3,22 @@
  * trocar o tipo dela futuramente, apenas altere as linhas iniciais. 
  */
 
-typedef char Dado;
-
+// bibliotecas do C:
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-char* dado_to_str(Dado d) {
-   char* string = malloc(sizeof(char) * 3);
-   sprintf(string, "%c", d);
-   return string;
-}
+// tal ponteiro pode assumir qualquer valor.
+typedef void* generico_t;
+// representação de tal objeto não sendo referênciado.
+#define INVALIDO NULL
 
 typedef struct no_modelo {
-   Dado dado;
+   generico_t dado;
    struct no_modelo* seta;
 } no_t;
 
-#include <stdbool.h>
-
-no_t* cria_no(Dado x) {
+no_t* cria_no(generico_t x) {
    no_t* node = malloc(sizeof(no_t));
 
    if (node != NULL) {
@@ -32,21 +29,27 @@ no_t* cria_no(Dado x) {
 }
 
 bool destroi_no(no_t* m) {
+   if (m == INVALIDO) return false;
    free(m);
    m = NULL;
    return true;
 }
 
 typedef struct fila_ligada {
+   // total de itens nela:
+   size_t tamanho;
+
+   // referência as suas pontas:
    no_t* inicio;
    no_t* fim; 
-   size_t tamanho;
+
 } fila_ligada_t;
 
 fila_ligada_t* cria_fl() {
-   fila_ligada_t* fila = malloc(sizeof(fila_ligada_t));
+   size_t t = sizeof (fila_ligada_t);
+   fila_ligada_t* fila = malloc (t);
 
-   if (fila != NULL) {
+   if (fila != INVALIDO) {
       fila->inicio = NULL;
       fila->fim = NULL;
       fila->tamanho = 0;
@@ -54,8 +57,8 @@ fila_ligada_t* cria_fl() {
    return fila;
 }
 
-bool objeto_valido(fila_ligada_t* f) 
-   { return f != NULL; }
+static bool objeto_valido(fila_ligada_t* f) 
+   { return f != INVALIDO; }
 
 size_t tamanho_fl(fila_ligada_t* f) 
    { return f->tamanho; }
@@ -63,7 +66,7 @@ size_t tamanho_fl(fila_ligada_t* f)
 bool vazia_fl(fila_ligada_t* f) 
    { return tamanho_fl(f) == 0; }
 
-bool insere_fl(fila_ligada_t* f, Dado d) {
+bool insere_fl(fila_ligada_t* f, generico_t d) {
    if (objeto_valido(f)) {
       no_t* novo = cria_no(d);
 
@@ -80,7 +83,7 @@ bool insere_fl(fila_ligada_t* f, Dado d) {
    return false;
 }
 
-Dado* remove_fl(fila_ligada_t* f) {
+generico_t remove_fl(fila_ligada_t* f) {
    if (vazia_fl(f))
       return NULL;
    
@@ -88,8 +91,7 @@ Dado* remove_fl(fila_ligada_t* f) {
    no_t* remocao = f->inicio;
    f->inicio = f->inicio->seta;
    // na heap para retirar deste escopo.
-   Dado* obj = malloc(sizeof(Dado));
-   *obj = remocao->dado;
+   generico_t obj = remocao->dado;
    // descontabiliza...
    f->tamanho--;
 
@@ -107,60 +109,67 @@ bool destroi_fl(fila_ligada_t* f) {
    return false;
 }
 
-Dado* final_fl(fila_ligada_t* f) {
+generico_t final_fl(fila_ligada_t* f) {
    if (!vazia_fl(f)) 
       return &f->fim->dado;
    return NULL;
 }
-Dado* comeco_fl(fila_ligada_t* f) {
+generico_t comeco_fl(fila_ligada_t* f) {
    if (!vazia_fl(f)) 
       return &f->inicio->dado;
    return NULL;
 }
 
+#ifdef _UT_FILA_LIGADA
 
-void visualiza_fl(fila_ligada_t* f) {
+// várias entradas para seus testes.
+char entradas[] = { 'm', 'z', 'i', 'L' };
+
+void visualiza_char_fl(fila_ligada_t* f) {
    if (!objeto_valido(f))
       return;
    if (vazia_fl(f))
-      puts("[]");
+      puts("fila-ligada: []");
    else {
-      printf("[");
+      printf("fila-ligada: [");
       no_t* atual = f->inicio;
 
       while (atual != NULL) {
-         printf("%s, ", dado_to_str(atual->dado));
+         char* removido = (char*)atual->dado;
+         printf("%c, ", *removido);
          atual = atual->seta;
       }
       printf("\b\b]\n");
    }
 }
 
+void mostra_pontas_da_fila(fila_ligada_t* q) {
+   char inicio = *((char*)comeco_fl (q));
+   char fim = *((char*)final_fl (q));
 
-#ifdef _UT_FILA_LIGADA
+   printf("start: %c\tend: %c\n", inicio, fim);
+}
 
 void todas_operacoes_basicas_simples() {
    fila_ligada_t* fila = cria_fl();
-   visualiza_fl(fila);
-   insere_fl(fila, 'm');
-   printf("start: %c\tend: %c\n", *comeco_fl(fila), *final_fl(fila));
-   insere_fl(fila, 'z');
-   insere_fl(fila, 'i');
-   printf("start: %c\tend: %c\n", *comeco_fl(fila), *final_fl(fila));
-   insere_fl(fila, 'L');
-   printf("start: %c\tend: %c\n", *comeco_fl(fila), *final_fl(fila));
-   visualiza_fl(fila);
-   printf("%c\n", *remove_fl(fila));
-   printf("%c\n", *remove_fl(fila));
-   visualiza_fl(fila);
-   destroi_fl(fila);
+   visualiza_char_fl(fila);
+   insere_fl(fila, &entradas[0]);
+   mostra_pontas_da_fila (fila);
+
+   insere_fl(fila, &entradas[1]);
+   insere_fl(fila, &entradas[2]);
+   insere_fl(fila, &entradas[3]);
+   mostra_pontas_da_fila (fila);
+   visualiza_char_fl(fila);
+
+   printf("removido: %c\n", *((char*)remove_fl(fila)));
+   printf("removido: %c\n", *((char*)remove_fl(fila)));
+   visualiza_char_fl(fila);
 }
 
 int main(int total, char* args[], char* vars[]) {
-
    todas_operacoes_basicas_simples();
    return EXIT_SUCCESS;
 }
-
 #endif
 
