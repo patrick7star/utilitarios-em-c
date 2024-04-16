@@ -2,7 +2,8 @@
 
 # 'ponto' não está terminado!
 #all: teste ponto aleatorio tempo
-all: teste aleatorio tempo barra-de-progresso
+all: teste aleatorio tempo barra-de-progresso estringue
+.PHONY = estringue
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -103,6 +104,7 @@ backups:
 barra-de-progresso.o: src/barra_de_progresso.c
 	gcc -c src/barra_de_progresso.c -o build/barra_de_progresso.o
 
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 EXE_PL = testes/ut_pilha_ligada
 MOSTRA_PL = -D_DESTROI_PL
 FLAGS_PL = -Wall
@@ -132,3 +134,11 @@ hashtable-i: teste.o tempo.o legivel.o terminal.o
 	gcc -I include/ $(FLAGS_HT_I) -c $(SRC_HT_I) -o build/hashtable-i.o
 	gcc -o $(EXE_HT_I) build/hashtable-i.o $(OBJS_HT_I) -lm -Wall
 
+
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
+EXE_STR = testes/estringue
+LIB_STR = ../utilitarios/include
+
+estringue: 
+	gcc -I $(LIB_STR) $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(OBJS_TESTE) build/teste.o -lm -Wall
