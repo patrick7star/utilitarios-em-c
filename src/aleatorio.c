@@ -11,7 +11,7 @@
 
 /* é atribuído futuramente valores tirados de diferentes formas, 
  * depedendo do OS. */
-static bool acionado = false;
+static bool ACIONADO = false;
 
 #ifdef _POSIX_SOURCE // apenas para Linux.
 uint8_t* lendo_64_bits() {
@@ -35,7 +35,7 @@ uint8_t* lendo_64_bits() {
 static void alimenta_semente() {
    // pega oito bytes da entropia do sistema no Linux("inicialmente" mais lento).
    // abandona função em caso de já acionamento desta 'alimentação'.
-   if (acionado) return;
+   if (ACIONADO) return;
 
    // versão para Linux:
    #ifdef _POSIX_SOURCE
@@ -54,7 +54,9 @@ static void alimenta_semente() {
    #endif
 
    // dizendo que função já foi chamada anteriormente.
-   acionado = true;
+   ACIONADO = true;
+   // librando de array de oite bytes.
+   free(bytes);
 }
 
 size_t inteiro_positivo(size_t a, size_t b) {

@@ -4,7 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
 #include "terminal.h"
+// para não compilar no Windows, assim mantém compatibilidade
+#ifndef _WIN64
+#include "tempo.h"
+#include "legivel.h"
+#endif
 /* incluindo aqui por quê? Primeiro, tem macros importantes definidos lá,
  * que é preciso também usar aqui; segundo, o 'header guards' garantem que 
  * não entra-se num loop de inclusão. */
@@ -245,15 +252,6 @@ void executa_teste_interruptor(char* descricacao, void (*funcao)(),
       puts("DESATIVADO TEMPORIAMENTE!");
 }
 
-#include <stdarg.h>
-// para não compilar no Windows, assim mantém compatibilidade
-#ifndef _WIN64
-#include "tempo.h"
-#include "legivel.h"
-#endif
-
-typedef void(*Fn)(void);
-
 void executa_testes(const uint8_t total, ...) {
    Cronometro medicao = cria_cronometro();
    va_list args;
@@ -308,8 +306,6 @@ char* concatena_literais_str(const uint8_t total, ...) {
    // retornando referência da string estática criada.
    return resultado;
 }
-
-#include <ctype.h>
 
 static bool string_esta_minuscula(char* string) {
    /* verifica se uma string está minúscula, ou seja, todos seus caractéres
@@ -524,7 +520,7 @@ uint8_t* binario_complemento_de_dois(size_t n) {
  * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
  * mais limpo. 
  */
-#ifdef UT_TESTE
+#ifdef _UT_TESTE
 static void imprime_debug(uint8_t* array, size_t t) {
    if (t == 0) 
       { printf("[]\n"); return; }
@@ -625,15 +621,35 @@ void transforma_toda_string_em_minuscula() {
       );
 }
 
-int main(int qtd, char* argumentos[], char* envp[]) {
+void testes_tal_declaracao_de_loop(void) {
+#ifdef _POSIX_C_SOURCE
+   Temporizador timer = cria_temporizador(Segundo, 3);
+   loop_infinito {
+      puts("mensagem fica se repetindo.");
+      breve_pausa(Miliseg, 200);
+
+      if (esgotado(timer)) {
+         puts("o termino de tal bloco chegou!!");
+         break;
+      }
+   }
+   destroi_temporizador(timer);
+#else
+   puts("testes não existente para sistemas diferente de Linux!");
+#endif
+}
+
+int main(int qtd, char* argumentos[], char* env_vars[]) {
    executa_testes(
-      8, teste_conversao_binaria_antiga_implementacao, true,
+      9, teste_conversao_binaria_antiga_implementacao, true,
          amostra_da_nova_implementacao_de_binario, true,
          extracao_de_bits_implementacao_geral, true,
          // iteração para gerar máscaras funciona!
          verificando_obtendo_de_potencias_de_dois, false,
          stringficacao_de_valores_primitivos, true,
          converte_strings_de_valores_logicos, true,
+         // consome bastante tempo...
+         testes_tal_declaracao_de_loop, false,
          // [teste da função interna]
          percorrendo_string, false,
          transforma_toda_string_em_minuscula, false
