@@ -42,7 +42,11 @@ extern void executa_testes(uint8_t total, ...);
 
  // macros importantes para melhorar a visualização:
  #define bool_to_str(VL) ((bool)VL) ? "verdadeiro": "falso"
- #define null_to_str(PTR) ( (bool)PTR ? "none": "válido")
+ #define null_to_str(PTR) ( !((bool)PTR) ? "none": "válido")
+ /* É frequente o uso da instrução 'while (true)' para criar loops sem 
+  * parada(loops infinitos). Aqui, usando de 'macros', vamos criar tal 
+  * tipo de declaração. */
+ #define loop_infinito while (true)
 
 /*
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
