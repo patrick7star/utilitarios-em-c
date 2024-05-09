@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <assert.h>
+#include <ctype.h>
 
 /* é atribuído futuramente valores tirados de diferentes formas, 
  * depedendo do OS. */
@@ -70,28 +71,29 @@ size_t inteiro_positivo(size_t a, size_t b) {
    return ((rand() % SIZE_MAX) % (b - a + 1)) + a;
 }
 
-unsigned char ascii_char_aleatorio() {
+char ascii_char_aleatorio() {
    alimenta_semente();
 
-	unsigned char byte = rand() % 256;
+	char byte = rand() % 128;
    /* selecionando só caractéres válidos. ou seja, aqueles acima de 32. */
-   return (unsigned char)(byte % (126-33) + 33);
+   return (byte % (126-33) + 33);
 }
 
-bool logico() { alimenta_semente(); return rand() % 10 >= 5; }
+bool logico() 
+   { alimenta_semente(); return rand() % 10 >= 5; }
 
-#include <ctype.h>
 
 unsigned char alfabeto_aleatorio() {
    uint8_t code = ascii_char_aleatorio();
 
-   if (isalpha(code))
-      { return (unsigned char)code; }
-   else
+   if (isalpha(code)) { 
+      return (unsigned char)code; 
+   } else
       { return alfabeto_aleatorio(); }
 }
 
-uint64_t* array_inteiro_aleatoria(uint64_t n, uint64_t a, uint64_t b) {
+uint64_t* array_inteiro_aleatoria(uint64_t n, uint64_t a, uint64_t b) 
+{
    uint64_t* array = calloc(n, sizeof(uint64_t));
 
    for (uint64_t q = 1; q <= n; q++) 
@@ -102,7 +104,8 @@ uint64_t* array_inteiro_aleatoria(uint64_t n, uint64_t a, uint64_t b) {
 
 struct par { size_t j; size_t i; };
 
-static bool par_distinto(struct par P, struct par* array, size_t t) {
+static bool par_distinto(struct par P, struct par* array, size_t t) 
+{
 	for (size_t m = 0; m < t; m++) {
 		struct par A = array[m];
 		bool um_par_igual = {
@@ -331,6 +334,28 @@ void tempo_do_primeiro_inteiro_positivo_sorteado() {
    printf("levou %0.1fseg\n", difftime(final, inicio));
 }
 
+void sorteio_de_caracteres_ascii(void) {
+   const size_t TOTAL = 100;
+
+   printf("todos %lu sorteios.\n", TOTAL);
+   for (size_t i = 1; i <= TOTAL; i++) {
+      if (i % 17 == 0)
+         putchar('\n');
+      printf("|%c| ", ascii_char_aleatorio());
+   }
+}
+
+void sorteio_de_letras_do_alfabeto(void) {
+   const size_t TOTAL = 100;
+
+   printf("todos %lu sorteios.\n", TOTAL);
+   for (size_t i = 1; i <= TOTAL; i++) {
+      if (i % 17 == 0)
+         putchar('\n');
+      printf("|%c| ", alfabeto_aleatorio());
+   }
+}
+
 #ifdef _POSIX_SOURCE
 #include "teste.h"
 #include "tempo.h"
@@ -397,10 +422,12 @@ int main(int qtd, char* args[], char* vars[])
    #elif _POSIX_SOURCE
    puts ("testes apenas para Linux:");
    executa_testes(
-      5, testando_funcao_getc, true,
+      7, testando_funcao_getc, true,
          sorteio_de_palavra, true,
          // consome muito CPU e memória, sempre deixe desabilitada:
          obtendo_tempo_de_sorteio_da_palavra, true,
+         sorteio_de_caracteres_ascii, true,
+         sorteio_de_letras_do_alfabeto, true,
          // consome muito CPU e tempo, sempre desabilitada:
          tempo_do_primeiro_inteiro_positivo_sorteado, false,
          distribuicao_de_sorteios, false
