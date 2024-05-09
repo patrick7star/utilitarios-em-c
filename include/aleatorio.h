@@ -1,7 +1,9 @@
 
 /*
- * Códigos para gerar valores aletórios
- * com todos os tipos primitivos.
+ * Códigos para gerar valores aletórios com todos os tipos primitivos, e
+ * alguns derivados importantes como: espeficicamente, o alfabeto; palavras
+ * dos dicionários em inglês e português; também, realiza embalharamento de
+ * qualquer array.
  */
 
 #include <stdbool.h>
@@ -9,20 +11,23 @@
 
 #ifndef ALEATORIO_H
 #define ALEATORIO_H
-   /* cospe uma letra aleatória do alfabeto,
-    * seja ela minúscula, ou maiúscula. */
-   extern unsigned char alfabeto_aleatorio(); 
 
-   /* qualquer caractére da tabela ASCII, pode 
-    * ser selecionado randomicamente, com exceção
-    * dos códigos de controles. */
-   extern unsigned char ascii_char_aleatorio();
+ typedef unsigned char char8_t;
+ /* cospe uma letra aleatória do alfabeto, seja ela minúscula, ou 
+  * maiúscula. */
+ extern char8_t alfabeto_aleatorio(); 
 
-   // seleciona randomicamente um valor lógico(verdadeiro ou falso)
-   extern bool logico(); 
+ /* qualquer caractére da tabela ASCII, pode ser selecionado randomicamente,  * com exceção dos códigos de controles. 
+  */
+ extern char ascii_char_aleatorio();
 
-   /* seleção de um inteiro positivo de 64-bits,
-    * dado os limites. */
-   // ainda não está pronto!
-   extern uint64_t inteiro_positivo(uint64_t a, uint64_t b); 
+ // seleciona randomicamente um valor lógico(verdadeiro ou falso)
+ extern bool logico(); 
+
+ // embalhara uma 'array de bytes', dado ela e seu tamanho.
+ extern void embaralha(uint8_t*, size_t); 
+
+ /* seleção de um inteiro positivo, dado os limites. */
+ extern size_t inteiro_positivo(size_t, size_t); 
+
 #endif 
