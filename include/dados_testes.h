@@ -95,4 +95,27 @@ char* veiculos[] = {
    "prancha de surf", "bote", "barco", "vela", "navio",
    "avião", "paraquedas", "helicoptero"
 };
+
+char silly_poem[] = (
+   "roses are red; violets are blue; i see you big pretty"
+   " eyes... as a huge cloud comes me soon"
+);
+
+const char* objetos[] = {
+   "copo",  "cerca", "porta", "cadeado", "mala", 
+   "bolsa", "garrafa", "ármario", "cesto",
+   "mola", "balde", "capacete", "moeda", "livro",
+   "colher"
+};
+
+char frase_i[] = "hoje será um bom dia!";
+char frase_ii[] = "Todas generalizações são falsas, incluse esta. -- Mark Twain";
+
+char* frases_i[] = {
+   "Hoje é um novo dia, de um tempo, que começou!",
+   "Terça-feira depois do almoço é o tempo cósmico da semana",
+   "sua mira está para cima, e à direita também",
+   "Independentemente",
+   "Você é sensato, justo e amoroso"
+};
 #endif
