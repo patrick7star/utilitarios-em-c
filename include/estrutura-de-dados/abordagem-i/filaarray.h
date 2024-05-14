@@ -15,12 +15,20 @@
  bool destroi_fa (fila_array_t* q); 
 
  // obtém informações sobre a estrutura, inclusive dados internos.
- size_t tamanho_fa (fila_array_t* q);
- bool vazia_fa (fila_array_t* q);
- generico_t primeiro_fa (fila_array_t* q);
+ size_t tamanho_fa (FilaArray);
+ bool vazia_fa (FilaArray);
+ generico_t primeiro_fa (FilaArray);
+ size_t capacidade (FilaArray);
+ // Retorna a diferença entre a 'capacidade' e o total de 'itens' nela.
+ size_t vacuo_fa(FilaArray); 
 
  // operações que mudam a estrutura interna da estrutura.
- bool coloca_fa (fila_array_t* q, void* e); 
+ bool coloca_fa (fila_array_t* q, generico_t e); 
  generico_t retira_fa (fila_array_t* q); 
+
+ #define __to_string__ char* (__str__)(generico_t)
+ /* Visualização genérica, que exige que se passe um método de transformação
+  * de strign para ela, assim ela pode imprimir tal estrutura de dados. */
+ void print_fila_fa(FilaArray, __to_string__); 
 
 #endif
