@@ -139,7 +139,6 @@ bool adiciona_metodos (
    return m->__hash__confirmada && m->__eq__confirmada;
 }
 
-
 hashtable_t* cria_com_capacidade_ht(
   // verifica capacidade da array interna da tabela.
   size_t capacidade, 
