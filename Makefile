@@ -30,13 +30,14 @@ teste: $(OBJS_TESTE) src/teste.c
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
-FILES_PONTO_C = testes/unit_tests_ponto.c ponto.c
-OBJS_PONTO = ponto.o terminal.o legivel.o tempo.o
 
-ponto: $(FILES_PONTO_C) $(OBJS_PONTO)
+OBJS_PONTO = build/terminal.o build/legivel.o build/tempo.o build/teste.o
+EXE_PONTO = bin/tests/ut_ponto
+
+ponto: teste.o
 	@echo "lincando artefatos para 'ponto.c'..."
-	gcc -o ut_ponto testes/unit_tests_ponto.c $(OBJS_PONTO) \
-	-Wall -lm -Wno-main
+	gcc -D_UT_PONTO -I include -o $(EXE_PONTO) src/ponto.c $(OBJS_PONTO) \
+		-Wall -lm -Wno-main
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
