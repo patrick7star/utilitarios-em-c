@@ -42,23 +42,22 @@
   * abaixo. Os dois primeiros "incorporam" o ponteiro para você não se 
   * preocupar com isso, já o último é preciso específicar-lô. */
  typedef struct contador_regressivo 
-  *Temporizador, 
-  *TEMPORIZADOR, 
+  *Temporizador, TIMER,
   temporizador_t;
 
  // construtor e destrutor do 'temporizador'.
- extern TEMPORIZADOR cria_temporizador(TEMPO_TIPO, uint16_t); 
- extern void destroi_temporizador(TEMPORIZADOR); 
+ extern Temporizador cria_temporizador(TEMPO_TIPO, uint16_t); 
+ extern void destroi_temporizador(Temporizador); 
 
  // total de instância de 'Temporizadores' na memória.
  extern uint8_t instancias_temporizador();
 
  // verificação de o Temporizador terminou sua contagem-regressiva.
- extern bool esgotado(TEMPORIZADOR);
- extern float percentual(TEMPORIZADOR);
+ extern bool esgotado (Temporizador);
+ extern float percentual (Temporizador);
 
  // ainda em fase de testes:
- extern char* temporizador_to_str(TEMPORIZADOR);
- extern void recomecar(TEMPORIZADOR);
+ extern char* temporizador_to_str (Temporizador);
+ extern void recomecar (Temporizador);
 
 #endif //TEMPO_H
