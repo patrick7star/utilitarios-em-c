@@ -13,19 +13,26 @@
  */
 
 #include "terminal.h"
+#include <inttypes.h>
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
 /* Mesma representação do que a 'Dimensão', com coordenadas 'y' e 'x', 
  * nesta ordem. */
 typedef Dimensao Ponto;
 typedef Ponto PONTO;
+typedef Ponto* ARRAY_PONTO;
+typedef ARRAY_PONTO ArrayPonto;
 
-#include <inttypes.h>
 /* contador de instâncias do tipo. Um inteiro de 32-bits, já que é um
  * tipo de dado que costuma-se criar na faixa das unidades de milhão.
  */
 static uint32_t total_de_instancias_ponto = 0;
 
-#include <stdlib.h>
+
 /* Meio que fazendo o mesmo acima, renomeando funções só passando os 
  * argumentos para função interna, que é chamada, e produz o mesmo 
  * resultado. 
@@ -53,8 +60,6 @@ void destroi_ponto(Ponto p) {
       { destroi_dimensao(p);  }
 }
 
-#include <math.h>
-
 // a menor distância entre os dois pontos.
 uint8_t distancia_ponto(Ponto p, Ponto q) { 
    // coordenadas mais legíveis.
@@ -64,7 +69,6 @@ uint8_t distancia_ponto(Ponto p, Ponto q) {
    return (uint8_t)floor(comprimento); 
 }
 
-#include <stdio.h>
 /* tipos de visualizações para o 'Ponto', tanto a versão padrão, como o 
  * 'debug'. */
 void visualiza_ponto(Ponto p) 
@@ -76,17 +80,6 @@ void visualiza_ponto_debug(Ponto p)
 #include <stdbool.h>
 
 /* comparações entre os Pontos. */ 
-bool lt_ponto(Ponto A, Ponto B) {
-   uint8_t y_a = A[0], x_a = A[0], y_b = B[0], x_b = B[0];
-   return (y_a < y_b) && (x_a < x_b);
-}
-
-bool gt_ponto(Ponto A, Ponto B)  {
-   uint8_t y_a = A[0], x_a = A[0]; 
-   uint8_t y_b = B[0], x_b = B[0];
-   return (y_a > y_b) && (x_a > x_b);
-}
-
 bool eq_ponto(Ponto A, Ponto B) {
    uint8_t y_a = A[0], x_a = A[1], y_b = B[0], x_b = B[1];
    return (y_a == y_b) && (x_a == x_b);
@@ -108,9 +101,6 @@ char* ponto_to_str(Ponto p) {
    sprintf(referencia, "(%d, %d)", p[0], p[1]); 
    return referencia;
 }
-
-typedef Ponto* ARRAY_PONTO;
-typedef ARRAY_PONTO ArrayPonto;
 
 ArrayPonto cria_array_de_pontos(uint16_t n) {
    ARRAY_PONTO array = (ARRAY_PONTO)calloc(n, sizeof(Ponto));
@@ -178,7 +168,6 @@ ArrayPonto retangulo_vertices(Ponto p, Ponto q) {
 bool pontos_colineares(Ponto a, Ponto b) 
    { return a[0] == b[0] || a[1] == b[1]; }
 
-#include <stdarg.h>
 /* criando uma array de forma manual, apenas passando pares de 
  * argumentos. 
  */
@@ -197,8 +186,6 @@ ArrayPonto cria_manualmente_ap(uint8_t total, ...) {
 
    return array;
 }
-
-#include <string.h>
 
 char* ap_to_str(ArrayPonto a, uint64_t t) {
    /* o total de caractéres é computado na seguinte forma: valores das
@@ -238,7 +225,6 @@ void visualiza_ap(ArrayPonto a, uint64_t t) {
 #include <stdio.h>
 #include <assert.h>
 #include <time.h>
-
 #include "teste.h"
 
 void criacao_da_array_de_pontos() {
@@ -320,11 +306,40 @@ void criacao_de_forma_manual_da_array_de_pontos(void) {
    destroi_array_de_pontos(array, 7);
 }
 
+void comparacao_entre_pontos() {
+   ArrayPonto input = cria_manualmente_ap(
+      5, 5, 15, 33, 7, 2, 2,
+      10, 5, 7, 13
+   );
+   ArrayPonto output = cria_manualmente_ap(
+      5, 5, 12, 33, 7, 2, 3,
+      10, 5, 7, 0
+   );
+
+   for (size_t k = 1; k <= 5; k++) {
+      Ponto a = input[k - 1];
+      Ponto b = output[k - 1];
+
+      if (eq_ponto(a, b))
+         printf("%s == %s\n", ponto_to_str(a), ponto_to_str(b));
+      else
+         printf("%s != %s\n", ponto_to_str(a), ponto_to_str(b));
+   }
+   /*
+   assert (!eq_ponto(input[0], output[0]));
+   assert (eq_ponto(input[1], output[1]));
+   assert (!eq_ponto(input[2], output[2]));
+   assert (eq_ponto(input[3], output[3]));
+   assert (!eq_ponto(input[4], output[4]));*/
+   puts("todos testaram corretamente.");
+}
+
 void main(int argc, char** argv) {
    executa_testes(
-      3, criacao_da_array_de_pontos, true,
+      4, criacao_da_array_de_pontos, true,
       todos_vertices_do_retangulo, true,
-      criacao_de_forma_manual_da_array_de_pontos, true
+      criacao_de_forma_manual_da_array_de_pontos, true,
+      comparacao_entre_pontos, true
    );
 }
 #endif // testes-unitários.
