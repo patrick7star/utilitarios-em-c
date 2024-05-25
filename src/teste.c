@@ -6,12 +6,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "terminal.h"
+#include <assert.h>
+#include <tgmath.h>
 // para não compilar no Windows, assim mantém compatibilidade
 #ifndef _WIN64
 #include "tempo.h"
 #include "legivel.h"
 #endif
+#include "terminal.h"
 /* incluindo aqui por quê? Primeiro, tem macros importantes definidos lá,
  * que é preciso também usar aqui; segundo, o 'header guards' garantem que 
  * não entra-se num loop de inclusão. */
@@ -73,7 +75,7 @@ void executa_teste(char* nome, void (*funcao)()) {
 static uint8_t contagem_de_usos = 0;
 /* ótima ferramenta de 'debug', onde indica a linha e o arquivo onde 
  * possível erro pode está. */
-void debug_aqui() {
+void debug_aqui(void) {
    printf("\no erro está bem ... ... ...aqui!(%d)\n", contagem_de_usos + 1);
    contagem_de_usos++;
 }
@@ -404,9 +406,6 @@ char algarismo(uint8_t alg) {
    }
 }
 
-#include <assert.h>
-#include <tgmath.h>
-
 extern char* binario_str(size_t decimal) {
    /* O modo de computar os digitos binários são seguinte: Pegado o valor
     * decimal(um inteiro de base 10), nós contabilizando o total de 
@@ -639,9 +638,128 @@ void testes_tal_declaracao_de_loop(void) {
 #endif
 }
 
+static char* substitui_separadores_do_nome(const char* nome_original) {
+/*   Pega o nome da função e substitui seus separadores do identificador por
+ * devidos espaços brancos. */
+   const char* nome = nome_original;
+   size_t t = strlen(nome) + 1; 
+   char* corrigido = malloc(t * sizeof(char));
+
+   for (size_t i = 1; i <= t; i++) {
+      char _char = nome[i - 1];
+      if (_char == '_') 
+         corrigido[i - 1] = ' '; 
+      else 
+         corrigido[i - 1] = _char;
+   }
+   corrigido[-1] = '\0';
+   return corrigido;
+} 
+
+typedef struct {
+   char* nome; 
+   Fn funcao; 
+   bool confirmacao; 
+} TesteSet;
+
+static TesteSet pack(char* name, Fn function, bool execution)
+{ 
+   #ifdef _NOVO_SUITE
+   printf(
+      "\tnome: '%s'\n\tendereço: %p\n\tconfirmação? %s\n\n", 
+      name, function, bool_to_str(execution)
+   );
+   #endif
+
+   return (TesteSet) {
+      substitui_separadores_do_nome(name), 
+      function, execution
+   }; 
+}
+
+#define TOKEN_TO_STR(FUNCAO) #FUNCAO
+#define UnitTest(FUNCAO,PERMISAO) \
+   realiza_teste_unitario(\
+      TOKEN_TO_STR(FUNCAO), \
+      FUNCAO, PERMISAO\
+   )
+#define Unit(FUNCAO, CONFIRMACAO) \
+   pack(TOKEN_TO_STR(FUNCAO), FUNCAO, CONFIRMACAO)
+
+void desenha_seperador() {
+   for (size_t i = 1; i <= 60; i++)
+      putchar('-');
+   putchar('\n');
+}
+
+void testes_unitarios(const uint8_t total, ...) {
+/*   Esta função difere da 'executa_testes', pois ao invés de ter um nome
+ * desconhecido do testes, usa a clásula da função, devidamente processada
+ * (com os espaços removidos). */
+   va_list args;
+   va_start(args, total);
+   uint8_t habilitados = 0;
+
+   #ifdef _POSIX_C_SOURCE 
+   // Utilitário está apenas disponível para sistemas Unix's.
+   Cronometro medicao = cria_cronometro();
+   #endif
+
+   #ifdef _NOVO_SUITE
+   printf("total demandado: %u\n", total);
+   #endif
+
+   /* Filtrando cada testes posto, e evaluando seus argumentos...*/
+   for (uint8_t i = 1; i <= total; i++) 
+   {
+      TesteSet T = va_arg(args, TesteSet);   
+      if (T.confirmacao) {
+         #ifdef _NOVO_SUITE
+         printf("[%p] '%s' ... sucedido.\n", T.funcao, T.nome);
+         #endif
+
+         executa_teste(T.nome, T.funcao);
+         #ifdef _POSIX_C_SOURCE 
+         marca(medicao);
+         #endif
+         // contabilizando os que estão ativados.
+         habilitados++;
+      } 
+      // Liberando string alocada dinamicamente...
+      free(T.nome);
+   }
+   va_end(args);
+
+   // informando tempo total da execução.
+   double tempo_total = marca(medicao);
+   // Informação final da série de testes:
+   desenha_seperador();
+   printf(
+      "Levaram %0.4lfs; estados dos testes: %u on | %u off; "
+      "total de testes: %u\n", 
+      tempo_total, habilitados, total - habilitados, testes_contagem
+   );
+}
+
+void novo_suite_de_testes_unitarios(void) {
+   // Chamadas individuais:
+   Unit(transforma_toda_string_em_minuscula, true);
+   Unit(transforma_toda_string_em_minuscula, false);
+   Unit(percorrendo_string, true);
+   Unit(percorrendo_string, false);
+
+   // Chamada conjunta:
+   TestesUnitarios (
+      4, Unit(transforma_toda_string_em_minuscula, true),
+         Unit(verificando_obtendo_de_potencias_de_dois, true),
+         Unit(percorrendo_string, false),
+         Unit(percorrendo_string, true)
+   );
+}
+
 int main(int qtd, char* argumentos[], char* env_vars[]) {
    executa_testes(
-      9, teste_conversao_binaria_antiga_implementacao, true,
+      10, teste_conversao_binaria_antiga_implementacao, true,
          amostra_da_nova_implementacao_de_binario, true,
          extracao_de_bits_implementacao_geral, true,
          // iteração para gerar máscaras funciona!
@@ -652,7 +770,8 @@ int main(int qtd, char* argumentos[], char* env_vars[]) {
          testes_tal_declaracao_de_loop, false,
          // [teste da função interna]
          percorrendo_string, false,
-         transforma_toda_string_em_minuscula, false
+         transforma_toda_string_em_minuscula, false,
+         novo_suite_de_testes_unitarios, true
    );
 
    return EXIT_SUCCESS;
