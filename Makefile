@@ -88,7 +88,7 @@ barra-de-progresso:
 # salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.1.2
+VERSAO = v1.1.3
 OPCOES = --exclude=ut* -cvf
 NOME = utilitarios.$(VERSAO).tar 
 LOCAL = ../versions
@@ -119,21 +119,17 @@ pilha-ligada-i: barra-de-progresso.o
 		build/pilhaligada.o build/barra_de_progresso.o -Wall
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-FLAGS_HT_I = -D_UT_HASHTABLE \
-					-D_INSERCAO_HT \
-					-D_CRIACAO_HT \
-					-D_DESTRUICAO_HT \
-					-D_CONTIDO_HT \
-					-D_ATUALIZA_HT \
-					-D_DELETA_HT \
-					-D_OBTEM_HT 
-EXE_HT_I = testes/ut_hashtable_i
+COMPILA_HT_I = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
+				-D_DESTRUICAO_HT -D_CONTIDO_HT \
+				-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT 
+EXE_HT_I = bin/tests/ut_hashtable_ref
 OBJS_HT_I = $(OBJS_TESTE) build/teste.o
-SRC_HT_I = $(ABS_DIR_I)/hashtable.c
+SRC_HT_I = src/estrutura-de-dados/hashtable.c
 
-hashtable-i: teste.o tempo.o legivel.o terminal.o
-	gcc -I include/ $(FLAGS_HT_I) -c $(SRC_HT_I) -o build/hashtable-i.o
-	gcc -o $(EXE_HT_I) build/hashtable-i.o $(OBJS_HT_I) -lm -Wall
+hashtable-ref: teste.o tempo.o legivel.o terminal.o
+	gcc -I include/ $(COMPILA_HT_I) -c $(SRC_HT_I) -o build/hashtable-ref.o
+	gcc -o $(EXE_HT_I) build/hashtable-ref.o $(OBJS_HT_I) -lm -Wall -std=c18
+
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 SRC_FC_I = src/estrutura-de-dados/abordagem-i/filacircular.c
 FLAGS_FC_I = -lm -Wall -Wno-main -std=c2x
