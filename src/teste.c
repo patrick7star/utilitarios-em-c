@@ -111,6 +111,7 @@ char* copia_substring(uint8_t i, uint8_t f, char* str) {
 
    return copia;
 }
+#ifdef _DEAD_CODE
 /* gera todas substrings que uma string pode ter.*/
 StringArray todas_substrings(char* str) {
    uint8_t largura = strlen(str);
@@ -131,6 +132,7 @@ StringArray todas_substrings(char* str) {
 
    return array;
 }
+#endif
 
 bool strings_correspodentes(char *str1, char *str2) {
    /*   "Bate" a correspodência entre duas strings, tenha elas ou não o 
