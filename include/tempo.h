@@ -6,12 +6,25 @@
 #ifndef TEMPO_H
 #define TEMPO_H
  typedef enum tipo_de_tempo { 
-    Segundo, Minuto, 
-    Hora, Miliseg, 
-    Microseg, Nanoseg 
- }TempoTipo, TEMPO_TIPO;
+   // Tempo normal:
+   Segundo, 
+   Minuto, 
+   Hora, 
+   // Abaixo de um segundo:
+   Miliseg, 
+   Microseg, 
+   Nanoseg 
+
+ } TempoTipo, TEMPO_TIPO;
  
+ /* Apelidos da estruturas -- por mais que os métodos só exaltem apenas um,
+  * os demais também são válidos; todos seus métodos e funções relacionadas
+  * com a estrutura.
+  *   Todos respectivos apelidos para o tipo de dado também são postos
+  * abaixo. Os dois primeiros "incorporam" o ponteiro para você não se 
+  * preocupar com isso, já o último é preciso específicar-lô. */
  typedef struct cronometro *CRONOMETRO, *Cronometro, cronometro_t;
+ typedef struct contador_regressivo *Temporizador, TIMER, temporizador_t;
 
  /* executa uma pausa no programa dado a grandeza do tempo, e o total de 
   * unidades daquela grandeza. */
@@ -35,19 +48,9 @@
  extern char* cronometro_to_str(Cronometro c); 
 
 
- /* Apelidos da estruturas -- por mais que os métodos só exaltem apenas um,
-  * os demais também são válidos; todos seus métodos e funções relacionadas
-  * com a estrutura.
-  *   Todos respectivos apelidos para o tipo de dado também são postos
-  * abaixo. Os dois primeiros "incorporam" o ponteiro para você não se 
-  * preocupar com isso, já o último é preciso específicar-lô. */
- typedef struct contador_regressivo 
-  *Temporizador, TIMER,
-  temporizador_t;
-
  // construtor e destrutor do 'temporizador'.
- extern Temporizador cria_temporizador(TEMPO_TIPO, uint16_t); 
- extern void destroi_temporizador(Temporizador); 
+ extern Temporizador cria_temporizador (TEMPO_TIPO, uint16_t); 
+ extern void destroi_temporizador (Temporizador); 
 
  // total de instância de 'Temporizadores' na memória.
  extern uint8_t instancias_temporizador();
