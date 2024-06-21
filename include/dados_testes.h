@@ -53,30 +53,30 @@ const char* nomes_de_meninos[] = {
 };
 
 // eu contei 9 nomes.
-char* girls_names[] = {
+const char* girls_names[] = {
    "Sarah", "Mayce", "Cristine", "Deborah", "Lauren",
    "Samantha", "Jane", "Madison", "Megan"
 };
 
 // eu contei 11 nomes.
-char* boys_names[] = {
+const char* boys_names[] = {
    "Peter", "Noah", "Matthew", "Dickson", "Carl",
    "John", "Taylor", "Charlie", "Dave", "Thomas", "Jacob"
 };
 
 // eu contei 9 legumes.
-char* legumes[] = { 
+const char* legumes[] = { 
    "batata", "tomate", "cenoura", "beterraba", "pimentão",
    "mandioca", "alface", "cebola", "repolho"
 };
 
-char sexo[] = { 'F', 'M', 'N'};
+const char sexo[] = { 'F', 'M', 'N'};
 
 // eu contei 10 inteiros.
-uint8_t valores_padronizados[] = { 9, 0, 8, 1, 7, 2, 6, 3, 5, 4};
+const uint8_t valores_padronizados[] = { 9, 0, 8, 1, 7, 2, 6, 3, 5, 4};
 
 // eu contei 36 inteiros positivos.
-uint16_t valores_padronizados_i[] = {
+const uint16_t valores_padronizados_i[] = {
    1, 11, 111, 1111,
    9, 99, 999, 9999, 
    8, 88, 888, 8888,
@@ -88,15 +88,37 @@ uint16_t valores_padronizados_i[] = {
    6, 66, 666, 6666
 };
 
+const int8_t valores_padronizados_ii[] = {
+   -9, -8, -7, -6, -5, -4, -3, -2, -1, 
+   0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+};
+
+// Extremos do determinado tipo.
+const int8_t valores_padronizados_iii[] = { INT8_MIN, 0, INT8_MAX };
+
+const int32_t valores_padronizados_iv[] = {
+   -99999, -88888, -77777, -66666, -55555, -44444, -33333, -22222, -11111,
+   -9999, -8888, -7777, -6666, -5555, -4444, -3333, -2222, -1111,
+   -999, -888, -777, -666, -555, -444, -333, -222, -111,
+   -99, -88, -77, -66, -55, -44, -33, -22, -11,
+   -9, -8, -7, -6, -5, -4, -3, -2, -1, 
+   0,
+   9, 8, 7, 6, 5, 4, 3, 2, 1, 
+   99, 88, 77, 66, 55, 44, 33, 22, 11,
+   999, 888, 777, 666, 555, 444, 333, 222, 111,
+   9999, 8888, 7777, 6666, 5555, 4444, 3333, 2222, 1111,
+   99999, 88888, 77777, 66666, 55555, 44444, 33333, 22222, 11111
+};
+
 // eu contei 16 strings.
-char* veiculos[] = {
+const char* veiculos[] = {
    "bicicleta", "skate", "carro", "ônibus", 
    "patins", "cavalo", "carroça", "escada rolante",
    "prancha de surf", "bote", "barco", "vela", "navio",
    "avião", "paraquedas", "helicoptero"
 };
 
-char silly_poem[] = (
+const char silly_poem[] = (
    "roses are red; violets are blue; i see you big pretty"
    " eyes... as a huge cloud comes me soon"
 );
@@ -108,10 +130,13 @@ const char* objetos[] = {
    "colher"
 };
 
-char frase_i[] = "hoje será um bom dia!";
-char frase_ii[] = "Todas generalizações são falsas, incluse esta. -- Mark Twain";
+const char frase_i[] = "hoje será um bom dia!";
+const char frase_ii[] = "Todas generalizações são falsas, incluse esta. -- Mark Twain";
+const char phrase_i[] = "When you stare an abyss, the abyss stares back";
+const char phrase_ii[] = "I do desire we may be better strangers.";
+const char phrase_iii[] = "Tempt not a desperate man.";
 
-char* frases_i[] = {
+const char* frases_i[] = {
    "Hoje é um novo dia, de um tempo, que começou!",
    "Terça-feira depois do almoço é o tempo cósmico da semana",
    "sua mira está para cima, e à direita também",
