@@ -9,24 +9,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
-
-// todos pesos necessários para passar um tempo preciso.
-enum tipo_de_tempo { 
-  // tempois inteiros:
-  Segundo, 
-  Minuto, 
-  Hora, 
-  // frações de segundos:
-  Miliseg,
-  Microseg, 
-  Nanoseg 
-};
-
-// nome mais curto e visível.
-typedef enum tipo_de_tempo TEMPO_TIPO;
-
 #include <stdio.h>
 #include <threads.h>
+#include "tempo.h"
+
 
 #include "tempo/calculo_potencia.c"
 
@@ -85,9 +71,14 @@ void breve_pausa(TEMPO_TIPO tipo, uint16_t qtd) {
  */
 #include "tempo/cronometro.c"   // primeiro
 #include "tempo/temporizador.c" // segundo.
-// #include "tempo/temporizador_i.c" // segundo.
 
+/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+ *
+ *                       Testes Unitários 
+ *
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---*/
 #if defined(_UT_TEMPO)
+#include <assert.h>
 
 void alocacao_e_desalocacao() {
    Cronometro c = cria_cronometro();
@@ -119,41 +110,107 @@ void visualizacao_dos_marcos() {
 }
 
 void stringficacao_do_temporizador() {
-   TEMPORIZADOR timer = cria_temporizador(Microseg, 20);
+   Temporizador timer = cria_temporizador(Microseg, 20);
+   assert(timer->reutilizacoes == 0);
 
    breve_pausa(Microseg, 9);
    breve_pausa(Nanoseg, 500);
-   puts(temporizador_to_str(timer));
+   puts(timer_to_str(timer));
 
    breve_pausa(Microseg, 6);
    breve_pausa(Nanoseg, 100);
-   puts(temporizador_to_str(timer));
+   puts(timer_to_str(timer));
 
    recomecar(timer);
+   assert(timer->reutilizacoes == 1);
 
    breve_pausa(Microseg, 3);
-   puts(temporizador_to_str(timer));
+   puts(timer_to_str(timer));
 
    breve_pausa(Microseg, 12);
-   puts(temporizador_to_str(timer));
+   puts(timer_to_str(timer));
 
    breve_pausa(Microseg, 8);
-   puts(temporizador_to_str(timer));
+   puts(timer_to_str(timer));
 
    destroi_temporizador(timer);
 
-   TEMPORIZADOR timer_seg = cria_temporizador(Segundo, 8);
+   Temporizador timer_seg = cria_temporizador(Segundo, 8);
 
    breve_pausa(Segundo, 3);
-   puts(temporizador_to_str(timer_seg));
+   puts(timer_to_str(timer_seg));
 
    breve_pausa(Segundo, 4);
-   puts(temporizador_to_str(timer_seg));
+   puts(timer_to_str(timer_seg));
 
    breve_pausa(Segundo, 2);
-   puts(temporizador_to_str(timer_seg));
+   puts(timer_to_str(timer_seg));
 
    destroi_temporizador(timer_seg);
+}
+
+void dois_tais_ate_o_esgotamento(void) {
+   Temporizador a = cria_temporizador(Segundo, 8);
+   Temporizador b = cria_temporizador(Segundo, 13);
+
+   while (!(esgotado(a) && esgotado(b))) {
+      char* fmt_a = timer_to_str(a);
+      char* fmt_b = timer_to_str(b);
+
+      printf("a ==> %s \tb ==> %s\n", fmt_a, fmt_b);
+      free(fmt_b); free(fmt_a);
+
+      breve_pausa(Miliseg, 700);
+   }
+   // Após o esgotamento:
+   char* fmt_a = timer_to_str(a);
+   char* fmt_b = timer_to_str(b);
+   printf("a ==> %s \tb ==> %s\n", fmt_a, fmt_b);
+   free(fmt_b); free(fmt_a);
+
+   destroi_temporizador(a);
+   destroi_temporizador(b);
+}
+
+void reutilizacao_do_temporizador(void) {
+   Timer obj = cria_temporizador(Segundo, 5);
+   bool temporizador_esta_esgotado = esgotado(obj);
+
+   assert (obj->reutilizacoes == 0);
+   do {
+      temporizador_esta_esgotado = esgotado(obj);
+
+      char* fmt = timer_to_str(obj);
+      printf("%s\n", fmt);
+      free(fmt);
+
+      breve_pausa(Miliseg, 800);
+   } while(!temporizador_esta_esgotado);
+
+   recomecar(obj);
+   assert (obj->reutilizacoes == 1);
+   do {
+      temporizador_esta_esgotado = esgotado(obj);
+
+      char* fmt = timer_to_str(obj);
+      printf("%s\n", fmt);
+      free(fmt);
+
+      breve_pausa(Miliseg, 800);
+   } while(!temporizador_esta_esgotado);
+
+   recomecar(obj);
+   assert (obj->reutilizacoes == 2);
+   do {
+      temporizador_esta_esgotado = esgotado(obj);
+
+      char* fmt = timer_to_str(obj);
+      printf("%s\n", fmt);
+      free(fmt);
+
+      breve_pausa(Miliseg, 800);
+   } while(!temporizador_esta_esgotado);
+   destroi_temporizador(obj);
 }
 
 void teste_desconhecido_i() {
@@ -168,10 +225,7 @@ void teste_desconhecido_i() {
    CLOCKS_PER_SEC, tempo_do_processo);
 }
 
-int main(int qtd, char* argumentos[], char* envp[]) 
-{
-   // stringficacao_do_temporizador();
-
+void teste_desconhecido_ii(void) {
    clockid_t tipo = CLOCK_MONOTONIC;
    struct timespec inicio, fim;
 
@@ -184,8 +238,15 @@ int main(int qtd, char* argumentos[], char* envp[])
    size_t decorrido_seg = fim.tv_sec - inicio.tv_sec;
    size_t decorrido_nano = fim.tv_nsec - inicio.tv_nsec;
    printf("%ldseg %ldns\n", decorrido_seg, decorrido_nano);
-   
-   return EXIT_SUCCESS;
 }
 
+int main(int qtd, char* argumentos[], char* envp[]) 
+{
+   // alocacao_e_desalocacao();
+   // visualizacao_dos_marcos();
+   // stringficacao_do_temporizador();
+   // dois_tais_ate_o_esgotamento();
+   reutilizacao_do_temporizador();
+   return EXIT_SUCCESS;
+}
 #endif
