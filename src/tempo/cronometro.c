@@ -4,21 +4,27 @@
  * que facilita a leitura.
  */
 
+#include <stdio.h>
+#include <stdbool.h>
+#include "legivel.h"
+
 // total de registros que é possível fazer.
 #define TOTAL_REGISTROS 100
 
 struct cronometro {
+   // Segundos decorridos à partir desta contagem.
    time_t inicio; 
+   // Outros selos de tempo do sistema, para verificar variação.
    time_t* marcos;
+
    // capacidade inicial da array.
    size_t capacidade;
+
    // quantos registros foram feitos.
    size_t qtd;
 };
 // tamanho da 'struct' acima.
-#define CLOCK_SIZE sizeof(struct cronometro)
-// nomes melhores para estrutura.
-typedef struct cronometro *Cronometro;
+#define CLOCK_SIZE sizeof (struct cronometro)
 
 Cronometro cria_cronometro() {
    Cronometro novo = malloc(CLOCK_SIZE);
@@ -29,6 +35,7 @@ Cronometro cria_cronometro() {
       novo->qtd = 0;
       novo->capacidade = TOTAL_REGISTROS;
       novo->marcos = malloc(TOTAL_REGISTROS * sizeof(time_t));
+
       #ifdef _DEBUG_CRIA_CRONOMETRO
       puts("cronômetro foi alocado com sucesso.");
       #endif
@@ -39,20 +46,14 @@ Cronometro cria_cronometro() {
    return novo;
 }
 
-#include <stdio.h>
-#include <stdbool.h>
-#include "../legivel.h"
-
 void destroi_cronometro(Cronometro c, bool info) {
-   //if (info) {
    #ifdef _DEBUG_DESTROI_CRONOMETRO
       time_t fim = time(NULL);
       double diferenca = difftime(fim, c->inicio);
       printf(
-         "\ntempo decorrido: %s\nregistros feitos: %d\n",
+         "\ntempo decorrido: %s\nregistros feitos: %lu\n",
          tempo_legivel(diferenca), c->qtd
       );
-   // }
    #endif
 
    if (c != NULL)

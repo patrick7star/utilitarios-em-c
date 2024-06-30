@@ -2,7 +2,7 @@
 struct tupla_duracao { TEMPO_TIPO t; uint64_t n; };
 typedef struct tupla_duracao Duracao;
 
-Duracao transforma_para_nanoseg(TEMPO_TIPO t, uint64_t n) {
+static Duracao transforma_para_nanoseg(TEMPO_TIPO t, uint64_t n) {
    uint64_t unidades = UINT64_MAX;
 
    switch (t) {
@@ -32,7 +32,7 @@ Duracao transforma_para_nanoseg(TEMPO_TIPO t, uint64_t n) {
    return resultado;
 }
 
-Duracao reducao_de_grandeza(Duracao nanosD) {
+static Duracao reducao_de_grandeza(Duracao nanosD) {
    uint64_t unidades = nanosD.n;
    TEMPO_TIPO tipo[4] = { Nanoseg, Microseg, Miliseg, Segundo };
    uint8_t posicao = 0;
