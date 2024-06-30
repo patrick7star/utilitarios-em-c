@@ -11,7 +11,7 @@ legivel.o: src/legivel.c
 	gcc -c src/legivel.c -o build/legivel.o
 
 terminal.o: src/terminal.c
-	gcc -c src/terminal.c -o build/terminal.o
+	gcc -I include -c src/terminal.c -o build/terminal.o
 
 tempo.o: src/tempo.c
 	gcc -c -I include/ src/tempo.c -o build/tempo.o
@@ -21,16 +21,26 @@ teste.o: src/teste.c
 
 FLAGS_TESTE = -I include/ -D_UT_TESTE -DALLOW_DEAD_CODE
 OBJS_TESTE=  build/legivel.o build/tempo.o build/terminal.o
-EXE_TESTE = testes/ut_teste
+EXE_TESTE = bin/tests/ut_teste
 
 teste: $(OBJS_TESTE) src/teste.c
 	@echo "lincando todos objetos gerados..."
 	@echo "compilando testes-unitários de teste.c ..."
-	gcc $(FLAGS_TESTE) -o testes/ut_teste src/teste.c $(OBJS_TESTE) -lm -Wall
+	gcc $(FLAGS_TESTE) -o $(EXE_TESTE) src/teste.c $(OBJS_TESTE) -lm -Wall
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+OBJ_TERM = build/terminal_teste.o
+EXE_TERM = ./bin/tests/ut_terminal
 
+terminal:
+	@echo "Compilando artefato 'terminal.o' em 'build' ..."
+	clang -std=gnu18 -Wno-main-return-type -I ./include \
+		-D_UT_TERMINAL -Wall \
+		-c -o $(OBJ_TERM) src/terminal.c
+	@echo "Ligamento entre o artefato e o executável ..."
+	clang -O0 -o $(EXE_TERM) $(OBJ_TERM)
 
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 OBJS_PONTO = build/terminal.o build/legivel.o build/tempo.o build/teste.o
 EXE_PONTO = bin/tests/ut_ponto
 
@@ -60,13 +70,15 @@ TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
 	-D_DEBUG_DESTROI_TEMPORIZADOR \
 	-D_DEBUG_DESTROI_CRONOMETRO \
 	-D_DEBUG_CRIA_CRONOMETRO 
-TEMPO_DEPEDENCIAS = src/teste.c src/tempo.c src/legivel.c src/terminal.c
+# TEMPO_DEPEDENCIAS = src/teste.c src/tempo.c src/legivel.c src/terminal.c
+TEMPO_COMPILA = -D_UT_TEMPO
+TEMPO_FLAGS = -I include -std=gnu18 -lm -Wall
+TEMPO_DEPEDENCIAS = -L bin/static -llegivel
 
 tempo: 
 	@echo "lincando artefatos para 'unit_tests_tempo.c'..."
-	gcc $(TEMPO_VERBOSE) -o testes/ut_tempo \
-	testes/unit_tests_tempo.c $(TEMPO_DEPEDENCIAS) \
-	-I 'include/' -std=gnu18 -lm -Wall -Wno-main -Wno-unused-functions
+	gcc $(TEMPO_FLAGS) $(TEMPO_COMPILA) -o bin/tests/ut_tempo \
+		src/tempo.c $(TEMPO_DEPEDENCIAS)
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
@@ -84,11 +96,18 @@ barra-de-progresso:
 	gcc -o testes/ut_barra_de_progresso build/progresso.o -Wall -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+OBJS_SET = $(OBJS_TESTE) build/teste.o build/aleatorio.o
+COMPILA_SET = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO 
+EXE_SET_REF = bin/tests/ut_conjunto
+SRC_SET_REF = src/estrutura-de-dados/conjunto.c
+
+conjunto-ref: teste.o
+	clang -std=c18 $(COMPILA_SET) -o $(EXE_SET_REF) -O0 -I include $(SRC_SET_REF) $(OBJS_TESTE) build/teste.o build/aleatorio.o -lm -Wall
 
 # salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.1.3
+VERSAO = v1.1.4
 OPCOES = --exclude=ut* -cvf
 NOME = utilitarios.$(VERSAO).tar 
 LOCAL = ../versions
@@ -153,19 +172,20 @@ fila-array-i: aleatorio.o
 	@echo "compilando 'testes unitários' da 'fila-array'..."
 	gcc -I include $(COMPILA_FA_I) -o $(EXE_FA_I) $(SRC_ADT_I)/filaarray.c $(DEPS_FA_I) -lm -Wall
 
-COMPILA_LA_I = -D_ALOCACAO_E_DESALOCACAO -D_UT_ARRAY_LISTA
-SRC_LA_I = src/estrutura-de-dados/abordagem-i/listaarray.c
+COMPILA_LA_I = -D_ALOCACAO_E_DESALOCACAO -D_UT_ARRAY_LISTA -D_TO_STRING
+SRC_LA_I = src/estrutura-de-dados/listaarray_ref.c
 DEPS_LA_I = build/terminal.o build/tempo.o -L bin/static -lteste -llegivel -lm
-EXE_LA_I = bin/tests/ut_lista_array
-lista-array-i:
+EXE_LA_I = bin/tests/ut_lista_array_ref
+lista-array-ref: libteste
 	gcc $(COMPILA_LA_I) -o $(EXE_LA_I) -I include/ $(SRC_LA_I) $(DEPS_LA_I) -Wall
+
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
-EXE_STR = testes/estringue
-LIB_STR = ../utilitarios/include
+EXE_STR = bin/tests/ut_estringue
+DEPS_STR = $(OBJS_TESTE) build/teste.o
 
-estringue: 
-	gcc -I $(LIB_STR) $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(OBJS_TESTE) build/teste.o -lm -Wall
+estringue: terminal.o
+	gcc -Wall -I ./include $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(DEPS_STR) -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 compila-libs: libprogresso liblegivel libteste libtempo
@@ -216,5 +236,9 @@ libtempo: legivel.o tempo.o
 	gcc -I include/ -fPIC -shared -o $(EXE_TIME_I) $(SRC_TIME) -Wall
 	@echo "compilação de uma biblioteca estática."
 	ar crs $(EXE_TIME_II) build/tempo.o
+
+libterminal: terminal.o
+	@echo "compilação de uma biblioteca estática."
+	ar crs bin/static/libterminal.a build/terminal.o
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
