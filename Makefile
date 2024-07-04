@@ -71,7 +71,8 @@ TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
 	-D_DEBUG_DESTROI_CRONOMETRO \
 	-D_DEBUG_CRIA_CRONOMETRO 
 # TEMPO_DEPEDENCIAS = src/teste.c src/tempo.c src/legivel.c src/terminal.c
-TEMPO_COMPILA = -D_UT_TEMPO
+TEMPO_COMPILA = -D_UT_TEMPO -D_DEBUG_CRIA_CRONOMETRO \
+					 -D_DEBUG_DESTROI_CRONOMETRO
 TEMPO_FLAGS = -I include -std=gnu18 -lm -Wall
 TEMPO_DEPEDENCIAS = -L bin/static -llegivel
 
@@ -143,11 +144,14 @@ COMPILA_HT_I = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
 				-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT 
 EXE_HT_I = bin/tests/ut_hashtable_ref
 OBJS_HT_I = $(OBJS_TESTE) build/teste.o
-SRC_HT_I = src/estrutura-de-dados/hashtable.c
+SRC_HT_I = src/estrutura-de-dados/hashtable_ref.c
 
 hashtable-ref: teste.o tempo.o legivel.o terminal.o
 	gcc -I include/ $(COMPILA_HT_I) -c $(SRC_HT_I) -o build/hashtable-ref.o
 	gcc -o $(EXE_HT_I) build/hashtable-ref.o $(OBJS_HT_I) -lm -Wall -std=c18
+
+hashtable-ref-cheque: teste.o tempo.o legivel.o terminal.o
+	gcc -fanalyzer -Wall -std=c18 build/hashtable-ref.o $(OBJS_HT_I) -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 SRC_FC_I = src/estrutura-de-dados/abordagem-i/filacircular.c
@@ -179,6 +183,15 @@ EXE_LA_I = bin/tests/ut_lista_array_ref
 lista-array-ref: libteste
 	gcc $(COMPILA_LA_I) -o $(EXE_LA_I) -I include/ $(SRC_LA_I) $(DEPS_LA_I) -Wall
 
+SRC_LP_REF = src/estrutura-de-dados/listaposicional_ref.c
+EXE_LP_REF = bin/tests/ut_listaposicional
+DEPS_LP_REF = -L bin/static -lteste -ltempo -llegivel -lm -lterminal
+
+lista-posicional-ref:
+	clang -I include -D_UT_LISTA_POSICIONAL -Wall -O0 \
+		-Wno-incompatible-pointer-types-discards-qualifiers \
+		-Wno-incompatible-pointer-types \
+		-o $(EXE_LP_REF) $(SRC_LP_REF) $(DEPS_LP_REF)
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
 EXE_STR = bin/tests/ut_estringue
