@@ -30,6 +30,7 @@
 #define VALORES_PADRONIZADOS 10llu
 #define VALORES_PADRONIZADOS_I 16llu
 #define VEICULOS 16llu
+#define LIVROS_DIDATICOS_GENEROS 12llu
 
 
 // contei 9 frutas.
@@ -142,5 +143,12 @@ const char* frases_i[] = {
    "sua mira está para cima, e à direita também",
    "Independentemente",
    "Você é sensato, justo e amoroso"
+};
+
+// Contei doze.
+const char* livros_didaticos_generos[] = {
+   "Matemática", "Português", "Inglês", "Geografia", "História", 
+   "Sociologia", "Filosofia", "Gramática", "Artes", "Física", 
+   "Química", "Biologia"
 };
 #endif
