@@ -2,7 +2,7 @@
 /*   Tipos mais genéricos, então caso necessite mudar-los para outro 
  * programa, apenas troque aqui.
  * 
- *   Hashtables com chaves genérica são basicamente impossível, não poderia
+ *   HashTables com chaves genérica são basicamente impossível, não poderia
  * implementar a hash no interno da estrutura. Basicamente implementar uma
  * para cada tipo primitivo(string, caractere, inteiro, etc...). O valor
  * pode sempre ser genérico, já que ele é irrelevante para o cálculo hash.
@@ -24,7 +24,9 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <assert.h>
-
+// Declaração das estruturas, funções e métodos, abaixo:
+#include "hashtable_ref.h"
+// Apenas incluindo para os testes:
 #if defined(_ATUALIZA_HD) || defined(_DELETA_HT) || defined (_OBTEM_HT)
 #include "teste.h"
 #endif
@@ -32,12 +34,15 @@
 // todos apelidos dados:
 typedef void* generico_t;
 typedef struct nodulo_do_hash nodulo_t; 
-typedef struct tabela_de_dispersao hashtable_t; 
 
 // todas constantes:
 #define INVALIDA NULL
 // Eu preciso transformar isso table[key] = value, nisso: insere_ht(table, key, value), ou atualiza_ht(table, key, value)
 
+/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+ *                Trecho do 'nódulo', embrulho que
+ *                   transporta os 'itens'
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
 struct nodulo_do_hash { 
    // valores genéricos tanto da chave como do valor:
    generico_t chave; 
@@ -81,7 +86,6 @@ static bool destroi_nodulo (nodulo_t* item) {
    if (item != INVALIDA) {
       // apenas some com as referências primeiramente...
       item->chave = NULL;
-      item->chave = NULL;
       destroi_toda_lista_ligada (item->seta);
       free (item);
       // confirma destruição.
@@ -116,14 +120,7 @@ struct tabela_de_dispersao {
    bool __hash__confirmada;
 };
 
-bool adiciona_metodos (
-  // instância que será passado tais métodos...
-  hashtable_t* m, 
-  // método para computar o hash.
-  size_t (*hash)(generico_t, size_t),
-  // método verifica os tipos genéricos testa instância.
-  bool (*eq)(generico_t, generico_t)
-) {
+bool adiciona_metodos ( HashTable m, Hash hash, Eq eq) {
    if (m == INVALIDA)
       return false;
 
@@ -144,15 +141,8 @@ bool adiciona_metodos (
    return m->__hash__confirmada && m->__eq__confirmada;
 }
 
-hashtable_t* cria_com_capacidade_ht(
-  // verifica capacidade da array interna da tabela.
-  size_t capacidade, 
-  // função hash do tipo específico tratado na tabela.
-  size_t (*Fh)(generico_t, size_t),
-  // função que verifica se tal dado é igual a outro.
-  bool (*Eq) (generico_t, generico_t)
-) {
-   hashtable_t* mapa = malloc(sizeof(hashtable_t));
+HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
+   HashTable mapa = malloc(sizeof(hashtable_t));
    size_t Q = capacidade;
    const size_t SIZE_REF = sizeof (nodulo_t*);
 
@@ -171,45 +161,38 @@ hashtable_t* cria_com_capacidade_ht(
       mapa->quantidade = 0;
 
       // referênciando funções que farão o cálculo hash internamente.
-      if (Fh != NULL) {
-         mapa->__hash__ = Fh;
+      if (f != NULL) {
+         mapa->__hash__ = f;
          // informando a instância tem tais métodos essenciais...
          mapa->__hash__confirmada = true;
       } else
          mapa->__hash__confirmada = false;
 
-      if (Eq != NULL) {
-         mapa->__iguais__ = Eq;
+      if (g != NULL) {
+         mapa->__iguais__ = g;
          mapa->__eq__confirmada = true;
       } else
          mapa->__eq__confirmada = false;
 
       #ifdef _CRIACAO_HT
-      assert (Fh != INVALIDA && Eq != INVALIDA);
+      assert (f != INVALIDA && g != INVALIDA);
       puts ("ambas funções passadas são válidas.");
       #endif 
    }
    return mapa;
 }
 
-hashtable_t* cria_ht (
-  // função hash do tipo específico tratado na tabela.
-  size_t (*Fh)(generico_t, size_t),
-  // função que verifica se tal dado é igual a outro.
-  bool (*Eq) (generico_t, generico_t)
-){
-   // criação vázia da 'hashtable', com uma capacidade inicial.
-   return cria_com_capacidade_ht (20, Fh, Eq);
-}
+HashTable cria_ht (Hash f, Eq g) 
+// Criação vázia da 'hashtable', com uma capacidade inicial.
+   { return cria_com_capacidade_ht (20, f, g); }
 
-hashtable_t* cria_branco_ht (void) {
-   /* cria a mesma instância que acima, porém sem as instâncias necessárias
-    * nele a priori. Elas são necessárias para fazer várias operações, 
-    * porém para apenas instânciar, não. */
-   return cria_com_capacidade_ht (30, NULL, NULL);
-}
+HashTable cria_branco_ht (void) 
+/* Cria a mesma instância que acima, porém sem as instâncias necessárias
+ * nele a priori. Elas são necessárias para fazer várias operações, 
+ * porém para apenas instânciar, não. */
+   { return cria_com_capacidade_ht (30, NULL, NULL); }
 
-bool destroi_ht(hashtable_t* m) { 
+bool destroi_ht(HashTable m) { 
    if (m == INVALIDA) return false; 
 
    size_t Q = m->capacidade, i = 1;
@@ -270,10 +253,10 @@ static result_t verifica_lista (
    return NEGACAO_PADRAO;
 }
 
-bool insere_ht(hashtable_t* m, generico_t ch, generico_t v) {
-   /* computa posição na array baseada na chave e capacidade. A função
-    * hash, por desenho da estrutura, já vem embutida. 
-    */
+bool insere_ht(HashTable m, generico_t ch, generico_t v) {
+/* computa posição na array baseada na chave e capacidade. A função
+ * hash, por desenho da estrutura, já vem embutida. 
+ */
    size_t posicao = m->__hash__ (ch, m->capacidade);
    nodulo_t* entrada = m->locais[posicao];
 
@@ -312,11 +295,11 @@ bool insere_ht(hashtable_t* m, generico_t ch, generico_t v) {
    }
 }
 
-bool contem_ht(hashtable_t* m,  generico_t ch) { 
-   /* verifica se tal chave está contida na tabela de dispersão. Chama 
-    * função que da uma varrida na lista interna procurando pelo primeiro
-    * item correspondente, manda o resultado e muito mais, porém apenas
-    * estamos interessado na condição de "pertencimento" retornada. */
+bool contem_ht(HashTable m,  generico_t ch) { 
+/* verifica se tal chave está contida na tabela de dispersão. Chama 
+ * função que da uma varrida na lista interna procurando pelo primeiro
+ * item correspondente, manda o resultado e muito mais, porém apenas
+ * estamos interessado na condição de "pertencimento" retornada. */
 
    /* computa posição na array baseada na chave e capacidade. A função
     * hash, por desenho da estrutura, já vem embutida. 
@@ -334,12 +317,11 @@ bool contem_ht(hashtable_t* m,  generico_t ch) {
    return resultado.contido;
 }
 
-
-bool atualiza_ht(hashtable_t* m,  generico_t ch,  generico_t nv) { 
-   /* acha uma chave e troca o valor dela, o retorno é bem sucedido se 
-    * a atualização foi definitivamente feita, e falho caso o contrário,
-    * que seria se por exemplo, se não houvesse a chave demanda para
-    * atualização. */
+bool atualiza_ht(HashTable m,  generico_t ch,  generico_t nv) { 
+/* acha uma chave e troca o valor dela, o retorno é bem sucedido se 
+ * a atualização foi definitivamente feita, e falho caso o contrário,
+ * que seria se por exemplo, se não houvesse a chave demanda para
+ * atualização. */
    size_t posicao = m->__hash__ (ch, m->capacidade);
 
    #ifdef _ATUALIZA_HD
@@ -362,14 +344,17 @@ bool atualiza_ht(hashtable_t* m,  generico_t ch,  generico_t nv) {
    return outcome.contido; 
 }
 
-bool deleta_ht(hashtable_t* m, generico_t ch) { 
-   /* A operação de remoção é apenas usar o método de atualização, para
-    * inserir uma chave-em-branco no lugar da 'chave' dada, o resto é 
-    * apenas realinhar das 'entradas' na array, tipo chaves-em-branco
-    * no fim dela, 'entradas' não vázia no começo, não importando a ordem.
-    */
+bool deleta_ht(HashTable m, generico_t ch) { 
+/* A operação de remoção é apenas usar o método de atualização, para
+ * inserir uma chave-em-branco no lugar da 'chave' dada, o resto é 
+ * apenas realinhar das 'entradas' na array, tipo chaves-em-branco
+ * no fim dela, 'entradas' não vázia no começo, não importando a ordem.
+ */
    size_t posicao = m->__hash__ (ch, m->capacidade);
-   result_t outcome = verifica_lista (m->locais[posicao], ch, m->__iguais__);
+   result_t outcome = verifica_lista (
+      m->locais[posicao], 
+      ch, m->__iguais__
+   );
    nodulo_t* item = outcome.item;
    bool a_chave_existe = outcome.contido;
 
@@ -403,19 +388,20 @@ bool deleta_ht(hashtable_t* m, generico_t ch) {
    return a_chave_existe;
 }
 
-bool vazia_ht(hashtable_t* m) 
+bool vazia_ht(HashTable m) 
    /* Operações, principalmente de encapsulamento, extremamente triviais
     * mais necessárias para esconder, futurumente quando este arquivo
     * fazer parte da 'lib' acessar tais valores da estrutura. */
    { return m->quantidade == 0; }
 
-size_t tamanho_ht(hashtable_t* m) 
+size_t tamanho_ht(HashTable m) 
+// Entrega o contador de itens iterno da estrutura.
    { return m->quantidade; }
 
-generico_t obtem_ht(hashtable_t* m,  generico_t ch) {
-   /* Basicamente, a função que verifca é está aqui, porém retorna muito
-    * mais que o atual nódulo com 'data', aqui só pegamos o importante
-    * e o retornamos. */
+generico_t obtem_ht(HashTable m,  generico_t ch) {
+/* Basicamente, a função que verifca é está aqui, porém retorna muito
+ * mais que o atual nódulo com 'data', aqui só pegamos o importante
+ * e o retornamos. */
    size_t posicao = m->__hash__ (ch, m->capacidade);
    result_t outcome = verifica_lista (
       // lista encadeada na determinada posição.
@@ -440,14 +426,16 @@ generico_t obtem_ht(hashtable_t* m,  generico_t ch) {
    return NULL;
 }
 
-
-/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+ *                      Iterador: funções e métodos
+ *                         relacionados a tal
+ *
  *   Esta parte é totalmente referente ao 'iterador' da estrutura, é uma 
  * parte dela, porém para melhor organização e visualização futura ficará
  * este separador entre eles. Assim fica de fácil localização, e os métodos
  * de cada um não serão confundidos.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
-typedef struct iteracao_da_hashtable {
+struct iteracao_da_hashtable {
    // contador de itens iterados.
    size_t contagem;
    // posição atual na array.
@@ -458,19 +446,13 @@ typedef struct iteracao_da_hashtable {
 
    // garantidor de que a 'tabela' não foi alterada.
    size_t inicialmente;
-   hashtable_t* tabela;
-
-} IterHT, *IteradorHT;
-
-/* tupla que é produzida na iteração de dados, contendo tanto uma referência
- * da chave como o valor. */  
-struct iterator_ouptut_hs { generico_t key; generico_t value; }; 
-typedef struct iterator_ouptut_hs IterOutputHT;
+   HashTable tabela;
+};
 
 // cédula em branco para indicar termino da iteração ou invalidação.
-const IterOutputHT NULO_HT = (IterOutputHT){NULL, NULL};
+const IterOutputHT NULO_HT = (IterOutputHT) {NULL, NULL};
 
-IterHT cria_iter_ht (hashtable_t* m) {
+IterHT cria_iter_ht (HashTable m) {
    IterHT instancia;
 
    instancia.contagem = 0;
@@ -535,22 +517,24 @@ IterOutputHT next_ht (IteradorHT iter) {
    return NULO_HT;
 }
 
-
-/* Testando todos métodos, funções, e dados abstratos acima. Deixando
+/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+ *                      Testes Unitários 
+ *
+ * Testando todos métodos, funções, e dados abstratos acima. Deixando
  * bem referênciado esta parte, pois fica fácil descartar -- além de 
  * ser necessário se os tipos forem trocados, do contrário o programa
  * não compila; se copiado para vários projetos. Caso também esta parte
  * futuramente for colocada num subdiretório, e os tipos serem trocados
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
- */
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 #ifdef _UT_HASHTABLE
 // bibliotecas:
 #include "teste.h"
 #include <assert.h>
 #include <locale.h>
 #include "dados_testes.h"
-
+// Constante que comfirma igualdade entre strings.
 #define STR_IGUAIS 0
 
 void varias_entradas_genericas_diferentes (void) {
@@ -610,12 +594,12 @@ bool iguais_string (generico_t a, generico_t b) {
 }
 
 void alocao_e_desacalocao_simples_instancia (void) {
-   hashtable_t* mapa = cria_ht (hash_string, iguais_string);
+   HashTable mapa = cria_ht (hash_string, iguais_string);
    destroi_ht (mapa);
 }
 
-void visualiza_interna (hashtable_t* m) {
-   puts ("\nHashtable visualização interna:");
+void visualiza_interna (HashTable m) {
+   puts ("\nHashTable visualização interna:");
    size_t C = m->capacidade;
 
    for (size_t i = 1; i <= C; i++) {
@@ -646,7 +630,7 @@ struct chave_valor entradas[] = {
 };
 
 void aplicacao_de_simples_insercoes (void) {
-   hashtable_t* mapa = cria_ht (hash_string, iguais_string);
+   HashTable mapa = cria_ht (hash_string, iguais_string);
 
    assert (vazia_ht (mapa));
    for (size_t i = 1; i <= 7; i++) {
@@ -661,7 +645,7 @@ void aplicacao_de_simples_insercoes (void) {
 }
 
 void verifica_operacao_de_pertencimento (void) {
-   hashtable_t* mapa = cria_ht (hash_string, iguais_string);
+   HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
       float* ptr_value = &entradas[i - 1].value;
@@ -690,7 +674,7 @@ void ascii_code_de_wide_strings (void) {
 }
 
 void simples_atualizacoes_de_alguns_valores (void) {
-   hashtable_t* mapa = cria_ht (hash_string, iguais_string);
+   HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
       float* ptr_value = &entradas[i - 1].value;
@@ -718,7 +702,7 @@ void simples_atualizacoes_de_alguns_valores (void) {
    destroi_ht (mapa);
 }
 
-void visualiza_mapa_wchar_e_float (hashtable_t* m) {
+void visualiza_mapa_wchar_e_float (HashTable m) {
    size_t cP = m->capacidade;
 
    printf ("{..");
@@ -738,7 +722,7 @@ void visualiza_mapa_wchar_e_float (hashtable_t* m) {
 }
 
 void algumas_remocoes_feitas (void) {
-   hashtable_t* mapa = cria_ht (hash_string, iguais_string);
+   HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
       float* ptr_value = &entradas[i - 1].value;
@@ -780,7 +764,6 @@ void algumas_remocoes_feitas (void) {
    destroi_ht (mapa);
 }
 
-
 size_t hash_int (generico_t dt, size_t cp) {
    uint16_t* ptr = dt;
    uint16_t chave = *ptr;
@@ -791,7 +774,7 @@ size_t hash_int (generico_t dt, size_t cp) {
 bool int_eq (generico_t a, generico_t b) 
    { return *((uint16_t*)a) == *((uint16_t*)b); }
 
-void visualizacao_mapa_u16_e_str (hashtable_t* m) {
+void visualizacao_mapa_u16_e_str (HashTable m) {
    size_t cP = m->capacidade;
 
    printf ("{..");
@@ -810,13 +793,17 @@ void visualizacao_mapa_u16_e_str (hashtable_t* m) {
 }
 
 void operacoes_negadas (void) {
-   uint16_t* amostras = valores_padronizados_i;
+   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
    // inserer, resgatar, e remover até não poder mais...
-   hashtable_t* M = cria_ht(hash_int, int_eq);
+   HashTable M = cria_ht(hash_int, int_eq);
    assert (vazia_ht(M));
 
-   for (size_t p = 1; p <= 8; p++)
-      insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+   for (size_t p = 1; p <= 8; p++) {
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)legumes[p - 1];
+      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+      insere_ht (M, key, value);
+   }
 
    visualizacao_mapa_u16_e_str (M);
    assert (tamanho_ht(M) == 8);
@@ -882,13 +869,17 @@ void operacoes_negadas (void) {
 }
 
 void metodo_get_verificacao_basica (void) {
-   uint16_t* amostras = valores_padronizados_i;
+   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
    // inserer, resgatar, e remover até não poder mais...
-   hashtable_t* M = cria_ht(hash_int, int_eq);
+   HashTable M = cria_ht(hash_int, int_eq);
    assert (vazia_ht(M));
 
-   for (size_t p = 1; p <= 8; p++)
-      insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+   for (size_t p = 1; p <= 8; p++) {
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)legumes[p - 1];
+      insere_ht (M, key, value);
+      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+   }
 
    visualizacao_mapa_u16_e_str (M);
    assert (tamanho_ht(M) == 8);
@@ -922,8 +913,8 @@ void print_item_ht_u16_e_str (IterOutputHT x) {
    printf (" ==> %u: %s\n", *((uint16_t*)x.key), (char*)x.value);
 }
 
-void print_inner_u16_e_str (hashtable_t* m) {
-   puts ("\nHashtable visualização interna:");
+void print_inner_u16_e_str (HashTable m) {
+   puts ("\nHashTable visualização interna:");
    size_t C = m->capacidade;
 
    for (size_t i = 1; i <= C; i++) {
@@ -945,13 +936,21 @@ void print_inner_u16_e_str (hashtable_t* m) {
 }
 
 void uso_simples_da_iteracao (void) {
-   hashtable_t* M = cria_ht(hash_int, int_eq);
-   uint16_t* amostras = valores_padronizados_i;
+   HashTable M = cria_ht(hash_int, int_eq);
+   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
 
-   for (size_t p = 1; p <= 9; p++)
-      insere_ht (M, &amostras[p - 1], legumes[p - 1]);
-   for (size_t p = 9; p <= 19; p++)
-      insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
+   for (size_t p = 1; p <= 9; p++) {
+      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)legumes[p - 1];
+      insere_ht (M, key, value);
+   }
+   for (size_t p = 9; p <= 19; p++) {
+      // insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)boys_names[p - 9 - 1];
+      insere_ht (M, key, value);
+   }
    visualizacao_mapa_u16_e_str (M);
    print_inner_u16_e_str (M);
 
@@ -977,7 +976,7 @@ void uso_simples_da_iteracao (void) {
 }
 
 void tentando_iterador_mapa_vazio (void) {
-   hashtable_t* M = cria_ht(hash_int, int_eq);
+   HashTable M = cria_ht(hash_int, int_eq);
    IterHT I = cria_iter_ht (M);
 
    IterOutputHT i = next_ht (&I);
@@ -1003,7 +1002,7 @@ typedef struct trechos { const char* inicio; uint8_t tamanho; } Trecho;
 void filtra(const char* todos_argumentos) {
    Trecho lista[5];
    char SEP = ',';
-   char* ptr = todos_argumentos;
+   char* ptr = (char*)todos_argumentos;
    uint16_t contador = 0;
 
    puts("visualizando ...");
@@ -1012,7 +1011,9 @@ void filtra(const char* todos_argumentos) {
       char* ptr_v = strchr(ptr, SEP);
 
       // Abandona o laço se nenhum pointeiro for encontrado.
-      if (ptr_v == NULL) break; 
+      if (ptr_v == NULL) {
+         break; 
+      }
 
       printf("%s\n", ptr);
       size_t X = ptr_v - ptr;
@@ -1020,8 +1021,9 @@ void filtra(const char* todos_argumentos) {
       ptr += (X + 1);
       contador++;
    } 
-   size_t X = strlen(todos_argumentos) - ptr;
-   lista[contador++] = (Trecho.inicio = ptr_v, .tamanho = X);
+   // size_t X = strlen(todos_argumentos) - ptr;
+   size_t X = strlen(todos_argumentos) - strlen(ptr);
+   lista[contador++] = (Trecho){.inicio = ptr, .tamanho = X};
 
    puts("Iterando trechos: ...");
    for (size_t p = 1; p <= 5; p++) 
@@ -1042,18 +1044,18 @@ void macro_de_insercao_especifico(void)
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
    executa_testes (
-      10, varias_entradas_genericas_diferentes, false,
-         alocao_e_desacalocao_simples_instancia, false,
-         aplicacao_de_simples_insercoes, false,
-         verifica_operacao_de_pertencimento, false,
+      10, varias_entradas_genericas_diferentes, true,
+         alocao_e_desacalocao_simples_instancia, true,
+         aplicacao_de_simples_insercoes, true,
+         verifica_operacao_de_pertencimento, true,
          // verificação de features do C.
-         ascii_code_de_wide_strings, false,
-         simples_atualizacoes_de_alguns_valores, false,
-         algumas_remocoes_feitas, false,
-         operacoes_negadas, false, 
-         metodo_get_verificacao_basica, false,
+         ascii_code_de_wide_strings, true,
+         simples_atualizacoes_de_alguns_valores, true,
+         algumas_remocoes_feitas, true,
+         operacoes_negadas, true, 
+         metodo_get_verificacao_basica, true,
          // Testando instânciação via macros:
-         macro_de_insercao_especifico, true
+         macro_de_insercao_especifico, false
    );
 
    // testes apenas do iteradores.
