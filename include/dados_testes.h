@@ -31,6 +31,7 @@
 #define VALORES_PADRONIZADOS_I 16llu
 #define VEICULOS 16llu
 #define LIVROS_DIDATICOS_GENEROS 12llu
+#define OBJETOS 15llu
 
 
 // contei 9 frutas.
@@ -124,6 +125,7 @@ const char silly_poem[] = (
    " eyes... as a huge cloud comes me soon"
 );
 
+// Contabilizei quize.
 const char* objetos[] = {
    "copo",  "cerca", "porta", "cadeado", "mala", 
    "bolsa", "garrafa", "ármario", "cesto",

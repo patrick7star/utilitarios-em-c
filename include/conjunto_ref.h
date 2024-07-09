@@ -41,4 +41,26 @@
  size_t tamanho_set (Conjunto); 
  void impressao_generica(Conjunto, ToString); 
 
+
+ /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
+  *                     Iterador do Conjunto
+  *                        e seus métodos
+  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+  */
+ typedef struct iterador_do_conjunto IterSet, *IteradorRefSet;
+ typedef struct saida_da_iteracao_do_set IterOutputSet;
+ // Constante que representa nenhum item iterado.
+ const IterOutputSet NULO_SET;
+
+ // Métodos de criação, mudança e atual estado:
+ IterSet cria_iter_set (Conjunto); 
+ /* Faz a clonagem do iterador dado, inclusive seu estado(consumido ou 
+  * não), no mesmo estágio do que foi usado.*/
+ IterSet clona_iter_set(IteradorRefSet);
+ // Total de itens ainda a consumir.
+ size_t contagem_iter_set (IteradorRefSet);
+ IterOutputSet next_set (IteradorRefSet); 
+ // Verifica se todos itens do 'conjunto' foram consumido via iterador.
+ bool consumido_iter_set (IteradorRefSet);
+
 #endif
