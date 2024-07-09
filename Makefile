@@ -52,7 +52,7 @@ ponto: teste.o
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 aleatorio.o: src/aleatorio.c
-	gcc -c src/aleatorio.c -o build/aleatorio.o -lm
+	gcc -I include/ -c src/aleatorio.c -o build/aleatorio.o -lm
 
 OBJETOS = build/teste.o build/teste.o build/tempo.o build/legivel.o 
 OBJS = build/teste.o build/tempo.o build/legivel.o build/terminal.o
@@ -97,13 +97,13 @@ barra-de-progresso:
 	gcc -o testes/ut_barra_de_progresso build/progresso.o -Wall -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-OBJS_SET = $(OBJS_TESTE) build/teste.o build/aleatorio.o
-COMPILA_SET = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO 
+OBJS_SET_REF = -L bin/static -lteste -llegivel -ltempo -lterminal
+COMPILA_SET_REF = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO 
 EXE_SET_REF = bin/tests/ut_conjunto
-SRC_SET_REF = src/estrutura-de-dados/conjunto.c
+SRC_SET_REF = src/estrutura-de-dados/conjunto_ref.c
 
-conjunto-ref: teste.o
-	clang -std=c18 $(COMPILA_SET) -o $(EXE_SET_REF) -O0 -I include $(SRC_SET_REF) $(OBJS_TESTE) build/teste.o build/aleatorio.o -lm -Wall
+conjunto-ref: libaleatorio
+	clang -O0 -std=c18 -Wall $(COMPILA_SET_REF) -o $(EXE_SET_REF) -I include $(SRC_SET_REF) $(OBJS_SET_REF) -lm
 
 # salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
@@ -253,5 +253,10 @@ libtempo: legivel.o tempo.o
 libterminal: terminal.o
 	@echo "compilação de uma biblioteca estática."
 	ar crs bin/static/libterminal.a build/terminal.o
+
+libaleatorio: aleatorio.o
+	@echo "compila gerador/embalharador."
+	ar crs bin/static/libaleatorio.a build/terminal.o
+
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
