@@ -7,11 +7,13 @@
  * seja eles qualquer que tipo.
  */
 
+// Definições das estruturas, dados, métodos, e funções abaixo:
+#include "listaarray_ref.h"
 // Apenas bibliotecas padrão do C:
-#include <stddef.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
 /* Sem específicar a capacidade, será o valor abaixo que será 
  * automaticamente redimensionado para o arranjo de dados. */
@@ -20,18 +22,14 @@
 /* Modo mais limpo de dizer que um tipo de dado é 'inválido'. */
 #define INVALIDA NULL
 
-// um jeito mais limpo e entendível de como chamar tal tipo.
-typedef void* generico_t;
-
-typedef struct array_lista {
+struct array_lista {
    // quantia inicial da array e total de itens nela guardados.
    size_t quantia;
    size_t capacidade;
 
    // array de containers, este, armazena o endereço do dado e seu tamanho.
    generico_t* array;
-
-} *ArrayLista, vetor_t;
+};
 
 ArrayLista cria_com_capacidade_al(size_t n) {
 /* Aloca a lista, onde a 'array interna' tem uma 'capacidade inicial', ou 
@@ -93,39 +91,7 @@ bool destroi_al(ArrayLista l) {
    return true;
 }
 
-/*
-bool redimensiona(ArrayLista l) {
-   size_t nova_capacidade = 2 * l->capacidade;
-   size_t Q = l->quantia;
-   size_t tamanho = sizeof (generico_t);
-   generico_t* nova_array = malloc(2 * nova_capacidade * tamanho);
-   size_t C = l->capacidade;
-   generico_t* ptr_array_antiga = l->array;
-
-   // só realiza a rotina abaixo se a 'quantia' atingiu a 'capacidade'.
-   if (Q < C) return false;
-
-   // se livrando a referência a antiga ...
-   l->array = NULL;
-   // copiando ...
-   for (size_t k = 1; k <= C; k++)
-      nova_array[k - 1] = ptr_array_antiga[k - 1];
-
-   // liberando antiga...
-   #ifdef _REDIMENSIONA
-   puts ("a liberação da antiga array foi sucedida.");
-   #endif
-   free (ptr_array_antiga);
-
-   // então atribuindo nova array a instância ...
-   l->array = nova_array;
-   // atualizando nova capacidade...
-   l->capacidade = nova_capacidade;
-   // confirma como feita o redimensionamento.
-   return true;
-}
-*/
-
+static void redimensiona(ArrayLista L, size_t nC) {
 /* Basicamente a solução foi copiada da implementação da 'fila-array' que 
  * é: faz uma função que redimensiona a 'array interna' da lista para o
  * tamanho desejado, em outras funções específicas, chamadas em ambos
@@ -133,7 +99,6 @@ bool redimensiona(ArrayLista l) {
  * baseado em premisas lógicas determinadas, redimensionam para mais ou 
  * para menos tal capacidade interna, já fazem quase tudo, inclusive
  * atualizar os valores. */
-static void redimensiona(ArrayLista L, size_t nC) {
    size_t t = L->quantia;
    generico_t* new_array = malloc(nC * sizeof(generico_t));
    generico_t* old_array = L->array;
@@ -225,7 +190,7 @@ bool vazia_al(ArrayLista l)
    { return l->quantia == 0; }
 
 size_t tamanho_al(ArrayLista l) 
-// retorna valor interno que contabiliza o líquido de inserções.
+// Retorna valor interno que contabiliza o líquido de inserções.
    { return l->quantia; }
 
 
@@ -288,6 +253,107 @@ size_t vacuo_al(ArrayLista l)
  * elementos que ele possui. */
    { return l->capacidade - l->quantia; }
 
+char* to_string_al(ArrayLista L, ToString fn) {
+/* Se você fornercer a função que gera uma string para o tipo de dado, tal
+ * função pode construir uma  string da estrutura em sí. */
+   size_t t = tamanho_al(L);
+   size_t size_vetor;
+   char* resultado_fmt;
+   size_t max_length = 10;
+   const char* rotulo = "array-lista";
+
+   if (t >= 1000) {
+      /* Por ser um processamento pesado, tanto na criação da string, com
+       * a medição do comprimento delas inicialmente, colocarei um limite
+       * de mil itens. Como impressões gerais não chegam a isso, pois tal
+       * código é geralmente usado para debbuging, é um bom limite. Até
+       * não achar um algoritmo mais leve para fazer isso, fica aí tal,
+       * sendo atualizado(dobrado) toda vez que o programa "quebrar" por
+       * causa de tal limitação. */
+      perror("não formata dado com tantos itens(mais de 1 mil).");
+      abort();
+   }
+
+   // Computando o a string com maior comprimento.
+   for (size_t i = t; i > 0; i--) {
+      generico_t dado = L->array[t - i];
+      // Olhando as strings, e registrando o tamanho da maior entre elas.
+      char* dado_str = fn(dado);
+      size_t length = strlen(dado_str);
+
+      if (length > max_length)
+         { max_length = length; }
+      free(dado_str);
+   }
+
+   /* Calculando necessário de caractéres, mais uns extras para não quebrar,
+    * e alocando a string com tal valor. */
+   size_vetor = strlen(rotulo) + (t + 1) * (max_length + 2) * sizeof(char);
+   resultado_fmt = (char*)malloc (size_vetor);
+
+   #ifdef _TO_STRING
+   printf(
+      "maior comprimento: %lu\ntotal de caractéres: %lu\n",
+      max_length, size_vetor
+   );
+   #endif
+
+   // Se está dentro do limite, então definir a primeira parte.
+   strcpy(resultado_fmt, rotulo); 
+   strcat(resultado_fmt, ": [");
+
+   if (vazia_al(L)) 
+      { strcat(resultado_fmt, "]"); } 
+   else {
+      for (size_t i = t; i > 0; i--) {
+         generico_t dado = L->array[t - i];
+         char* dado_str = fn(dado);
+         // Concatena o dado...
+         strcat(resultado_fmt, dado_str); 
+         // Concatena o separador...
+         strcat(resultado_fmt, ", ");
+         // Liberando a string gerada, depois de copiada.
+         free(dado_str);
+      }
+      // Retira espaço e vírgular(separador) do excesso.
+      strcat(resultado_fmt, "\b\b]\0");
+   }
+   return resultado_fmt;
+}
+
+ArrayLista cria_de_al(uint8_t Q, ...) {
+/* Função que aloca uma 'lista' da quantidade definida manualmente de 
+ * pointeiros. Ela serve mais de auxiliar para o macro abaixo. */
+   va_list dados_seq;
+   ArrayLista lista = cria_com_capacidade_al(Q);
+   va_start(dados_seq, Q);
+
+   for (uint8_t i = 1; i <= Q; i++) { 
+      generico_t datum = va_arg(dados_seq, generico_t);
+      insere_al(lista, datum);
+   }
+   va_end(dados_seq);
+
+   return lista;
+}
+
+void destroi_todas_al(uint8_t qtd, ...) {
+/* Dada todas listas instânciadas, esta função desaloca todas, em sequência.
+ * Se faltou com uma, o programa é interrompido. */
+   va_list LISTAS;
+   va_start(LISTAS, qtd);
+
+   for (uint8_t i = 1; i <= qtd; i++) { 
+      generico_t L = va_arg(LISTAS, ArrayLista);
+
+      if (destroi_al(L)) {
+         perror("[erro]Não foi possível desalocar esta!");
+         abort();
+      };
+   }
+   va_end(LISTAS);
+}
+
 /* Testando todos métodos, funções, e dados abstratos acima. Deixando
  * bem referênciado esta parte, pois fica fácil descartar -- além de 
  * ser necessário se os tipos forem trocados, do contrário o programa
@@ -298,6 +364,7 @@ size_t vacuo_al(ArrayLista l)
  */
 #if defined(_UT_ARRAY_LISTA)
 #include "teste.h"
+#include "dados_testes.h"
 #include <assert.h>
 
 void visualizacao_array_list_char(vetor_t* l) {
@@ -453,8 +520,6 @@ void remocao_em_pontos_criticos (void) {
    destroi_al(lista);
 }
 
-#include "dados_testes.h"
-
 void redimensionamento_automatico_da_capacidade(void) {
    vetor_t* L = cria_com_capacidade_al(4);
 
@@ -496,13 +561,51 @@ void redimensionamento_automatico_da_capacidade(void) {
    destroi_al(L);
 }
 
+char* stringfy_str(generico_t X) {
+   char* fmt = malloc(6 * sizeof(char));
+   uint16_t* pointer = X;
+   sprintf(fmt, "%u", *pointer);
+   return fmt;
+}
+
+void conversao_em_string(void) {
+   ArrayLista v = cria_al();
+   for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
+      insere_al(v, &valores_padronizados_i[i - 1]);
+
+
+   char* string_vetor = to_string_al(v, stringfy_str);
+   puts(string_vetor);
+   free(string_vetor);
+
+   destroi_al(v);
+}
+
+void novo_tipo_de_criacao_da_lista(void) {
+   ArrayLista L = cria_de_al(
+      4, &valores_padronizados_i[0],
+         &valores_padronizados_i[5],
+         &valores_padronizados_i[10],
+         &valores_padronizados_i[15]
+   );
+
+   printf("Total de itens: %lu\n", tamanho_al(L));
+   char* lista_str = to_string_al(L, stringfy_str);
+   puts(lista_str);
+
+   free(lista_str);
+   destroi_al(L);
+}
+
 int main(int total, char* argumentos[], char* variaveis[]) {
    executa_testes (
-      5, demonstracao_com_inteiros, true,
-         demonstracao_com_caracteres, true,
-         demonstracao_com_strings, true,
-         remocao_em_pontos_criticos, true,
-         redimensionamento_automatico_da_capacidade, true
+      7, demonstracao_com_inteiros, false,
+         demonstracao_com_caracteres, false,
+         demonstracao_com_strings, false,
+         remocao_em_pontos_criticos, false,
+         redimensionamento_automatico_da_capacidade, false,
+         conversao_em_string, false,
+         novo_tipo_de_criacao_da_lista, true
    );
    // verificado_o_que_foi_coletado, true
 

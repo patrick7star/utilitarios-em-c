@@ -16,6 +16,8 @@
  * importante nestes casos.
  */
 
+// Declaração das estruturas, funções e métodos, abaixo:
+#include "hashtable_ref.h"
 // biblioteca padrões em C:
 #include <inttypes.h>
 #include <stdlib.h>
@@ -24,16 +26,13 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <assert.h>
-// Declaração das estruturas, funções e métodos, abaixo:
-#include "hashtable_ref.h"
 // Apenas incluindo para os testes:
 #if defined(_ATUALIZA_HD) || defined(_DELETA_HT) || defined (_OBTEM_HT)
 #include "teste.h"
 #endif
 
 // todos apelidos dados:
-typedef void* generico_t;
-typedef struct nodulo_do_hash nodulo_t; 
+typedef struct nodulo_do_hash nodulo_t, *Node; 
 
 // todas constantes:
 #define INVALIDA NULL
@@ -42,7 +41,7 @@ typedef struct nodulo_do_hash nodulo_t;
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                Trecho do 'nódulo', embrulho que
  *                   transporta os 'itens'
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 struct nodulo_do_hash { 
    // valores genéricos tanto da chave como do valor:
    generico_t chave; 
@@ -53,8 +52,8 @@ struct nodulo_do_hash {
 };
 
 static nodulo_t* cria_nodulo (generico_t key, generico_t value) {
-   /* Retorna uma instância inválida ou não. Dependendo se a alocação 
-    * foi bem sucedidad. */
+/* Retorna uma instância inválida ou não. Dependendo se a alocação foi bem
+ * sucedidad. */
    nodulo_t* instancia = malloc (sizeof (nodulo_t));
 
    if (instancia != INVALIDA) {
@@ -80,6 +79,7 @@ static void destroi_toda_lista_ligada (nodulo_t* lista) {
       destroi_toda_lista_ligada (lista);
    }
 }
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
 
 #ifdef _ALLOW_DEAD_CODE
 static bool destroi_nodulo (nodulo_t* item) {
@@ -439,44 +439,44 @@ struct iteracao_da_hashtable {
    // contador de itens iterados.
    size_t contagem;
    // posição atual na array.
-   size_t cursor;
+   size_t indice;
 
    // referência ao atual item da 'tabela' referenciado.
-   nodulo_t* atual;
+   nodulo_t* cursor;
 
    // garantidor de que a 'tabela' não foi alterada.
    size_t inicialmente;
-   HashTable tabela;
+   HashTable instancia;
 };
 
 // cédula em branco para indicar termino da iteração ou invalidação.
 const IterOutputHT NULO_HT = (IterOutputHT) {NULL, NULL};
 
 IterHT cria_iter_ht (HashTable m) {
-   IterHT instancia;
+   IterHT i;
 
-   instancia.contagem = 0;
-   instancia.cursor = 0;
-   instancia.atual = m->locais[0];
-   instancia.inicialmente = tamanho_ht (m);
+   i.contagem = 0;
+   i.indice = 0;
+   i.cursor = m->locais[0];
+   i.inicialmente = tamanho_ht (m);
    // referência ao próprio mapa, dicio, table,... como quiser chamar.
-   instancia.tabela = m;
+   i.instancia = m;
 
-   return instancia;
+   return i;
 }
 
 static bool iterador_valido (IteradorHT iter) {
-   /* Para realizar qualquer uma das operações abaixo, é necessário
-    * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
-    * tamanho que na criação da instância. */
-   size_t T = tamanho_ht(iter->tabela);
-   bool referencia_existe = (iter->tabela != NULL);
+/* Para realizar qualquer uma das operações abaixo, é necessário
+ * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
+ * tamanho que na criação da instância. */
+   size_t T = tamanho_ht(iter->instancia);
+   bool referencia_existe = (iter->instancia != NULL);
    return (iter->inicialmente == T && referencia_existe);
 }
 
-size_t tamanho_iter_ht (IteradorHT iter) {
-   /* O restante de iterações é calculado na seguinte forma:
-    * total de itens na "lista" menos os já iterados. */
+size_t contagem_iter_ht (IteradorHT iter) {
+/* O restante de iterações é calculado na seguinte forma: total de itens 
+ * na "lista" menos os já iterados. */
    if (iterador_valido (iter))
       return iter->inicialmente - iter->contagem;
 
@@ -486,44 +486,107 @@ size_t tamanho_iter_ht (IteradorHT iter) {
 }
 
 IterOutputHT next_ht (IteradorHT iter) {
+/* O algoritmo que pega o próximo item da iteração. Seu modo de funcionar
+ * é o seguinte; vai iterando o cada posição na array de listas-ligadas,
+ * se não houver nada nela(sem lista), ele pula para o próximo índice 
+ * nela, se houver um nó, seguir a lista ligada. Cada iteração com um
+ * item válido(nó) é contabilizado. */
    /* Casos que não retornar qualquer valor válido. */
    if (!iterador_valido(iter))
       return NULO_HT;
-   else if (tamanho_iter_ht (iter) == 0)
+   else if (contagem_iter_ht(iter) == 0)
       return NULO_HT;
 
-   nodulo_t* atual = iter->atual;
+   nodulo_t* atual = iter->cursor;
    if (atual != INVALIDA) {
       // colhendo dados necessários ...
       generico_t vl = atual->valor;
       generico_t ch = atual->chave;
 
       // movendo pela lista ...
-      iter->atual = iter->atual->seta;
+      iter->cursor = iter->cursor->seta;
       // contabiliza iteração.
       iter->contagem++;
 
       // retorna item "cholido".
       return (IterOutputHT){.key = ch, .value=vl };
    } else  {
-      iter->cursor += 1;
+      iter->indice += 1;
       /* primeiro 'nódulo' da lista abaixo. */
-      iter->atual = iter->tabela->locais[iter->cursor];
+      iter->cursor = iter->instancia->locais[iter->indice];
       // chama a função recursivamente novamente...
       return next_ht (iter);
    }
-   // se chegar até aqui é o fim da iteração, se houve alguma. Neste caso
-   // será retornado uma tupla com endereço inválidos.
-   return NULO_HT;
 }
+
+bool consumido_iter_ht(IteradorHT iter) 
+// Diz se o iterador se esgotou(contagem atingiu valor inicial).
+   { return iter->contagem == iter->inicialmente; }
+
+IterHT clona_iter_ht(IteradorRefHT iter) {
+/* Clona o iterador passado, à partir do estágio que está. A alteração 
+ * deste novo clone, ou do original, não alteram a iteração de cada, más 
+ * sim, a mudança da estrutura original, que não permite ambos realizar 
+ * mais iterações. */ 
+   IterHT novo;
+   // Copiando informações:
+   novo.instancia = iter->instancia;
+   novo.contagem = iter->contagem;
+   novo.inicialmente = tamanho_ht(iter->instancia);
+   // Camos internos para iteração(até mais importante que os acimas):
+   novo.cursor = iter->cursor;
+   novo.indice = iter->indice;
+
+   return novo;
+}
+
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Renomeação de vários 
+ *                métodos e funções para os termos
+ *                  mais conhecidos em inglês
+ *
+ *  Apenas o encapsulamento das antigas com nomes novos, sendo que seus 
+ * blocos de instruções apenas fazem chamadas das originais, retornando
+ * o mesmo valor.
+ * === === === === === === === === === === === === === === === === === ==*/
+HashTable new_with_capacity_ht (size_t cP, Hash f, Eq g)
+   { return cria_com_capacidade_ht(cP, f, g); }
+
+HashTable new_ht (Hash f, Eq g)
+   { return cria_ht(f, g); }
+
+HashTable default_ht (void)
+   { return cria_branco_ht(); }
+
+bool delete_ht (HashTable m) 
+   { return destroi_ht(m); }
+
+bool add_ht (HashTable m, generico_t key, generico_t vl) 
+   { return insere_ht(m, key, vl); }
+
+bool update_ht (HashTable m,  generico_t key,  generico_t nvl)
+   { return atualiza_ht(m, key, nvl); }
+
+bool remove_ht (HashTable m, generico_t key)
+   { return deleta_ht(m, key); }
+
+bool contains_ht (HashTable m, generico_t key)
+   { return contem_ht(m, key); }
+
+generico_t get_ht (HashTable m, generico_t key)
+   { return obtem_ht(m, key); }
+
+bool empty_ht (HashTable m) { return vazia_ht(m); }
+
+size_t len_ht (HashTable m) { return tamanho_ht(m); }
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
  *
- * Testando todos métodos, funções, e dados abstratos acima. Deixando
- * bem referênciado esta parte, pois fica fácil descartar -- além de 
- * ser necessário se os tipos forem trocados, do contrário o programa
- * não compila; se copiado para vários projetos. Caso também esta parte
+ * Testando todos métodos, funções, e dados abstratos acima. Deixando bem 
+ * referênciado esta parte, pois fica fácil descartar -- além de ser 
+ * necessário se os tipos forem trocados, do contrário o programa não 
+ * compila; se copiado para vários projetos. Caso também esta parte 
  * futuramente for colocada num subdiretório, e os tipos serem trocados
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
@@ -955,13 +1018,13 @@ void uso_simples_da_iteracao (void) {
    print_inner_u16_e_str (M);
 
    IterHT I = cria_iter_ht (M);
-   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
 
-   for (size_t count = tamanho_iter_ht(&I); count > 0; count--) {
+   for (size_t count = contagem_iter_ht(&I); count > 0; count--) {
       IterOutputHT i = next_ht (&I);
       assert (i.key != NULL && i.value != NULL);
       print_item_ht_u16_e_str (i);
-      printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+      printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
    }
 
    printf ("tetando iterar mesmo esgotado ...");
@@ -980,20 +1043,22 @@ void tentando_iterador_mapa_vazio (void) {
    IterHT I = cria_iter_ht (M);
 
    IterOutputHT i = next_ht (&I);
-   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
    assert (i.key == NULL && i.value == NULL);
 
    i = next_ht (&I);
-   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
    assert (i.key == NULL && i.value == NULL);
 
    i = next_ht (&I);
-   printf ("contagem em %lu ...\n", tamanho_iter_ht(&I));
+   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
    assert (i.key == NULL && i.value == NULL);
 
    puts ("não funcionou com nenhuma!");
    destroi_ht (M);
 }
+
+// ---...---...---...---... ---...---...---...---...---...---...---...---
 
 typedef struct trechos { const char* inicio; uint8_t tamanho; } Trecho;
 
@@ -1060,8 +1125,8 @@ void main(void) {
 
    // testes apenas do iteradores.
    executa_testes (
-      2, uso_simples_da_iteracao, false,
-      tentando_iterador_mapa_vazio, false
+      2, uso_simples_da_iteracao, true,
+      tentando_iterador_mapa_vazio, true
    );
 }
 #endif
