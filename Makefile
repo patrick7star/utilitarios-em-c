@@ -94,7 +94,7 @@ barra-de-progresso:
 	@echo "criando objetos(artefatos) do 'barra de progresso'..."
 	gcc -c src/barra_de_progresso.c -D_UT_BARRA_DE_PROGRESSO -o build/progresso.o
 	@echo "lincando todos objetos num executável..."
-	gcc -o testes/ut_barra_de_progresso build/progresso.o -Wall -lm
+	gcc -o bin/tests/ut_barra_de_progresso build/progresso.o -Wall -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 OBJS_SET_REF = -L bin/static -lteste -llegivel -ltempo -lterminal
@@ -126,17 +126,13 @@ barra-de-progresso.o: src/barra_de_progresso.c
 	gcc -c src/barra_de_progresso.c -o build/barra_de_progresso.o
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-EXE_PL = testes/ut_pilha_ligada
-MOSTRA_PL = -D_DESTROI_PL
-FLAGS_PL = -Wall
-ABS_DIR_I = src/estrutura-de-dados/abordagem-i
+EXE_PL = bin/tests/ut_pilha_ligada
+MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL
+DEPS_PL = build/barra_de_progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
 
-pilha-ligada-i: barra-de-progresso.o
-	gcc $(MOSTRA_PL) -I include/ -D_UT_PILHA_LIGADA -c \
-		$(ABS_DIR_I)/pilhaligada.c \
-		-o build/pilhaligada.o
-	gcc -Og -I include/ -o $(EXE_PL) \
-		build/pilhaligada.o build/barra_de_progresso.o -Wall
+pilha-ligada-ref: barra-de-progresso.o
+	clang $(MOSTRA_PL) -I include/ -O0 -Wall -Wall \
+		-o $(EXE_PL) src/estrutura-de-dados/pilhaligada_ref.c -lm $(DEPS_PL)
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 COMPILA_HT_I = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
