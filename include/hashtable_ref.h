@@ -37,6 +37,8 @@
  typedef bool (*Eq)(generico_t, generico_t);
  // Método essencial para desalocar memória de objeto genérico.
  typedef bool (*Drop)(generico_t);
+ // Propriedade de transformar o dado genérico numa string.
+ typedef char* (*ToString)(generico_t);
 
  // criação e destruição da instância da estrutura de dados.
  HashTable cria_com_capacidade_ht (size_t, Hash, Eq);
@@ -71,11 +73,16 @@
  bool vazia_ht (HashTable); 
  size_t tamanho_ht (HashTable);
 
+ /* Métodos para visualização da tabela, seja o resultado uma string, ou 
+  * na saída principal. */
+// char* hashtable_to_str(HashTable, ToString); 
+//  void imprime_ht(HashTable, ToString); 
+
  /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
   *                     Iterador da Hashtable
   *                        e seus métodos
   * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- - */
- typedef struct iteracao_da_hashtable IterHT, *IteradorHT;
+ typedef struct iteracao_da_hashtable IterHT, *IteradorHT, *IteradorRefHT;
  /* Toda vez que iterador a estrutra acima, retorna o tipo de valor
   * abaixo. Uma tupla com o endereço da 'chave', e outro ponteiro com
   * o 'valor' da respectiva 'entrada' da tabela. */
@@ -90,7 +97,31 @@
 
  IterHT cria_iter_ht (HashTable);
  // Total de itens, ainda não consumidos.
- size_t tamanho_iter_ht (IteradorHT); 
+ size_t contagem_iter_ht (IteradorRefHT); 
  // Retorna próximo item do iterador.
- IterOutputHT next_ht (IteradorHT); 
+ IterOutputHT next_ht (IteradorRefHT); 
+ // Clona um iterador, no mesmo estado que ela está atualmente.
+ IterHT clona_iter_ht(IteradorRefHT); 
+
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Renomeação de vários 
+ *                métodos e funções para os termos
+ *                  mais conhecidos em inglês
+ *
+ * Observação: Estão espaçado e agrupadas de acordo com as originais.
+ * === === === === === === === === === === === === === === === === === ==*/
+ HashTable new_with_capacity_ht (size_t, Hash, Eq);
+ HashTable new_ht (Hash, Eq);
+ HashTable default_ht (void);
+ bool delete_ht (HashTable); 
+
+ bool add_ht (HashTable, generico_t key, generico_t vl); 
+ bool update_ht (HashTable,  generico_t key,  generico_t nvl); 
+ bool remove_ht (HashTable, generico_t key); 
+
+ bool contains_ht (HashTable, generico_t key); 
+ generico_t get_ht (HashTable,  generico_t key); 
+ bool empty_ht (HashTable); 
+ size_t len_ht (HashTable);
+
 #endif
