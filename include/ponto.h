@@ -1,48 +1,49 @@
+/*   O tipo de dado ponto serve como um referencial em várias aplicações que
+ * exigem tais abstrações. Aqui esta originalmente para planos, porém, com
+ * um campo a ser usado em três dimensões, apesar de todas atuais operações
+ * trabalharem apenas em duas.
+ *   Como pode ser visto seus método apenas copiam o valor da instância
+ * passado, nada de referência, justamente por ser uma estrutura muito 
+ * enxuta só com dados primitivos, porém não muitos para ser custo cria
+ * aos bucados instâncias dela.
+ *   Tanto a array de pontos como o modo de cria-la, ajudam a trabalhar com
+ * vários 'pontos' de uma vez. Também haverá operações para este tipo
+ * agrupado de dado.*/
 
-
-/* computar a dimensão do terminal e seus 
- * derivados. Também inputs personalizados.
- */
 #include <stdint.h>
 #include <stdbool.h>
-#include "terminal.h"
+#include <stddef.h>
 
 #ifndef TEXTO_PONTO_H
 # define TEXTO_PONTO_H
 
  /* Representação das coordenadas 'y' e 'x', nesta ordem. */
- typedef Dimensao Ponto, PONTO, ponto_t;
+ typedef struct coordenada_bidimensional Ponto, PONTO, ponto_t;
  // uma array do tipo Ponto, seu alocador e destruídor. 
- typedef Ponto* ARRAY_PONTO;
- typedef ARRAY_PONTO ArrayPonto;
+ typedef Ponto* ARRAY_PONTO, *ArrayPonto;
 
  /* cria e destrói o 'Ponto'. */
- extern Ponto cria_ponto(uint8_t y, uint8_t x);
- extern void destroi_ponto(Ponto p);
- extern Ponto clona_ponto(Ponto);
+ const Ponto cria_ponto (uint16_t y, uint16_t x);
+ ArrayPonto cria_array_ponto (size_t qtd, ...);
 
-  // verifica se o ponto A é menor ou igual ao ponto B.
- extern bool eq_ponto(Ponto, Ponto); 
+ // Verifica se o ponto A é menor ou igual ao ponto B.
+ bool eq_ponto (Ponto, Ponto); 
+ bool ne_ponto (Ponto, Ponto);
 
- /* todas tipos de visualização do 'Ponto'. */
- extern void visualiza_ponto(Ponto p);
- extern void visualiza_ponto_debug(Ponto p);
- // formatação string de tal.
- extern char* ponto_to_str(Ponto p);
+ /* Todas tipos de visualização do 'Ponto'. */
+ void imprime_ponto (Ponto);
+ void imprime_ponto_debug (Ponto);
+ char* ponto_to_str (Ponto);
 
- // a menor distância entre os dois pontos.
- extern uint8_t distancia_ponto(Ponto, Ponto); 
+ // A menor distância entre os dois pontos.
+ uint16_t distancia_ponto(Ponto, Ponto); 
 
-
- extern ARRAY_PONTO cria_array_de_pontos(uint16_t); 
- extern void destroi_array_de_pontos(ARRAY_PONTO, uint16_t); 
- extern ARRAY_PONTO cria_manualmente_ap(uint8_t, ...);
-
-   /* retorna todos pontos que formam um retângulo, dado dois pontos.
-    * Tais pontos são organizados do canto superior esquerdo com
-    * enumeração no sentido anti-horário à partir deste ponto até
-    * o inferior esquerdo. */
- extern ArrayPonto retangulo_vertices(Ponto p, Ponto q); 
+ /* Retorna todos pontos que formam um retângulo, dado dois pontos.
+  * Tais pontos são organizados do canto superior esquerdo com
+  * enumeração no sentido anti-horário à partir deste ponto até
+  * o inferior esquerdo. */
+ ArrayPonto retangulo_vertices(Ponto p, Ponto q); 
+ void imprime_array_ponto (ArrayPonto, size_t); 
 
 #endif  // PONTO(ADT)
 

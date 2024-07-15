@@ -35,4 +35,24 @@
  /* Operação que converte pequenas estruturas em strings. */
  char* to_string_al(ArrayLista L, ToString fn);
 
+/* === === === === === === === === === === === === === === === === === ==
+ *                     Iterador da pilha-ligada
+ *                        e seus métodos
+ * === === === === === === === === === === === === === === === === === ==*/
+ typedef struct iterador_da_lista_ligada_al IterAL, *IteradorRefAL;
+ typedef struct saida_da_iteracao_da_al IterOutputAL;
+ // Constante que representa nenhum item iterado.
+ const IterOutputAL NULO_AL;
+
+ // Métodos de criação, mudança e atual estado:
+ IterAL cria_iter_al (ArrayLista); 
+ /* Faz a clonagem do iterador dado, inclusive seu estado(consumido ou 
+  * não), no mesmo estágio do que foi usado.*/
+ IterAL clona_iter_al (IteradorRefAL);
+ // Total de itens ainda a consumir.
+ size_t contagem_iter_al (IteradorRefAL);
+ IterOutputAL next_al (IteradorRefAL); 
+ // Verifica se todos itens da estrutura foram consumido via iterador.
+ bool consumido_iter_al (IteradorRefAL);
+
 #endif 
