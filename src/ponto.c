@@ -12,122 +12,80 @@
  * com dois bytes.
  */
 
-#include "terminal.h"
-#include <inttypes.h>
+// Declaração de tipos de dados, seus métodos, e funções abaixo:
+#include "ponto.h"
+// Biblioteca padrão do C:
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
-/* Mesma representação do que a 'Dimensão', com coordenadas 'y' e 'x', 
- * nesta ordem. */
-typedef Dimensao Ponto;
-typedef Ponto PONTO;
-typedef Ponto* ARRAY_PONTO;
-typedef ARRAY_PONTO ArrayPonto;
-
-/* contador de instâncias do tipo. Um inteiro de 32-bits, já que é um
- * tipo de dado que costuma-se criar na faixa das unidades de milhão.
- */
-static uint32_t total_de_instancias_ponto = 0;
+/* Como tal estrutura será usada principalmente para telas de computadores,
+ * representando caractéres, não é preciso ter valores nas casas das 
+ * centenas de milhares, ou milhões, entretanto, telas estão cada vez 
+ * maiores hoje em dia, logo um inteiro positivo de 8-bits não será o
+ * suficiente também; ficamos em tão com inteiros positivos de 16-bits. */
+struct coordenada_bidimensional { uint16_t y; uint16_t x; };
 
 
-/* Meio que fazendo o mesmo acima, renomeando funções só passando os 
- * argumentos para função interna, que é chamada, e produz o mesmo 
- * resultado. 
- */
-Ponto cria_ponto(uint8_t y, uint8_t x) { 
-   /* cria uma tupla representando a dimensão, onde
-    * o primeiro valor é da "altura", e o segundo
-    * da "largura". A "altura" é o primeiro parametro,
-    * já largura, o segundo. */
-   Dimensao cria_dimensao(uint8_t a, uint8_t l) {
-      Dimensao tupla;
-      tupla = (uint8_t*)calloc(2, sizeof(uint8_t));
-      tupla[0] = a;
-      tupla[1] = l;
-      return tupla;
-   }
+const Ponto cria_ponto(uint16_t y, uint16_t x) 
+/* Apenas faz as copias dos valores paras o respecitivos pontos na estrutura
+ * alocada e retornada a cópia abaixo.*/
+   { return (Ponto){y, x}; }
 
-   total_de_instancias_ponto++;
-   return cria_dimensao(y, x); 
-}
 
-void destroi_ponto(Ponto p) { 
-   total_de_instancias_ponto--;
-   if (p != NULL) 
-      { destroi_dimensao(p);  }
-}
-
-// a menor distância entre os dois pontos.
-uint8_t distancia_ponto(Ponto p, Ponto q) { 
-   // coordenadas mais legíveis.
-   double yp = (double)p[0], yq = (double)q[0];
-   double xp = (double)p[1], xq = (double)q[1];
+uint16_t distancia_ponto(Ponto p, Ponto q) { 
+/* A distância entre dois pontos. Posteriormente é convertida a inteiro, 
+ * pois a meta especial é trabalhando tais coordenadas como caractéres,
+ * na tela do terminal, ou seja, unidades inteiras. */
+   double yp = (double)p.y, yq = (double)q.y;
+   double xp = (double)p.x, xq = (double)q.x;
+   // Aplicando na equação para calcular a distância.
    double comprimento = sqrt(pow(xp - xq, 2) + pow(yp - yq, 2));
-   return (uint8_t)floor(comprimento); 
+
+   // Converte resultado para inteiro.
+   return (uint16_t)floor(comprimento); 
 }
 
-/* tipos de visualizações para o 'Ponto', tanto a versão padrão, como o 
- * 'debug'. */
-void visualiza_ponto(Ponto p) 
-   { printf("(%d, %d)", p[0], p[1]); }
+void imprime_ponto(Ponto p) 
+// Visualização segue padrão usado na biblioteca ncurses(y, x).
+   { printf("(%d, %d)\n", p.y, p.x); }
 
-void visualiza_ponto_debug(Ponto p) 
-   { printf("Ponto(y=%d, x=%d)", p[0], p[1]); }
+void imprime_ponto_debug(Ponto p) 
+// Não segue a ordem do ncurses, porque tais valores são nomeados.
+   { printf("Ponto(x=%d, y=%d)\n", p.x, p.y); }
 
-#include <stdbool.h>
 
-/* comparações entre os Pontos. */ 
-bool eq_ponto(Ponto A, Ponto B) {
-   uint8_t y_a = A[0], x_a = A[1], y_b = B[0], x_b = B[1];
-   return (y_a == y_b) && (x_a == x_b);
-}
+/* Comparações entres pontos, pelo menos as que são possíveis neste tipo
+ * de estrutura. Relações de maior e menor ficam sem sentidos para ela. */
+bool eq_ponto(Ponto a, Ponto b) 
+   { return a.y == b.y && b.x == a.x; }
 
+bool ne_ponto(Ponto a, Ponto b)
+   { return !eq_ponto(a, b); }
+
+char* ponto_to_str(Ponto p) { 
 /* Conversão de um Ponto para o formato string, visualização dos
  * tipo de dado. É muito similar à impressão dele.
- */
-char* ponto_to_str(Ponto p) { 
-   /* tentando estimar o total de caractéres necessários: contando os
-    * parênteses, a vírgula e o espaço necessário entres os valores,
-    * chegamos em quatro, entretanto, cada valor, baseado no seu tamanho
-    * pode variar de um à três dígitos, vamos só precisamos do máximo,
-    * quatro dígitos; assim nota conta fica em doze caractéres, então
-    * vamos dobrar por segurança.
-    */
-   // char formatacao[4 + 2 * 4 + 12];
-   char* referencia = (char*)calloc(4 + 2*4 + 2, sizeof(char));
-   sprintf(referencia, "(%d, %d)", p[0], p[1]); 
-   return referencia;
+ * tentando estimar o total de caractéres necessários: contando os
+ * parênteses, a vírgula e o espaço necessário entres os valores,
+ * chegamos em quatro, entretanto, cada valor, baseado no seu tamanho
+ * pode variar de um à três dígitos, vamos só precisamos do máximo,
+ * quatro dígitos; assim nota conta fica em doze caractéres, então
+ * vamos dobrar por segurança. */
+   size_t size = (4 + 2*4 + 2 + 6) * sizeof(char); 
+   char* ponto_fmt = malloc(size);
+
+   sprintf(ponto_fmt, "(%d, %d)", p.x, p.y); 
+   return ponto_fmt;
 }
 
-ArrayPonto cria_array_de_pontos(uint16_t n) {
-   ARRAY_PONTO array = (ARRAY_PONTO)calloc(n, sizeof(Ponto));
-   for (uint16_t i = 0; i < n; i++)
-      array[i] = NULL;
-   return array;
-}
-
-void destroi_array_de_pontos(ArrayPonto a, uint16_t n) {
-   if (a != NULL) {
-      for (uint16_t i = 0; i < n; i++) {
-         destroi_ponto(a[i]);
-         // printf("%dª ponto destruído.\n", i + 1);
-      }
-      free(a);
-      // puts("array destruída");
-   } else
-      puts("array de Pontos é inválida.");
-}
-
-Ponto clona_ponto(Ponto p)
-   { return cria_ponto(p[0], p[1]); }
 
 // todas vértices dos retângulo formado por dois pontos não-colineares.
 ArrayPonto retangulo_vertices(Ponto p, Ponto q) {
-   uint8_t xP = p[1], yP = p[0];
-   uint8_t xQ = q[1], yQ = q[0];
+   uint16_t xP = p.x, yP = p.y;
+   uint16_t xQ = q.x, yQ = q.y;
    Ponto a, b, c, d;
 
    /* achando pontos restantes, dependendo de como os dois pontos
@@ -141,64 +99,66 @@ ArrayPonto retangulo_vertices(Ponto p, Ponto q) {
     * retângulo.
     */
    if (xP < xQ && yP < yQ) {
-      a = clona_ponto(p);
+      // a = clona_ponto(p);
+      a = p;
       b = cria_ponto(yP, xQ);
-      c = clona_ponto(q);
+      // c = clona_ponto(q);
+       c = q;
       d = cria_ponto(yQ, xP);
    } else if (xP > xQ && yP < yQ) {
       a = cria_ponto(yP, xQ);
-      b = clona_ponto(p);
+      // b = clona_ponto(p);
+      b = p;
       c = cria_ponto(yQ, xP);
-      d = clona_ponto(q);
+      // d = clona_ponto(q);
+      d = q;
    } else 
       perror("pontos com x's e y's coicidentes não produzem retângulos");
 
-   ArrayPonto vertices = cria_array_de_pontos(4);
+   const size_t TOTAL = 4;
+   const size_t size = sizeof(struct coordenada_bidimensional);
+   ArrayPonto vertices = malloc(TOTAL * size);
+
    vertices[0] = a;
    vertices[1] = b;
    vertices[2] = c;
    vertices[3] = d;
    /* Pontos que representam as vértices dos retângulos à partir do 
     * canto-superior-esquerdo até o canto-inferior-esquerdo, portanto,
-    * seguindo o sentido horário.
-    */
+    * seguindo o sentido horário. */
    return vertices;
 }
 
 bool pontos_colineares(Ponto a, Ponto b) 
-   { return a[0] == b[0] || a[1] == b[1]; }
+   { return a.y == b.y || a.x == b.x; }
 
-/* criando uma array de forma manual, apenas passando pares de 
- * argumentos. 
+char* array_ponto_to_str(ArrayPonto a, size_t t) {
+/* o total de caractéres é computado na seguinte forma: valores das
+ * coordenadas são no máximo três dígitos cada, e há dois deles; mais
+ * dois caractéres, sendo o primeiro o separador(vírgula), e o segundo
+ * o espaçamento, isso tudo multiplicado pela quantidade de itens
+ * da array; somado no final com dois caractéres para as delimitações,
+ * e dois espaços de reserva.
  */
-ArrayPonto cria_manualmente_ap(uint8_t total, ...) {
-   va_list argumentos;
-   ARRAY_PONTO array = cria_array_de_pontos(total);
+   size_t total = t * (3 * 2 + 2) + 2 + 2;
+   char* resultado_fmt;
+   size_t comprimento = 0;
 
-   va_start(argumentos, total);
-
-   for(uint8_t k = 0; k < total; k++) {
-      uint8_t y = va_arg(argumentos, int);
-      uint8_t x = va_arg(argumentos, int);
-      array[k] = cria_ponto(y, x);
+   // Primeiro loop para computar o tamanho final da string necessária. 
+   for (uint64_t k = 1; k <= t; k++) {
+      resultado_fmt = ponto_to_str(a[k - 1]);
+      // Contabiliza a string e seu separador..
+      comprimento += strlen(resultado_fmt) + 2;
+      // Libera após gerar.
+      free(resultado_fmt);
    }
-   va_end(argumentos);
-
-   return array;
-}
-
-char* ap_to_str(ArrayPonto a, uint64_t t) {
-   /* o total de caractéres é computado na seguinte forma: valores das
-    * coordenadas são no máximo três dígitos cada, e há dois deles; mais
-    * dois caractéres, sendo o primeiro o separador(vírgula), e o segundo
-    * o espaçamento, isso tudo multiplicado pela quantidade de itens
-    * da array; somado no final com dois caractéres para as delimitações,
-    * e dois espaços de reserva.
-    */
-   uint64_t total = t * (3 * 2 + 2) + 2 + 2;
-   char* resultado_fmt = calloc(total, sizeof(char));
-
+   // Computando delimitadores finais de '[' e '\b\b]'.
+   comprimento += 1 + 3;  
+   
+   // Aloca e coloca o delimitador inicial.
+   resultado_fmt = calloc(total, sizeof(char));
    resultado_fmt[0] = '[';
+
    for (uint64_t k = 1; k <= t; k++) {
       strcat(resultado_fmt, ponto_to_str(a[k - 1]));
       strcat(resultado_fmt, ", ");
@@ -208,7 +168,7 @@ char* ap_to_str(ArrayPonto a, uint64_t t) {
    return resultado_fmt;
 }
 
-void visualiza_ap(ArrayPonto a, uint64_t t) {
+void imprime_array_ponto(ArrayPonto a, uint64_t t) {
    printf("Array de Ponto: [\n\t");
    for (uint64_t k = 1; k <= t; k++) {
       char* formatacao = ponto_to_str(a[k - 1]);
@@ -219,6 +179,24 @@ void visualiza_ap(ArrayPonto a, uint64_t t) {
    }
    printf("\b\b\n]\n");
 }
+
+ArrayPonto cria_array_ponto(size_t qtd, ...) {
+   va_list argumentos;
+   size_t size = (qtd / 2) * sizeof(Ponto);
+   ArrayPonto pontos = malloc (size);
+
+   va_start(argumentos, qtd);
+   for (size_t p = 1; p <= qtd; p++) {
+      uint16_t y = va_arg(argumentos, int);
+      uint16_t x = va_arg(argumentos, int);
+
+      pontos[p - 1].y = y;
+      pontos[p - 1].x = x;
+   }
+   va_end(argumentos);
+
+   return pontos;
+}
    
 #if defined(_UT_PONTO)
 // biblioteca padrão em C(libs muito utilizadas.):
@@ -228,7 +206,7 @@ void visualiza_ap(ArrayPonto a, uint64_t t) {
 #include "teste.h"
 
 void criacao_da_array_de_pontos() {
-   ArrayPonto array = cria_array_de_pontos(7);
+   Ponto array[7];
 
    srand(time(NULL));
    for (int k = 1; k <= 7; k++) {
@@ -239,7 +217,6 @@ void criacao_da_array_de_pontos() {
 
    for (int p = 1; p <= 7; p++)
       printf("%s\t", ponto_to_str(array[p - 1]));
-   destroi_array_de_pontos(array, 7);
 }
 
 void todos_vertices_do_retangulo() {
@@ -264,10 +241,7 @@ void todos_vertices_do_retangulo() {
    assert(eq_ponto(vertices[3], p4));
    printf("%s\t", ponto_to_str(vertices[3]));
 
-   destroi_array_de_pontos(vertices, 4);
-   destroi_ponto(p); destroi_ponto(q);
-   destroi_ponto(p1); destroi_ponto(p2);
-   destroi_ponto(p3); destroi_ponto(p4);
+   free(vertices);
 
    // outro modo de arranjos dos pontos.
    p = cria_ponto(2, 30);
@@ -291,30 +265,27 @@ void todos_vertices_do_retangulo() {
    assert(eq_ponto(vertices[3], p4));
    printf("%s\t", ponto_to_str(vertices[3]));
 
-   destroi_array_de_pontos(vertices, 4);
-   destroi_ponto(p); destroi_ponto(q);
-   destroi_ponto(p1); destroi_ponto(p2);
-   destroi_ponto(p3); destroi_ponto(p4);
+   free(vertices);
 }
 
 void criacao_de_forma_manual_da_array_de_pontos(void) {
-   ArrayPonto array = cria_manualmente_ap(
+   ArrayPonto array = cria_array_ponto (
       7, 8, 10, 5, 19, 0, 7, 5, 25, 9, 10,
       15, 3, 20, 20
    );
-   printf("%s\n", ap_to_str(array, 7));
-   destroi_array_de_pontos(array, 7);
+   printf("%s\n", array_ponto_to_str(array, 7));
+   free(array); 
 }
 
 void comparacao_entre_pontos() {
-   ArrayPonto input = cria_manualmente_ap(
-      5, 5, 15, 33, 7, 2, 2,
-      10, 5, 7, 13
-   );
-   ArrayPonto output = cria_manualmente_ap(
-      5, 5, 12, 33, 7, 2, 3,
-      10, 5, 7, 0
-   );
+   Ponto input[] = {
+      (Ponto){5, 5}, (Ponto){15, 33}, (Ponto){7, 2},
+      (Ponto){2, 10}, (Ponto){5, 7}, (Ponto){13, 0}
+   };
+   Ponto output[] = {
+      (Ponto){5, 5}, (Ponto){16, 21}, (Ponto){7, 4},
+      (Ponto){2, 10}, (Ponto){5, 7}, (Ponto){13, 2}
+   };
 
    for (size_t k = 1; k <= 5; k++) {
       Ponto a = input[k - 1];
@@ -325,21 +296,53 @@ void comparacao_entre_pontos() {
       else
          printf("%s != %s\n", ponto_to_str(a), ponto_to_str(b));
    }
-   /*
-   assert (!eq_ponto(input[0], output[0]));
-   assert (eq_ponto(input[1], output[1]));
+
+   assert (eq_ponto(input[0], output[0]));
+   assert (!eq_ponto(input[1], output[1]));
    assert (!eq_ponto(input[2], output[2]));
    assert (eq_ponto(input[3], output[3]));
-   assert (!eq_ponto(input[4], output[4]));*/
-   puts("todos testaram corretamente.");
+   assert (eq_ponto(input[4], output[4]));
+   assert (!eq_ponto(input[5], output[5]));
+   puts("Todos testaram corretamente.");
+}
+
+void todos_tipos_de_visualizacao_das_estruturas(void) {
+   Ponto a = cria_ponto(314, 171);
+   Ponto b = cria_ponto(1, 9);
+   Ponto c = cria_ponto(12345, 54321);
+   ArrayPonto sequencia = cria_array_ponto(
+      10, 1,2, 3,4, 5,6, 7,8, 9,10, 11,12,
+         99,100, 101,102, 103,104, 105,106
+   );
+
+   char* str = ponto_to_str(a);
+   printf("A%s\n", str);
+   free(str);
+   str = ponto_to_str(b);
+   printf("B%s\n", str);
+   free(str);
+   str = ponto_to_str(c);
+   printf("C%s\n", str);
+   free(str);
+
+   str = array_ponto_to_str(sequencia, 10);
+   printf("Array de Pontos: %s\n", str);
+   free(str);
+   free(sequencia);
+
+   imprime_array_ponto(sequencia, 10);
+   imprime_ponto(a);
+   imprime_ponto(b);
+   imprime_ponto(c);
 }
 
 void main(int argc, char** argv) {
    executa_testes(
-      4, criacao_da_array_de_pontos, true,
-      todos_vertices_do_retangulo, true,
-      criacao_de_forma_manual_da_array_de_pontos, true,
-      comparacao_entre_pontos, true
+      5, criacao_da_array_de_pontos, true,
+         todos_vertices_do_retangulo, true,
+         criacao_de_forma_manual_da_array_de_pontos, true,
+         comparacao_entre_pontos, true,
+         todos_tipos_de_visualizacao_das_estruturas, true
    );
 }
 #endif // testes-unitários.
