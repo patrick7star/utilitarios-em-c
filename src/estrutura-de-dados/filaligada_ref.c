@@ -1,6 +1,5 @@
-
-/* criando uma simples fila-ligada com o tipo também embutido aqui. Se desejar 
- * trocar o tipo dela futuramente, apenas altere as linhas iniciais. 
+/* criando uma simples fila-ligada com o tipo também embutido aqui. Se 
+ * desejar trocar o tipo dela futuramente, apenas altere as linhas iniciais.
  */
 
 // bibliotecas do C:

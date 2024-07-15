@@ -354,6 +354,97 @@ void destroi_todas_al(uint8_t qtd, ...) {
    va_end(LISTAS);
 }
 
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Iterador e seus métodos
+ *
+ * Observação: todo código foi copiada da implementação de pilha, e apenas
+ * se trocou os sufixos e alguns rótulos, além de alguns toques leve na
+ * implementação, campos que não se usam foram desativados, e "locomoção"
+ * na "array interna" é diferente aqui. Comentários foram retirados,
+ * justamente, para nota-se que aqui não é um código original. Busque o 
+ * original para qualquer outro problema não sintático.
+ * === === === === === === === === === === === === === === === === === ==*/
+struct saida_da_iteracao_da_al { generico_t item; };
+
+struct iterador_da_lista_ligada_al {
+   ArrayLista instancia;
+
+   size_t inicial; 
+   size_t contagem;
+};
+const IterOutputAL NULO_AL = { NULL };
+
+IterAL cria_iter_al(ArrayLista a) {
+   IterAL iter; 
+
+   iter.inicial = tamanho_al(a);
+   iter.contagem = 0;
+   iter.instancia = a;
+
+   return iter;
+}
+
+static bool iterador_esta_invalido(IteradorRefAL iter) {
+   if (iter == NULL) {
+      perror("Não foi passado um iterador válido.");
+      return false;
+   } else if (iter->instancia == NULL) {
+      perror("O iterador não tem uma instância.");
+      return false;
+   } else if (iter->instancia->array == NULL) {
+      perror("Erro na estrutura da lista.");
+      return false;
+   } else {
+      size_t t = tamanho_al(iter->instancia);
+      size_t T = iter->inicial;
+      return  t != T ;
+   }
+}
+
+size_t contagem_iter_al (IteradorRefAL iter) {
+   if (iterador_esta_invalido(iter)) {
+      const char* msg_erro = {
+         "não é possível determinar o tamanho "
+         "de um iterador inválido!"
+      };
+      // se chegar até aqui é erro na certa.
+      perror (msg_erro); abort();
+   }
+   return (iter->inicial - iter->contagem);
+}
+
+IterOutputAL next_al (IteradorRefAL iter) {
+   bool nao_e_possivel_iterar = {
+      consumido_iter_al(iter) || 
+      iterador_esta_invalido(iter)
+   };
+
+   if (nao_e_possivel_iterar)
+      return NULO_AL;
+
+   size_t I = iter->inicial;
+   size_t c = iter->contagem;
+   Vetor e = iter->instancia;
+   generico_t dado = indexa_al(e, I - c - 1);
+
+   iter->contagem += 1;
+   return (IterOutputAL){ .item=dado };
+}
+
+bool consumido_iter_al(IteradorRefAL iter) 
+   { return iter->contagem == iter->inicial; }
+
+IterAL clona_iter_al(IteradorRefAL iter) {
+   IterAL novo;
+
+   novo.instancia = iter->instancia;
+   novo.contagem = iter->contagem;
+   novo.inicial = tamanho_al(iter->instancia);
+
+   return novo;
+}
+// === === === === === === === === === === === === === === === === === ===
+
 /* Testando todos métodos, funções, e dados abstratos acima. Deixando
  * bem referênciado esta parte, pois fica fácil descartar -- além de 
  * ser necessário se os tipos forem trocados, do contrário o programa
@@ -570,8 +661,10 @@ char* stringfy_str(generico_t X) {
 
 void conversao_em_string(void) {
    ArrayLista v = cria_al();
+   uint16_t* array = (uint16_t*)valores_padronizados_i;
+
    for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
-      insere_al(v, &valores_padronizados_i[i - 1]);
+      insere_al(v, &array[i - 1]);
 
 
    char* string_vetor = to_string_al(v, stringfy_str);
@@ -597,17 +690,40 @@ void novo_tipo_de_criacao_da_lista(void) {
    destroi_al(L);
 }
 
+void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
+   ArrayLista v = cria_al();
+   uint16_t* array = (uint16_t*)valores_padronizados_i;
+
+   for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
+      insere_al(v, &array[i - 1]);
+   assert (!vazia_al(v));
+   IterAL I = cria_iter_al(v);
+
+   printf("Restantes: %lu\n", contagem_iter_al(&I));
+   puts("\nIterando cada item do iterador ...");
+
+   do {
+      IterOutputAL saida = next_al(&I);
+      uint16_t* ptr = saida.item;
+      uint16_t dado = *ptr;
+      size_t count = contagem_iter_al(&I);
+      printf("\t>>> iterador(faltam %lu): %u\n", count, dado);
+   } while (!consumido_iter_al(&I));
+
+   destroi_al(v);
+}
+
 int main(int total, char* argumentos[], char* variaveis[]) {
    executa_testes (
-      7, demonstracao_com_inteiros, false,
-         demonstracao_com_caracteres, false,
-         demonstracao_com_strings, false,
-         remocao_em_pontos_criticos, false,
-         redimensionamento_automatico_da_capacidade, false,
-         conversao_em_string, false,
-         novo_tipo_de_criacao_da_lista, true
+      8, demonstracao_com_inteiros, true,
+         demonstracao_com_caracteres, true,
+         demonstracao_com_strings, true,
+         remocao_em_pontos_criticos, true,
+         redimensionamento_automatico_da_capacidade, true,
+         conversao_em_string, true,
+         novo_tipo_de_criacao_da_lista, true,
+         uso_para_chacagem_do_funcionmanento_do_iterador, true
    );
-   // verificado_o_que_foi_coletado, true
 
    return EXIT_SUCCESS;
 }

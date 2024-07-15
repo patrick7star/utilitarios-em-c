@@ -342,29 +342,6 @@ size_t tamanho_set(Conjunto S)
    // Total de itens contidos no 'conjunto'.
    { return S->quantidade; }
 
-void impressao_generica(Conjunto S, ToString funcao) {
-/* Dado um conjunto, e o método que converte seu tipo de dado interno numa
- * string, a função faz a impressão de uma lista simples dele. */
-   size_t C = S->capacidade;
-   nodulo_t** array = S->locais;
-   nodulo_t* node;
-
-   printf("conjunto: {");
-   if (vazia_set(S))
-      { puts("}"); return; }
-
-   for (size_t k = 1; k <= C; k++)
-   {
-      for (node = array[k - 1]; node != NULL; node = node->seta)
-      {
-         char* dado_str = funcao(node->chave);
-         printf("%s, ", dado_str);
-         // Não mais necessário, porque já foi impresso.
-         free(dado_str);
-      }
-   }
-   puts("\b\b}");
-}
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Iterador: funções e métodos
@@ -490,10 +467,10 @@ bool consumido_iter_set(IteradorRefSet iter)
    { return iter->contagem == iter->total_inicial; }
 
 IterSet clona_iter_set(IteradorRefSet iter) {
-/* Clona o iterador passado, à partir do estágio que está. A alteração deste
- * novo clone, ou do original, não alteram a iteração de cada, más sim, a
- * mudança da estrutura original, que não permite ambos realizar mais 
- * iterações. */ 
+/* Clona o iterador passado, à partir do estágio que está. A alteração 
+ * deste novo clone, ou do original, não alteram a iteração de cada, más 
+ * sim, a mudança da estrutura original, que não permite ambos realizar 
+ * mais iterações. */ 
    IterSet novo;
    // Copiando informações:
    novo.instancia = iter->instancia;
@@ -505,6 +482,101 @@ IterSet clona_iter_set(IteradorRefSet iter) {
 
    return novo;
 }
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+
+char* set_to_str(Conjunto S, ToString f) {
+/* Converte uma string para string, dado a função que transforma o dado
+ * interno dela em string. Há um limite aqui, é uma função que usa muito
+ * recurso, então há um limite de itens que se podem imprimir, aqui no 
+ * caso está na casa das dezenas de milhares; se for necessário aumentar
+ * isso é possível(para o máximo até). Coloco tal limite, porque uso 
+ * geralmente isso para exemplos com poucas quantidades, não vejo nenhuma
+ * necessidade de aumentar isso. */
+   char* resultado_fmt;
+   IterSet iterador = cria_iter_set(S);
+   IterSet iterador_copia = clona_iter_set(&iterador);
+   size_t mC = 0;
+   const char* cabecalho = "Conjunto: {";
+   const char* fim;
+   const char* separador = ", ";
+   char* dado_str;
+   // Nesta quantia de itens, tal impressão fica totalmente desnecessária
+   // na maioria dos casos. Se quiser ativar, apenas comente isso.
+   const size_t LIMITE_PROCESSAMENTO = UINT16_MAX / 4;
+
+   // Limite de processamento para tal quantia de itens.
+   if (tamanho_set(S) >= LIMITE_PROCESSAMENTO) {
+      const char msg_erro[] = {
+         "Mais que tal quantia, às vezes é desnecessário"
+      };
+      perror(msg_erro); abort();
+   }
+
+   // Computa dado que gera a mais longa string.
+   while (!consumido_iter_set(&iterador)) {
+      IterOutputSet i = next_set(&iterador);
+      generico_t dado = i.item;
+      dado_str = f(dado);
+      size_t t = strlen(dado_str);
+
+      if (t > mC)
+      // Sempre atualiza para maior comprimento de string.
+         mC = t + 1;
+      // Após de ter medida a string, libera ela.
+      free(dado_str);
+   }
+
+   // Alocando string que terár tal formatação:
+   size_t total_alocado = (mC + strlen(separador)) * sizeof(char) + 30;
+   resultado_fmt = malloc(total_alocado);
+
+   // Branqueando-a com algum conteudo.
+   strcpy(resultado_fmt, "");
+   // Colocando o cabeçalho primeiramente ...
+   strcat(resultado_fmt, cabecalho);
+
+   if (vazia_set(S)) 
+      // O fim depedente se foi iterado ou não.
+      fim = "}";
+   else {
+      while (!consumido_iter_set(&iterador_copia)) {
+         IterOutputSet i = next_set(&iterador_copia);
+         generico_t dado = i.item;
+         dado_str = f(dado);
+         strcat(resultado_fmt, dado_str);
+         strcat(resultado_fmt, separador);
+         // Removendo dado em formato string.
+         free(dado_str);
+      }
+      fim = "\b\b}";
+   }
+   // Enclausurando a formatação da estrutura.
+   strcat(resultado_fmt, fim); 
+   return resultado_fmt; 
+}
+
+void impressao_generica(Conjunto S, ToString funcao) {
+/* Dado um conjunto, e o método que converte seu tipo de dado interno numa
+ * string, a função faz a impressão de uma lista simples dele. */
+   IterSet i = cria_iter_set(S);
+   char* dado_str;
+
+   printf("Conjunto(%lu): {", tamanho_set(S));
+   if (vazia_set(S))
+      { puts("}"); return; }
+
+   while (!consumido_iter_set(&i)) {
+      IterOutputSet a = next_set(&i);
+      generico_t dt = a.item;
+
+      // Estringuifica, imprime, e libera ciclo.
+      dado_str = funcao(dt);
+      printf("%s, ", dado_str);
+      free(dado_str);
+   }
+   puts("\b\b}");
+}
+
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
@@ -997,14 +1069,51 @@ void simples_clonagem_inicial_de_iteradores(void) {
    destroi_set(S);
 }
 
+static char* u16_to_str(generico_t dt) {
+   char* fmt = malloc(15 * sizeof(char));
+   uint16_t* pointer = dt;
+   uint16_t valor = *pointer;
+
+   memset(fmt, '\0', 15);
+   sprintf(fmt, "%u", valor);
+   return fmt;
+}
+
+static bool eq_u16(generico_t a, generico_t b) {
+   uint16_t* ptr_a = a;
+   uint16_t* ptr_b = b;
+   return *ptr_a == *ptr_b;
+}
+
+static size_t hash_u16(generico_t a, size_t cp) {
+   uint16_t* ptr = a;
+   return *ptr % cp;
+}
+
+void demonstracao_simples_da_conversao_em_str(void) {
+   Conjunto S = cria_set(hash_u16, eq_u16); 
+
+   for (size_t i = 0; i < VALORES_PADRONIZADOS_I; i++) {
+      uint16_t* X = (uint16_t*)&valores_padronizados_i[i];
+      adiciona_set(S, X);
+   }
+   puts("Aqui como fica a formatação em string:");
+   char* stringset = set_to_str(S, u16_to_str);
+   puts(stringset);
+
+   free(stringset);
+   destroi_set(S);
+}
+
 int main(int total, char* args[], char* vars[]) {
    executa_testes (
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-   6, operacoes_basicas_na_estrutura, true,
+   7, operacoes_basicas_na_estrutura, true,
       rejeicao_de_entradas_duplicadas_em_massa, true,
       iteracao_simples_para_testar_a_implmentacao, true,
       simples_clonagem_inicial_de_iteradores, true,
+      demonstracao_simples_da_conversao_em_str, true,
       // Desativados, pois consomem CPU e tempo:
       monitorando_propriedades_sobre_estresse, false,
       insercoes_stats_havendo_redimensionamento, false
