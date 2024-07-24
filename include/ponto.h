@@ -14,16 +14,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifndef TEXTO_PONTO_H
-# define TEXTO_PONTO_H
-
+#ifndef PONTO_H
+#define PONTO_H
  /* Representação das coordenadas 'y' e 'x', nesta ordem. */
- typedef struct coordenada_bidimensional Ponto, PONTO, ponto_t;
+ typedef struct coordenada_bidimensional { uint16_t y; uint16_t x; }
+   Ponto, PONTO, ponto_t;
  // uma array do tipo Ponto, seu alocador e destruídor. 
- typedef Ponto* ARRAY_PONTO, *ArrayPonto;
+ typedef Ponto* ArrayPonto;
 
  /* cria e destrói o 'Ponto'. */
- const Ponto cria_ponto (uint16_t y, uint16_t x);
+ Ponto cria_ponto (uint16_t y, uint16_t x);
  ArrayPonto cria_array_ponto (size_t qtd, ...);
 
  // Verifica se o ponto A é menor ou igual ao ponto B.

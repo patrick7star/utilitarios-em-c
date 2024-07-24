@@ -1,4 +1,3 @@
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <inttypes.h>
@@ -15,9 +14,9 @@
  // criação e destruição do tipo de dado.
  ArrayLista cria_al();
  ArrayLista cria_com_capacidade_al (size_t); 
- ArrayLista cria_de_al (uint8_t qtd, ...);
+ ArrayLista cria_de_al (int, ...);
  bool destroi_al (ArrayLista); 
- void destroi_todas_al (uint8_t qtd, ...); 
+ void destroi_todas_al (int, ...); 
 
  /* Operações que obtém dados, e outras que mudam a estrutura interna da
   * lista. */
@@ -39,10 +38,14 @@
  *                     Iterador da pilha-ligada
  *                        e seus métodos
  * === === === === === === === === === === === === === === === === === ==*/
- typedef struct iterador_da_lista_ligada_al IterAL, *IteradorRefAL;
- typedef struct saida_da_iteracao_da_al IterOutputAL;
+ typedef struct iterador_da_lista_ligada_al 
+   IterAL, *IteradorRefAL;
+ /* Saída que o iterador produz. É apenas um único campo na estrutura, 
+  * nomeado 'item', que entrega a referência que a estrutura retém. */
+ typedef struct saida_da_iteracao_da_al { generico_t item; } 
+   IterOutputAL;
  // Constante que representa nenhum item iterado.
- const IterOutputAL NULO_AL;
+ const IterOutputAL NULO_AL = { .item = NULL };
 
  // Métodos de criação, mudança e atual estado:
  IterAL cria_iter_al (ArrayLista); 
