@@ -1,11 +1,72 @@
 
 
 # 'ponto' não está terminado!
-#all: teste ponto aleatorio tempo
-all: teste aleatorio tempo barra-de-progresso estringue
 .PHONY = estringue
 
+# Compila todos objetos no diretório de construção ...
+compila-objetos-principais: \
+	cria_diretorio_build \
+	legivel.o \
+	terminal.o \
+	tempo.o \
+	teste.o \
+	barra-de-progresso.o \
+	aleatorio.o \
+	ponto.o
+
+compila-bibliotecas-estaticas: \
+	libprogresso \
+	liblegivel \
+	libtempo \
+	libterminal \
+	libaleatorio \
+	libteste
+
+compila-testes-unitarios: \
+	cria-diretorio-bin \
+	terminal \
+	ponto \
+	aleatorio \
+	tempo
+
+compila-testes-unitarios-colecoes: \
+	conjunto-ref \
+	hashtable-ref \
+	pilha-ligada-ref \
+	lista-posicional-ref
+# Compila tudo acima, seguindo sua hieraquia copiada(cima para baixo):
+compila-tudo: \
+	compila-objetos-principais \
+	compila-bibliotecas-estaticas \
+	compila-testes-unitarios \
+	compila-testes-unitarios-colecoes 
+	@echo "Todas códigos das bibliotecas(testes e libs) foram compilados com sucesso."
+
+# limpando todos executáveis no diretório.
+clean:
+	rm -fv build/*.o testes/ut*
+	rm -frv bin/
+	rmdir build/
+
+# Salva mais um backup deste projeto. Entretanto, antes de executar tal,
+# mude a atual versão para não reescreve o último, pois é isso que vai 
+# acontecer.
+VERSAO = v1.1.4
+OPCOES = --exclude=ut* -cvf
+NOME = utilitarios.$(VERSAO).tar 
+LOCAL = ../versions
+CONTEUDO = include/ src/ testes/*.c Makefile
+
+salva:
+	tar $(OPCOES) $(LOCAL)/$(NOME) $(CONTEUDO)
+
+# visualizar todos backups deste projeto.
+backups:
+	ls --sort=time -1 $(LOCAL)/utilitarios*.tar
+
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+cria_diretorio_build:
+	mkdir --verbose build/
 
 legivel.o: src/legivel.c
 	gcc -c src/legivel.c -o build/legivel.o
@@ -19,14 +80,31 @@ tempo.o: src/tempo.c
 teste.o: src/teste.c
 	gcc -I include/ -c src/teste.c -o build/teste.o
 
-FLAGS_TESTE = -I include/ -D_UT_TESTE -DALLOW_DEAD_CODE
-OBJS_TESTE=  build/legivel.o build/tempo.o build/terminal.o
+barra-de-progresso.o: src/barra_de_progresso.c
+	gcc -I include/ -c src/barra_de_progresso.c -o build/barra_de_progresso.o
+
+ponto.o:
+	clang -I include/ -Wall -c -o build/ponto.o src/ponto.c
+
+# === === ===  === === === === === === === === === === === === === === ===
+#
+#						Compilação dos Testes Unitários dos
+#							Módulos Principais da Biblioteca
+#
+# === === ===  === === === === === === === === === === === === === === ===
+cria-diretorio-bin:
+	mkdir --parents --verbose bin/tests
+
+FLAGS_TESTE = -Wno-unused-variable -Wno-unused-function
+COMPILA_TESTE = -D_UT_TESTE -DALLOW_DEAD_CODE \
+				  -D_NOVO_SUITE_COMPLETO -D_NOVO_SUITE
+OBJS_TESTE=  build/legivel.o build/tempo.o build/terminal.o build/barra_de_progresso.o
 EXE_TESTE = bin/tests/ut_teste
 
 teste: $(OBJS_TESTE) src/teste.c
 	@echo "lincando todos objetos gerados..."
 	@echo "compilando testes-unitários de teste.c ..."
-	gcc $(FLAGS_TESTE) -o $(EXE_TESTE) src/teste.c $(OBJS_TESTE) -lm -Wall
+	gcc -I include/ $(COMPILA_TESTE) -Wall -o $(EXE_TESTE) src/teste.c $(OBJS_TESTE) -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 OBJ_TERM = build/terminal_teste.o
@@ -46,11 +124,10 @@ EXE_PONTO = bin/tests/ut_ponto
 
 ponto: teste.o
 	@echo "lincando artefatos para 'ponto.c'..."
-	gcc -D_UT_PONTO -I include -o $(EXE_PONTO) src/ponto.c $(OBJS_PONTO) \
+	gcc -D_UT_PONTO -I include/ -o $(EXE_PONTO) src/ponto.c $(OBJS_PONTO) \
 		-Wall -lm -Wno-main
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
 aleatorio.o: src/aleatorio.c
 	gcc -I include/ -c src/aleatorio.c -o build/aleatorio.o -lm
 
@@ -64,7 +141,6 @@ aleatorio: legivel.o terminal.o tempo.o teste.o
 	gcc $(FLAGS) -o $(EXE) $(SOURCE) -lm $(OBJS) 
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
 TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
 	-D_DEBUG_CRIA_TEMPORIZADOR \
 	-D_DEBUG_DESTROI_TEMPORIZADOR \
@@ -82,14 +158,15 @@ tempo:
 		src/tempo.c $(TEMPO_DEPEDENCIAS)
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-# limpando todos executáveis no diretório.
-clean:
-	rm -fv build/*.o testes/ut*
-	rm -rv bin/
+COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
+EXE_STR = bin/tests/ut_estringue
+DEPS_STR = $(OBJS_TESTE) build/teste.o
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+estringue: terminal.o
+	gcc -Wall -I ./include $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(DEPS_STR) -lm
 
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 barra-de-progresso:
 	@echo "criando objetos(artefatos) do 'barra de progresso'..."
 	gcc -c src/barra_de_progresso.c -D_UT_BARRA_DE_PROGRESSO -o build/progresso.o
@@ -97,6 +174,15 @@ barra-de-progresso:
 	gcc -o bin/tests/ut_barra_de_progresso build/progresso.o -Wall -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+impressao: lista-array-ref.o
+	clang -I include/ -D_UT_IMPRESSAO -o ut_impressao src/impressao.c build/listaarray_ref.o build/terminal.o
+
+# === === ===  === === === === === === === === === === === === === === ===
+#
+# 					Compilação e Coleção de Estruturas de Dados
+# 					 			e seus Testes Unitários
+#
+# === === ===  === === === === === === === === === === === === === === ===
 OBJS_SET_REF = -L bin/static -lteste -llegivel -ltempo -lterminal
 COMPILA_SET_REF = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO 
 EXE_SET_REF = bin/tests/ut_conjunto
@@ -105,27 +191,6 @@ SRC_SET_REF = src/estrutura-de-dados/conjunto_ref.c
 conjunto-ref: libaleatorio
 	clang -O0 -std=c18 -Wall $(COMPILA_SET_REF) -o $(EXE_SET_REF) -I include $(SRC_SET_REF) $(OBJS_SET_REF) -lm
 
-# salva mais um backup deste projeto. Entretanto, antes de executar tal,
-# mude a atual versão para não reescreve o último, pois é isso que vai 
-# acontecer.
-VERSAO = v1.1.4
-OPCOES = --exclude=ut* -cvf
-NOME = utilitarios.$(VERSAO).tar 
-LOCAL = ../versions
-CONTEUDO = include/ src/ testes/*.c Makefile
-
-salva:
-	tar $(OPCOES) $(LOCAL)/$(NOME) $(CONTEUDO)
-
-# visualizar todos backups deste projeto.
-backups:
-	ls --sort=time -1 $(LOCAL)/utilitarios*.tar
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-barra-de-progresso.o: src/barra_de_progresso.c
-	gcc -c src/barra_de_progresso.c -o build/barra_de_progresso.o
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 EXE_PL = bin/tests/ut_pilha_ligada
 MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL
 DEPS_PL = build/barra_de_progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
@@ -189,16 +254,16 @@ lista-posicional-ref:
 		-Wno-incompatible-pointer-types \
 		-o $(EXE_LP_REF) $(SRC_LP_REF) $(DEPS_LP_REF)
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
-EXE_STR = bin/tests/ut_estringue
-DEPS_STR = $(OBJS_TESTE) build/teste.o
 
-estringue: terminal.o
-	gcc -Wall -I ./include $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(DEPS_STR) -lm
+lista-array-ref.o:
+	clang -I include/ -std=c18 -Wall -c src/estrutura-de-dados/listaarray_ref.c -o build/listaarray_ref.o
 
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-compila-libs: libprogresso liblegivel libteste libtempo
 
+# === === ===  === === === === === === === === === === === === === === ===
+#
+# 					 Compilação de bibliotecas estáticas
+#
+# === === ===  === === === === === === === === === === === === === === ===
 cria_diretorio_bin:
 	mkdir --parents --verbose bin/shared
 	mkdir --parents --verbose bin/static
@@ -228,13 +293,14 @@ liblegivel:
 EXE_TST_I = bin/shared/libteste.so
 EXE_TST_II = bin/static/libteste.a
 SRC_TST = src/teste.c
+OBJS_LIB_TST = build/tempo.o build/legivel.o build/terminal.o
 
 libteste: teste.o cria_diretorio_bin
-	@echo "compilação de uma biblioteca compartilhada."
-	gcc $(FLAGS_TESTE) -fPIC -shared -o $(EXE_TST_I) \
-		$(SRC_TST) $(OBJS_TESTE) -lm -Wall
 	@echo "compilação de uma biblioteca estática."
 	ar crs $(EXE_TST_II) build/teste.o
+	@echo "compilação de uma biblioteca compartilhada."
+	gcc -I include/ -fPIC -shared -o $(EXE_TST_I) \
+		$(SRC_TST) $(OBJS_LIB_TST) -lm -Wall
 
 EXE_TIME_I = bin/shared/libtempo.so
 SRC_TIME = build/tempo.o build/legivel.o
@@ -254,5 +320,5 @@ libaleatorio: aleatorio.o
 	@echo "compila gerador/embalharador."
 	ar crs bin/static/libaleatorio.a build/terminal.o
 
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+# === === ===  === === === === === === === === === === === === === === ===
 
