@@ -516,7 +516,21 @@ uint8_t* binario_complemento_de_dois(size_t n) {
    return lista_de_bits;
 }
 
-/* Testando todos estrutura, métodos e funções declarados e implementados
+/* Nova feature de testes, sendo está pega o nome do teste, e também
+ * permite a paralelização, se assim for desejado.
+ *
+ *    O que ele fornece:
+ *       - testes_unitarios
+ *       - Unit
+ *
+ *    Seus testes-unitários:
+ *       - novo_suite_de_testes_unitarios
+ *       - resultado_de_todos_testes_desativados
+ */
+#include "teste/testador.c"
+
+/* 
+ *   Testando todos estrutura, métodos e funções declarados e implementados
  * acima. Esta parte abaixo pode futuramente ser colocada em outra arquivo
  * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
  * mais limpo. 
@@ -640,140 +654,31 @@ void testes_tal_declaracao_de_loop(void) {
 #endif
 }
 
-static char* substitui_separadores_do_nome(const char* nome_original) {
-/*   Pega o nome da função e substitui seus separadores do identificador por
- * devidos espaços brancos. */
-   const char* nome = nome_original;
-   size_t t = strlen(nome) + 1; 
-   char* corrigido = malloc(t * sizeof(char));
-
-   for (size_t i = 1; i <= t; i++) {
-      char _char = nome[i - 1];
-      if (_char == '_') 
-         corrigido[i - 1] = ' '; 
-      else 
-         corrigido[i - 1] = _char;
-   }
-   corrigido[-1] = '\0';
-   return corrigido;
-} 
-
-typedef struct {
-   char* nome; 
-   Fn funcao; 
-   bool confirmacao; 
-} TesteSet;
-
-static TesteSet pack(char* name, Fn function, bool execution)
-{ 
-   #ifdef _NOVO_SUITE
-   printf(
-      "\tnome: '%s'\n\tendereço: %p\n\tconfirmação? %s\n\n", 
-      name, function, bool_to_str(execution)
-   );
-   #endif
-
-   return (TesteSet) {
-      substitui_separadores_do_nome(name), 
-      function, execution
-   }; 
-}
-
-#define TOKEN_TO_STR(FUNCAO) #FUNCAO
-#define UnitTest(FUNCAO,PERMISAO) \
-   realiza_teste_unitario(\
-      TOKEN_TO_STR(FUNCAO), \
-      FUNCAO, PERMISAO\
-   )
-#define Unit(FUNCAO, CONFIRMACAO) \
-   pack(TOKEN_TO_STR(FUNCAO), FUNCAO, CONFIRMACAO)
-
-void desenha_seperador() {
-   for (size_t i = 1; i <= 60; i++)
-      putchar('-');
-   putchar('\n');
-}
-
-void testes_unitarios(const uint8_t total, ...) {
-/*   Esta função difere da 'executa_testes', pois ao invés de ter um nome
- * desconhecido do testes, usa a clásula da função, devidamente processada
- * (com os espaços removidos). */
-   va_list args;
-   va_start(args, total);
-   uint8_t habilitados = 0;
-
-   #ifdef _POSIX_C_SOURCE 
-   // Utilitário está apenas disponível para sistemas Unix's.
-   Cronometro medicao = cria_cronometro();
-   #endif
-
-   #ifdef _NOVO_SUITE
-   printf("total demandado: %u\n", total);
-   #endif
-
-   /* Filtrando cada testes posto, e evaluando seus argumentos...*/
-   for (uint8_t i = 1; i <= total; i++) 
-   {
-      TesteSet T = va_arg(args, TesteSet);   
-      if (T.confirmacao) {
-         #ifdef _NOVO_SUITE
-         printf("[%p] '%s' ... sucedido.\n", T.funcao, T.nome);
-         #endif
-
-         executa_teste(T.nome, T.funcao);
-         #ifdef _POSIX_C_SOURCE 
-         marca(medicao);
-         #endif
-         // contabilizando os que estão ativados.
-         habilitados++;
-      } 
-      // Liberando string alocada dinamicamente...
-      free(T.nome);
-   }
-   va_end(args);
-
-   // informando tempo total da execução.
-   double tempo_total = marca(medicao);
-   // Informação final da série de testes:
-   desenha_seperador();
-   printf(
-      "Levaram %0.4lfs; estados dos testes: %u on | %u off; "
-      "total de testes: %u\n", 
-      tempo_total, habilitados, total - habilitados, testes_contagem
-   );
-}
-
-void novo_suite_de_testes_unitarios(void) {
-   // Chamadas individuais:
-   Unit(transforma_toda_string_em_minuscula, true);
-   Unit(transforma_toda_string_em_minuscula, false);
-   Unit(percorrendo_string, true);
-   Unit(percorrendo_string, false);
-
-   // Chamada conjunta:
-   TestesUnitarios (
-      4, Unit(transforma_toda_string_em_minuscula, true),
-         Unit(verificando_obtendo_de_potencias_de_dois, true),
-         Unit(percorrendo_string, false),
-         Unit(percorrendo_string, true)
-   );
-}
-
 int main(int qtd, char* argumentos[], char* env_vars[]) {
    executa_testes(
-      10, teste_conversao_binaria_antiga_implementacao, true,
-         amostra_da_nova_implementacao_de_binario, true,
-         extracao_de_bits_implementacao_geral, true,
+      12, teste_conversao_binaria_antiga_implementacao, false,
+         amostra_da_nova_implementacao_de_binario, false,
+         extracao_de_bits_implementacao_geral, false,
          // iteração para gerar máscaras funciona!
          verificando_obtendo_de_potencias_de_dois, false,
-         stringficacao_de_valores_primitivos, true,
-         converte_strings_de_valores_logicos, true,
+         stringficacao_de_valores_primitivos, false,
+         converte_strings_de_valores_logicos, false,
          // consome bastante tempo...
          testes_tal_declaracao_de_loop, false,
-         // [teste da função interna]
+         // Teste da função interna sem nada com atual módulo:
          percorrendo_string, false,
          transforma_toda_string_em_minuscula, false,
-         novo_suite_de_testes_unitarios, true
+         verificando_saida_do_pipe_sem_multiprocessing, false,
+         captura_de_saida_via_named_pipe, false,
+         simple_teste_de_named_pipe, true
+   );
+
+   puts("\nTestes especiais do novo suíte de testes-unitários:");
+   executa_testes(
+      4, novo_suite_de_testes_unitarios, false,
+         resultado_de_todos_testes_desativados, false,
+         executa_um_teste_unitario_e_coleta_informacoes, false,
+         funcao_que_captura_sinal_e_saida, false
    );
 
    return EXIT_SUCCESS;
