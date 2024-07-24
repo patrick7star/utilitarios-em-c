@@ -79,17 +79,18 @@ void breve_pausa(TEMPO_TIPO tipo, uint16_t qtd) {
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---*/
 #if defined(_UT_TEMPO)
 #include <assert.h>
+#include <unistd.h>
 
 void alocacao_e_desalocacao() {
    Cronometro c = cria_cronometro();
    // pausa.
    breve_pausa(Segundo, 2);
    breve_pausa(Miliseg, 700);
-   destroi_cronometro(c, true);
+   destroi_cronometro(c);
 
    Cronometro c1 = cria_cronometro();
    breve_pausa(Miliseg, 26);
-   destroi_cronometro(c1, true);
+   destroi_cronometro(c1);
 }
 
 void visualizacao_dos_marcos() {
@@ -213,6 +214,24 @@ void reutilizacao_do_temporizador(void) {
    destroi_temporizador(obj);
 }
 
+void disparando_o_cronometro(void) {
+   Cronometro tool = cria_cronometro();
+   double entrada[] = {3.51, 5.81, 7.23, 8.01, 14.2};
+   size_t cursor = 0;
+   
+   while(cursor < 5) {
+      // Registra a variação:
+      marca(tool);
+      // Impressão:
+      char* fmt = cronometro_to_str(tool);
+      printf("%s \t ~%3.2lfseg\n", fmt, entrada[cursor]);
+      free(fmt);
+      // Pausa deterministica:
+      sleep((int)entrada[cursor++]);
+   }
+   destroi_cronometro(tool);
+}
+
 void teste_desconhecido_i() {
    clock_t inicio = clock();
    alocacao_e_desalocacao();
@@ -242,11 +261,12 @@ void teste_desconhecido_ii(void) {
 
 int main(int qtd, char* argumentos[], char* envp[]) 
 {
-   // alocacao_e_desalocacao();
-   // visualizacao_dos_marcos();
-   // stringficacao_do_temporizador();
-   // dois_tais_ate_o_esgotamento();
+   alocacao_e_desalocacao();
+   visualizacao_dos_marcos();
+   stringficacao_do_temporizador();
+   dois_tais_ate_o_esgotamento();
    reutilizacao_do_temporizador();
+   disparando_o_cronometro();
    return EXIT_SUCCESS;
 }
 #endif

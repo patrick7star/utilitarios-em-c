@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <tgmath.h>
 
 /* ~~~ ~~~ ~~~ ~~~ ~~~   Progresso Simples ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
 
@@ -107,9 +109,9 @@ Progresso cria_bps (size_t total)
    { return novo_bps (total, 50); }
 
 
-/* ~~~ ~~~ ~~~ ~~~ ~~~ Progresso Temporal ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
-#include <time.h>
-#include <tgmath.h>
+/* == == == == == == == == == == == == == == == == == == == == == == == ==
+ * ~~~ ~~~ ~~~ ~~~ ~~~ Progresso Temporal ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ ~~~
+ * == == == == == == == == == == == == == == == == == == == == == == == = */
 
 typedef struct progresso_tempo {
    /* valores atual e o que têm que ser atingido para ser finalizado. */
@@ -124,7 +126,7 @@ typedef struct progresso_tempo {
    /* marcador da variação de tempo.*/
    time_t inicio;
 
-} *ProgressoTemporal, *PT;
+} *ProgressoTemporal, *PT, progresso_t;
 
 PT novo_bpt(size_t total, uint8_t qB) {
    size_t tamanho = sizeof(struct progresso_tempo);
@@ -148,8 +150,25 @@ PT novo_bpt(size_t total, uint8_t qB) {
    return instancia;
 }
 
-// static uint8_t digitos_necessarios (size_t valor) 
-//   { return log10 (valor) + 1; }
+progresso_t novo_estatico_bpt(size_t total, uint8_t qB) {
+   struct progresso_tempo instancia;
+   // desabilitando o buffer da saída padrão para futuras impressões.
+   setbuf(stdout, NULL);
+
+   instancia.atual = 0;
+   instancia.total = total;
+   instancia.esgotado = false;
+
+   if (qB > 1)
+      { instancia.comprimento = qB; }
+   else
+      { instancia.comprimento = 50; }
+
+   // marcando o íncio da contagem de tempo.
+   instancia.inicio = time(NULL);
+   // retornando instância válida.
+   return instancia;
+}
 
 static void impressao_da_barra (size_t a, size_t T, float p, uint8_t C) 
 {
@@ -218,7 +237,9 @@ PT cria_bpt (size_t total)
     * necessário apenas o parâmetro total para instanciar-la. */
    { return novo_bpt (total, 30); }
 
-/* ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ Testes Unitários ~~~ ~~~ ~~~ ~~ ~~~~ ~~~ ~~~ */
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Testes Unitários 
+ * === === === === === === === === === === === === === === === === === ==*/
 #ifdef _UT_BARRA_DE_PROGRESSO
 #include <unistd.h>
 
@@ -246,8 +267,18 @@ void reevendo_bps (void) {
    destroi_bps (barra);
 }
 
+void barra_de_progresso_na_stack(void) {
+   size_t TOTAL = units_MiB(25);
+   progresso_t bp = novo_estatico_bpt(TOTAL, 40);
+
+   for (size_t q = 1; q <= TOTAL; q++)
+      visualiza_e_atualiza_bpt (&bp, q);
+}
+
 void main (void) {
-   novos_metodos_do_progresso_temporal();
-   reevendo_bps();
+   // novos_metodos_do_progresso_temporal();
+   // reevendo_bps();
+   barra_de_progresso_na_stack();
+
 }
 #endif
