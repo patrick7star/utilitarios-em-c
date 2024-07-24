@@ -26,14 +26,16 @@
  * centenas de milhares, ou milhões, entretanto, telas estão cada vez 
  * maiores hoje em dia, logo um inteiro positivo de 8-bits não será o
  * suficiente também; ficamos em tão com inteiros positivos de 16-bits. */
-struct coordenada_bidimensional { uint16_t y; uint16_t x; };
+ // struct coordenada_bidimensional { uint16_t y; uint16_t x; };
 
 
-const Ponto cria_ponto(uint16_t y, uint16_t x) 
+Ponto cria_ponto(uint16_t y, uint16_t x) 
 /* Apenas faz as copias dos valores paras o respecitivos pontos na estrutura
  * alocada e retornada a cópia abaixo.*/
    { return (Ponto){y, x}; }
 
+Ponto cria_default(void)
+   { return (Ponto){0, 0}; }
 
 uint16_t distancia_ponto(Ponto p, Ponto q) { 
 /* A distância entre dois pontos. Posteriormente é convertida a inteiro, 
@@ -81,12 +83,12 @@ char* ponto_to_str(Ponto p) {
    return ponto_fmt;
 }
 
-
 // todas vértices dos retângulo formado por dois pontos não-colineares.
 ArrayPonto retangulo_vertices(Ponto p, Ponto q) {
    uint16_t xP = p.x, yP = p.y;
    uint16_t xQ = q.x, yQ = q.y;
-   Ponto a, b, c, d;
+   Ponto a = cria_default(), b = cria_default(), 
+         c = cria_default(), d = cria_default();
 
    /* achando pontos restantes, dependendo de como os dois pontos
     * estão dispersos. Eles tem apenas dois modos de o fazer: o
@@ -140,7 +142,7 @@ char* array_ponto_to_str(ArrayPonto a, size_t t) {
  * da array; somado no final com dois caractéres para as delimitações,
  * e dois espaços de reserva.
  */
-   size_t total = t * (3 * 2 + 2) + 2 + 2;
+   // size_t total = t * (3 * 2 + 2) + 2 + 2;
    char* resultado_fmt;
    size_t comprimento = 0;
 
@@ -156,7 +158,7 @@ char* array_ponto_to_str(ArrayPonto a, size_t t) {
    comprimento += 1 + 3;  
    
    // Aloca e coloca o delimitador inicial.
-   resultado_fmt = calloc(total, sizeof(char));
+   resultado_fmt = calloc(comprimento, sizeof(char));
    resultado_fmt[0] = '[';
 
    for (uint64_t k = 1; k <= t; k++) {
