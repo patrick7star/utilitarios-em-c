@@ -9,13 +9,14 @@
 // nome mais curto, estético e significativo para um ponteiro de 
 // de função.
  typedef void(*Fn)(void);
+ // Tipo de função especial para testes-unitários.
+ typedef int (*FnTst) (void);
 
-/* string vázia dizendo que não quer que o teste tem um nome 
- * própria, ou uma mensagem explicando-o. */
+/* string vázia dizendo que não quer que o teste tem um nome própria, ou 
+ * uma mensagem explicando-o. */
  #define SEM_MENSAGEM ""
  #define SEM_NOME SEM_MENSAGEM
 
- // extern void executa_teste(char* nome, Fn);
  extern void debug_aqui(void);
  // extern void executa_teste_interruptor(char* , Fn, bool);
 /* Executa variados testes passados. Os parâmetros seguem a seguinte
@@ -65,14 +66,12 @@ extern void executa_testes(uint8_t total, ...);
   */
  void testes_unitarios(const uint8_t total, ...); 
 
-/*
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+/* -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
  *
  *                         Ainda em fase
  *                            de testes
  *
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
- */
+ * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---*/
 //  extern bool strings_correspodentes(char* str1, char* str2);
 // extern StringArray todas_substrings(char *str);
 // extern uint64_t total_substrings(char* str);
