@@ -10,6 +10,7 @@
 
 // total de registros que é possível fazer.
 #define TOTAL_REGISTROS 100
+static uint8_t instancias_do_cronometro;
 
 struct cronometro {
    // Segundos decorridos à partir desta contagem.
@@ -39,30 +40,13 @@ Cronometro cria_cronometro() {
       #ifdef _DEBUG_CRIA_CRONOMETRO
       puts("cronômetro foi alocado com sucesso.");
       #endif
+      // Contabilizando instância nova.
+      instancias_do_cronometro++;
    } else { 
       perror("cronômetro não foi criado corretamente."); 
       abort();
    }
    return novo;
-}
-
-void destroi_cronometro(Cronometro c, bool info) {
-   #ifdef _DEBUG_DESTROI_CRONOMETRO
-      time_t fim = time(NULL);
-      double diferenca = difftime(fim, c->inicio);
-      printf(
-         "\ntempo decorrido: %s\nregistros feitos: %lu\n",
-         tempo_legivel(diferenca), c->qtd
-      );
-   #endif
-
-   if (c != NULL)
-      free(c);
-   else {
-      #ifdef _DEBUG_DESTROI_CRONOMETRO
-      puts("o tal cronômetro não existe!");
-      #endif
-   }
 }
 
 static void ajusta_container_de_registros(Cronometro c) {
@@ -90,8 +74,8 @@ static void ajusta_container_de_registros(Cronometro c) {
 }
 
 double marca(Cronometro c) {
-   // if (c->qtd >= TOTAL_REGISTROS) 
-   //   perror("não é possível mais fazer registros.");
+/* Retorna o tempo variado desde a última marcação, o desde o início, se
+ * nenhuma ainda foi marcada. */
    ajusta_container_de_registros(c);
    
    c->marcos[c->qtd] = time(NULL);
@@ -119,11 +103,14 @@ void visualiza_marcos(Cronometro c) {
 
 double variacao(Cronometro c) {
    // quanto variou do último registro marcado, se houver algum é claro.
-   if (c->qtd == 0)
-      perror("nenhum registro foi marcado.");
+   if (c->qtd == 0) {
+      const char* mensagem_erro = "nenhum registro foi marcado.";
+      perror(mensagem_erro); abort();
+   }
 
    time_t f = time(NULL);
-   time_t i = c->marcos[c->qtd - 1];
+   size_t Q = c->qtd;
+   time_t i = c->marcos[Q - 1];
    return difftime(f, i);
 }
 
@@ -137,9 +124,39 @@ char* cronometro_to_str(Cronometro c) {
 
    sprintf(
       resultado_fmt, 
-      "cronômetro (%s, %3ld)", 
+      "Cronômetro(%u) [%s | %3ld]", 
+      instancias_do_cronometro,
       tempo_legivel(t), c->qtd
    );
    // retornando a slice-string transformada.
    return resultado_fmt;
+}
+
+uint8_t instancias_cronometro(void) 
+   { return instancias_do_cronometro; }
+   
+void destroi_cronometro(Cronometro c) {
+   #ifdef _DEBUG_DESTROI_CRONOMETRO
+      time_t fim = time(NULL);
+      double diferenca = difftime(fim, c->inicio);
+      printf(
+         "\ntempo decorrido: %s\nregistros feitos: %lu\n",
+         tempo_legivel(diferenca), c->qtd
+      );
+   #endif
+
+   if (c != NULL) {
+      free(c);
+      instancias_do_cronometro--;
+      #ifdef _DEBUG_DESTROI_CRONOMETRO
+      printf(
+         "Desalocação realizada, agora há apenas %u instâncias.\n", 
+         instancias_do_cronometro
+      );
+      #endif
+   } else {
+      #ifdef _DEBUG_DESTROI_CRONOMETRO
+      puts("o tal cronômetro não existe!");
+      #endif
+   }
 }
