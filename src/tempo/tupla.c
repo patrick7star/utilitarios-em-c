@@ -7,7 +7,7 @@
  * mas copiadas, novamente de acordo com a lógica interna que rege 
  * a thread.
  */
-struct tupla_para_thread {
+typedef struct tupla_para_thread {
    uint8_t* porcentagem;
 
    bool* estado;
@@ -15,6 +15,4 @@ struct tupla_para_thread {
    uint16_t unidades;
 
    TEMPO_TIPO grandeza;
-};
-
-typedef struct tupla_para_thread TuplaThread;
+} TuplaThread;
