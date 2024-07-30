@@ -13,7 +13,11 @@
 #include <time.h>
 
 // Atributos do objeto.
+#ifdef _WIN64
 const char BARRA = '*';
+#elif defined(__linux__)
+const char BARRA = 'o';
+#endif
 const char VACUO = '.';
 const size_t COMPRIMENTO = 45;
 
@@ -43,7 +47,7 @@ bool esgotado_bps (RefPS p)
 /* Verifica se */
    { return p->atual >= p->total; }
 
-static simple_progress_t cria_bps(size_t total, uint8_t comprimento) {
+simple_progress_t cria_bps(size_t total, uint8_t comprimento) {
    simple_progress_t instancia;
 
    instancia.atual = 0;
@@ -81,8 +85,9 @@ static void impressao_da_barra_bps (size_t a, size_t T, uint8_t c)
    #ifdef _WIN64
    printf("\r%9zu/%9zu [%s]%5.1f%%", a, T, barra, (p * 100.0));
    fflush(stdout);
-   #elif _POSIX_C_SOURCE
+   #elif defined(__linux__)
    printf("\r%9lu/%9lu [%s]%5.1f%%", a, T, barra, (p * 100.0));
+   fflush(stdout);
    #endif
    // quebra-de-linha pelo fim do progresso.
    if (a == T) {
@@ -178,8 +183,10 @@ static void impressao_da_barra (size_t a, size_t T, float p, uint8_t C)
 
    #ifdef _WIN64
    printf("\r%9zu/%9zu [%s]%5.1lf%%", a,T, barra, (p * 100.0));
-   #elif _POSIX_C_SOURCE
+   fflush(stdout);
+   #elif defined(__linux__)
    printf("\r%9lu/%9lu [%s]%5.1lf%%", a,T, barra, (p * 100.0));
+   fflush(stdout);
    #endif
    // quebra-de-linha pelo fim do progresso.
    if (a == T) putchar ('\n');
@@ -240,9 +247,9 @@ time_progress_t cria_padrao_bpt (size_t total)
  * necessário apenas o parâmetro total para instanciar-la. */
    { return cria_bpt (total, COMPRIMENTO); }
 
-/* == == == == == == == == == == == == == == == == == == == == == == == == == 
+/* == == == == == == == == == == == == == == == == == == == == == == == == =
  *                         Temporizador Genérico
- * == == == == == == == == == == == == == == == == == == == == == == == == */
+ * == == == == == == == == == == == == == == == == == == == == == == == = */
 union selecao { simple_progress_t simples; time_progress_t temporal; };
 typedef struct barra_de_progresso_generica {
    // Identificação do tipo de progresso.
@@ -298,14 +305,73 @@ void visualiza_bp(RefPG a) {
  *                     Testes Unitários e seus Auxiliares
  * == == == == == == == == == == == == == == == == == == == == == == == == */
 #ifdef _UT_PROGRESSO
-#ifdef _POSIX_C_SOURCE
+/* Testes, em suas respectivas plataformas, estão separados entre os 
+ * definitivos macros. */
+#ifdef __linux__
+#include "teste.h"
+#include <assert.h>
+#include <time.h>
 #include <unistd.h>
-#elif _WIN64
-#include <windows.h>
-#endif
 
 /* Converte um total de megabytes in bytes. */
-size_t units_MiB (uint8_t n) { return n * pow(2, 20); }
+const uint64_t L = 30;
+const struct timespec PAUSA = {0, 600000000};
+
+void progresso_simples() {
+   ProgressoSimples p = cria_bps(L, 0);
+
+   for (size_t k = 1; k <= L; k++) 
+   { 
+      atualiza_bps(&p, k);
+      visualiza_bps(&p); 
+      // sleep(1); 
+      nanosleep(&PAUSA, NULL);
+   }
+   assert(esgotado_bps(&p));
+}
+
+void progresso_simples_varios_tamanhos() {
+   ProgressoSimples pI = cria_bps(L, 4);
+   ProgressoSimples pII = cria_bps(L, 10);
+   ProgressoSimples pIII = cria_bps(L, 20);
+
+   for (uint64_t k = 0; k <= L; k++) { 
+      atualiza_bps(&pI, k);
+      visualiza_bps(&pI); 
+      nanosleep(&PAUSA, NULL);
+   }
+   assert(esgotado_bps(&pI));
+
+   for (uint64_t k = 0; k <= L; k++) { 
+      atualiza_bps(&pII, k);
+      visualiza_bps(&pII); 
+      nanosleep(&PAUSA, NULL);
+   }
+   assert(esgotado_bps(&pII));
+
+   for (uint64_t k = 0; k <= L; k++) { 
+      atualiza_bps(&pIII, k);
+      visualiza_bps(&pIII); 
+      nanosleep(&PAUSA, NULL);
+   }
+   assert(esgotado_bps(&pIII));
+}
+
+void progresso_temporal() {
+   PT p = cria_bpt(L, 32);
+
+   for (uint64_t k = 0; k <= L; k++) { 
+      atualiza_bpt(&p, k);
+      visualiza_bpt(&p); 
+      nanosleep(&PAUSA, NULL);
+   }
+}
+
+#elif defined(_WIN64)
+#include <windows.h>
+
+size_t units_MiB (uint8_t n) 
+   { return n * pow(2, 20); }
 
 void taxa_de_aumento(size_t* t) {
    size_t T = *t;
@@ -371,20 +437,28 @@ void uso_simples_da_barra_generica(void) {
       Sleep(ms);
    } while (i < T);
 }
+#endif
 
 int main (void) {
-   #ifdef _WIN64
+#ifdef _WIN64
    // Configuração apenas para o terminal do Windows.
    #include <locale.h>
    setlocale(LC_CTYPE, "en_US.UTF-8");
-   #endif
 
-   /*
    novos_metodos_do_progresso_temporal();
    reevendo_bps();
    teste_de_conversao_estatica();
-   */
    uso_simples_da_barra_generica();
+
+#elif defined(__linux__)
+   puts("Śérie de testes no Linux.\n");
+
+   executa_testes (
+      3, progresso_simples, true,
+         progresso_simples_varios_tamanhos, true,
+         progresso_temporal, true
+   );
+#endif
 
    return EXIT_SUCCESS;
 }

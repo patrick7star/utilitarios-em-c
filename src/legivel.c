@@ -1,5 +1,3 @@
-
-
 /* Grandezas mais legíveis:
  * Faz conversões de grandezas referentes a dados utilizados em computação,
  * ou outros campos. 
@@ -9,6 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 char* tempo_legivel(double segundos) {
    // variável com uma letra para agilizar codificação.
@@ -50,9 +49,20 @@ char* tempo_legivel(double segundos) {
    return resultado;
 }
 
-#include <string.h>
-#include <stdint.h>
-#include "legivel/calculo_potencia.c"
+// #include "legivel/calculo_potencia.c"
+static uint64_t potencia(uint64_t b, uint8_t e) {
+/* Calcula uma pontência, porém retorna ela como um grande inteiro --
+ * o maior tipo que existe, já que na falta de um deste na biblioteca
+ * padrão do C, é preciso criar um. Não computa para expoentes negativos,
+ * por motivos óbvio do tipo de retorno.
+ */
+   uint64_t produto = 1;
+
+   for (uint8_t k = 1; k <= e; k++)   
+      produto *= b;
+
+   return produto;
+}
 
 char* tamanho_legivel(size_t bytes) { 
    // múltiplos de tamanho(equivalente em bytes).
@@ -117,3 +127,65 @@ char* valor_legivel(size_t unidades) {
       sprintf(resultado_str, "%0.1f%s", novo_valor, peso);
    return resultado_str;
 }
+
+/* === === === === === === === === === === === === === === === === === ===+
+ * .......................................................................&
+ * ........................Testes Unitários...............................&
+ * .......................................................................&
+ * === === === === === === === === === === === === === === === === === ===*/
+#ifdef _UT_LEGIVEL
+// Biblioteca padrão em C(libs muito utilizadas.):
+#include <stdbool.h>
+#include <assert.h>
+// Seus módulos:
+#include "teste.h"
+
+uint64_t entradas[] = {
+   382, 12832, 3842394, 7712340981,
+   111931512, 50123812341, 100030231892377
+};
+
+double segundos[] = {
+   51.3232, 12832.15, 8328.0,
+   38832.312, 0.001, 0.038,
+   0.000851, 0.000000701, 190.5321
+};
+
+void legibilidade_do_tempo(void) {
+   for(int p = 0; p < 9; p++)
+      printf(
+         "%16lf ===> %s\n", 
+         segundos[p], 
+         tempo_legivel(segundos[p])
+      );
+   // de avaliação manual?
+}
+
+void legibilidade_de_tamanhos(void) {
+   for(size_t p = 1; p <= 7; p++) {
+		uint64_t valor = entradas[p - 1];
+		char* traducao = tamanho_legivel(valor);
+		printf ("%20lu ==> %s\n", valor, traducao);
+		free (traducao);
+	}
+}
+
+void o_grosso_de_grande_valores(void) {
+   for(int p = 0; p < 7; p++)
+      printf(
+         "%16lu ===> %s\n", 
+         entradas[p], 
+         valor_legivel(entradas[p])
+      );
+}
+
+int main(void) {
+   executa_testes(
+      3, legibilidade_do_tempo, true,
+         legibilidade_de_tamanhos, true,
+		   o_grosso_de_grande_valores, true
+	);
+
+   return EXIT_SUCCESS;
+}
+#endif
