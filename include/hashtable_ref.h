@@ -1,5 +1,3 @@
-
-
 /*   Tipos mais genéricos, então caso necessite mudar-los para outro 
  * programa, apenas troque aqui.
  * 
@@ -21,8 +19,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#ifndef HASHTABLE_I_H
-#define HASHTABLE_I_H
+#ifndef HASHTABLE_H_REF
+#define HASHTABLE_H_REF
  // todos apelidos dados:
  typedef struct tabela_de_dispersao 
    // Formas estáticas(para pegarem o objeto, precisam de ponteiros):
@@ -51,7 +49,7 @@
  bool destroi_ht (HashTable); 
  /* Também desaloca o tipo de dados internos, se for passado também o 
   * desalocador de tal tipo abstrato que foi alocada na tabela. */
- bool destroi_interno_ht(HashTable);
+ bool destroi_interno_ht (HashTable, Drop k, Drop v);
  
  /* Necessário para o último método de criação, que não passa as condições
   * necessárias para que a maioria dos métodos abaixo, mudem ou não a 
@@ -75,33 +73,14 @@
 
  /* Métodos para visualização da tabela, seja o resultado uma string, ou 
   * na saída principal. */
-// char* hashtable_to_str(HashTable, ToString); 
-//  void imprime_ht(HashTable, ToString); 
+ // char* hashtable_to_str(HashTable, ToString); 
+ void imprime_ht (HashTable, ToString fk, ToString gv); 
 
- /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
-  *                     Iterador da Hashtable
-  *                        e seus métodos
-  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- - */
- typedef struct iteracao_da_hashtable IterHT, *IteradorHT, *IteradorRefHT;
- /* Toda vez que iterador a estrutra acima, retorna o tipo de valor
-  * abaixo. Uma tupla com o endereço da 'chave', e outro ponteiro com
-  * o 'valor' da respectiva 'entrada' da tabela. */
- typedef struct iterator_ouptut_hs { generico_t key; generico_t value; } 
-   // Possíveis nomes para a tupla:
-   IterOutputHT, IterSaidaHT; 
-
- /* Cédula em branco para indicar termino da iteração ou invalidação. O 
-  * mesmo que (NULL, NULL).
-  */
- const IterOutputHT NULO_HT;
-
- IterHT cria_iter_ht (HashTable);
- // Total de itens, ainda não consumidos.
- size_t contagem_iter_ht (IteradorRefHT); 
- // Retorna próximo item do iterador.
- IterOutputHT next_ht (IteradorRefHT); 
- // Clona um iterador, no mesmo estado que ela está atualmente.
- IterHT clona_iter_ht(IteradorRefHT); 
+ /* Método clássico de iteração, gera arrays e colocas todos suas 'chaves'
+  * ou 'valores' nesta, sendo seu tamanho o mesmo que a quantia de itens
+  * da tabela. */
+ generico_t* valores_ht (HashTable); 
+ generico_t* chaves_ht (HashTable); 
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários 
@@ -123,5 +102,7 @@
  generico_t get_ht (HashTable,  generico_t key); 
  bool empty_ht (HashTable); 
  size_t len_ht (HashTable);
+
+ void print_ht (HashTable, ToString fk, ToString gv); 
 
 #endif

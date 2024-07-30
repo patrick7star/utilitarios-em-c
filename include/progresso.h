@@ -18,9 +18,9 @@ typedef struct progresso_simples ProgressoSimples, PS, *RefPS;
 typedef struct progresso_tempo *RefPT, ProgressoTemporal, PT;
 typedef struct barra_de_progresso_generica PG, *RefPG;
 
-// Barra de Progresso Simples:
+ // Barra de Progresso Simples:
  ProgressoSimples cria_bps(size_t, uint8_t);
-// Cria a barra, porém promove um comprimento padrão a ela.
+ // Cria a barra, porém promove um comprimento padrão a ela.
  ProgressoSimples cria_padrao_bps (size_t);
  bool esgotado_bps (RefPS);
  void visualiza_bps(RefPS);

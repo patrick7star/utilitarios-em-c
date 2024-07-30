@@ -32,6 +32,7 @@
  * valor verdade, além de bate com o total de argumentos declarados
  * inicialmente. */
 extern void executa_testes(uint8_t total, ...);
+void executa_teste_interruptor(char*, Fn, bool); 
 
 /* Converte um valor lógico para uma string, em português, dizendo o que 
  * ele representa. Nome similires, mas fazem a mesma coisas também estão 
@@ -66,22 +67,15 @@ extern void executa_testes(uint8_t total, ...);
   */
  void testes_unitarios(const uint8_t total, ...); 
 
+
 /* -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
  *
  *                         Ainda em fase
  *                            de testes
  *
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---*/
-//  extern bool strings_correspodentes(char* str1, char* str2);
-// extern StringArray todas_substrings(char *str);
-// extern uint64_t total_substrings(char* str);
-// extern StringArray forma_strings(const char* str);
 /* converte um inteiro, qualquer que seja seu tamanho, na sua forma
  * binária. */
  extern char* binario_str(size_t);
-// --- --- --- --- --- --- --- --- --- ---
-
-// faz a concatenação de várias strings literais.
- extern char* concatena_literais_str(const uint8_t, ...);
 
 #endif //TESTE_H

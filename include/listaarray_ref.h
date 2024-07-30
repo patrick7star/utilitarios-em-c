@@ -45,7 +45,7 @@
  typedef struct saida_da_iteracao_da_al { generico_t item; } 
    IterOutputAL;
  // Constante que representa nenhum item iterado.
- const IterOutputAL NULO_AL = { .item = NULL };
+ // extern IterOutputAL NULO_AL = { .item = NULL };
 
  // Métodos de criação, mudança e atual estado:
  IterAL cria_iter_al (ArrayLista); 
