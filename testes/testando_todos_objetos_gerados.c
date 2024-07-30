@@ -97,13 +97,10 @@ void funcoes_de_ponto(void) {
 }
 
 int main(void) {
-
-   /*
    funcoes_do_legivel();
    funcoes_do_tempo();
    funcoes_do_progresso();
    funcoes_do_aleatorio();
-   */
    funcoes_de_ponto();
 
    return EXIT_SUCCESS;
