@@ -27,19 +27,29 @@ compila-testes-unitarios: \
 	terminal \
 	ponto \
 	aleatorio \
-	tempo
+	tempo \
+	impressao \
+	legivel
 
 compila-testes-unitarios-colecoes: \
 	conjunto-ref \
 	hashtable-ref \
 	pilha-ligada-ref \
-	lista-posicional-ref
+	lista-posicional-ref \
+	lista-array-ref
+
+compila-testes-integrais: \
+	fatorizacao-com-hashtable \
+	testando-todos-objetos-gerados \
+	distribuicao-de-numeros-gerados-randomicamente
+
 # Compila tudo acima, seguindo sua hieraquia copiada(cima para baixo):
 compila-tudo: \
 	compila-objetos-principais \
 	compila-bibliotecas-estaticas \
 	compila-testes-unitarios \
-	compila-testes-unitarios-colecoes 
+	compila-testes-unitarios-colecoes \
+	compila-testes-integrais
 	@echo "Todas códigos das bibliotecas(testes e libs) foram compilados com sucesso."
 
 # limpando todos executáveis no diretório.
@@ -51,11 +61,11 @@ clean:
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.1.4
+VERSAO = v1.1.6
 OPCOES = --exclude=ut* -cvf
 NOME = utilitarios.$(VERSAO).tar 
 LOCAL = ../versions
-CONTEUDO = include/ src/ testes/*.c Makefile
+CONTEUDO = include/ src/ tests/*.c Makefile
 
 salva:
 	tar $(OPCOES) $(LOCAL)/$(NOME) $(CONTEUDO)
@@ -174,9 +184,21 @@ barra-de-progresso:
 	gcc -o bin/tests/ut_barra_de_progresso build/progresso.o -Wall -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-impressao: lista-array-ref.o
-	clang -I include/ -D_UT_IMPRESSAO -o ut_impressao src/impressao.c build/listaarray_ref.o build/terminal.o
+impressao: terminal.o lista-array-ref.o
+	clang -I include/ -D_UT_IMPRESSAO -o bin/tests/ut_impressao src/impressao.c build/terminal.o build/listaarray_ref.o
 
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+legivel: teste.o
+	clang -O0 -std=c2x -I include/ -Wall \
+		-D_UT_LEGIVEL \
+		-o bin/tests/ut_legivel src/legivel.c -lm \
+		-L bin/static -lteste -ltempo -lterminal
+
+progresso: teste.o
+	clang -O0 -std=gnu2x -I include/ -Wall \
+		-D_UT_PROGRESSO \
+		-o bin/tests/ut_progresso src/progresso.c -lm \
+		-L bin/static -lteste -llegivel -ltempo -lterminal
 # === === ===  === === === === === === === === === === === === === === ===
 #
 # 					Compilação e Coleção de Estruturas de Dados
@@ -256,7 +278,7 @@ lista-posicional-ref:
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 lista-array-ref.o:
-	clang -I include/ -std=c18 -Wall -c src/estrutura-de-dados/listaarray_ref.c -o build/listaarray_ref.o
+	clang -I include/ -Wall -std=c2x -c -o build/listaarray_ref.o src/estrutura-de-dados/listaarray_ref.c 
 
 
 # === === ===  === === === === === === === === === === === === === === ===
@@ -321,4 +343,27 @@ libaleatorio: aleatorio.o
 	ar crs bin/static/libaleatorio.a build/terminal.o
 
 # === === ===  === === === === === === === === === === === === === === ===
+#
+#						Compilação dos Testes Integrais
+#
+# === === ===  === === === === === === === === === === === === === === ===
 
+fatorizacao-com-hashtable:
+	clang -I include/ -Wall tests/fatorizacao_com_hashtable.c src/estrutura-de-dados/hashtable_ref.c -o bin/tests/it_fatorizacao_com_hashtable
+
+testando-todos-objetos-gerados:
+	clang -I include/ -Wall -o bin/tests/it_testando_todos_objetos_gerados tests/testando_todos_objetos_gerados.c build/tempo.o build/barra_de_progresso.o build/aleatorio.o build/legivel.o build/ponto.o -lm
+
+hashtable-ref.o:
+	@clang -std=c2x -I include/ -Wall -c -o \
+		build/hashtable_ref.o \
+		src/estrutura-de-dados/hashtable_ref.c
+
+distribuicao-de-numeros-gerados-randomicamente: hashtable-ref.o
+	clang -std=c2x -I include/ -Wall \
+		-D_DESTRUICAO_HT \
+		-o bin/tests/it_distruibacao_de_numeros_gerados_randomicamente \
+		tests/distribuicao_de_numeros_gerados_randomicamente.c \
+		build/barra_de_progresso.o build/aleatorio.o -lm \
+		build/hashtable_ref.o
+# === === ===  === === === === === === === === === === === === === === ===
