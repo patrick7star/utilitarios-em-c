@@ -7,9 +7,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 // Apenas para os testes:
 #ifdef _DESTROI_PL
-#include <assert.h>
 #include <unistd.h>
 #endif
 
@@ -77,7 +77,9 @@ struct pilha_ligada_abstracao {
 };
 
 PilhaLigada cria_pl (void) {
-   PilhaLigada instancia = malloc(sizeof(PilhaLigada));
+   size_t sz = sizeof (struct pilha_ligada_abstracao);
+   // PilhaLigada instancia = malloc(sizeof(PilhaLigada));
+   PilhaLigada instancia = malloc(sz);
 
    if (instancia != NULL) {
       instancia->quantidade = 0;
@@ -101,11 +103,11 @@ bool coloca_pl(PilhaLigada s, void* dado) {
    return true;
 }
 
-size_t tamanho_pl(PilhaLigada s) 
+size_t comprimento_pl(PilhaLigada s) 
    { return s->quantidade; }
 
 bool vazia_pl(PilhaLigada s) 
-   { return tamanho_pl(s) == 0; }
+   { return s->quantidade == 0; }
 
 void visualiza_pl(PilhaLigada s) {
    if (vazia_pl(s)) { puts("pilha-ligada: []"); return; }
@@ -193,19 +195,18 @@ bool destroi_interno_pl (PilhaLigada s, Drop del) {
    if (s == NULL) return false;
 
    #ifdef _DESTROI_PL
-   size_t parada = tamanho_pl (s) / 2;
+   size_t parada =  (s) / 2;
    size_t cortes = 0;
    #endif
 
    while (!vazia_pl (s)) {
       generico_t dado = retira_pl(s);
-      // free (dado);
       del(dado);
       dado = NULL;
 
       #ifdef _DESTROI_PL
       assert (dado == NULL);
-      size_t quantia = tamanho_pl (s);
+      size_t quantia =  (s);
       bool chegou = quantia < parada;
       if (chegou) {
          printf (
@@ -223,6 +224,15 @@ bool destroi_interno_pl (PilhaLigada s, Drop del) {
    return true;
 }
 
+size_t tamanho_pl(PilhaLigada s, size_t size_dt) {
+   size_t a = sizeof(pilha_ligada_t) + sizeof(PilhaLigada);
+   size_t b = sizeof(struct nodulo) + sizeof(Node);
+   size_t c = size_dt + sizeof(generico_t);
+   size_t n = comprimento_pl(s);
+
+   return a + (b + c) * n;
+}
+
 /* === === === === === === === === === === === === === === === === === ==
  *                      Iterador e seus métodos
  *
@@ -234,9 +244,6 @@ bool destroi_interno_pl (PilhaLigada s, Drop del) {
  * de 'tabela de dispersão', no mais, pilha-ligada é apenas uma simples 
  * lista-ligada que adiciona e remove em uma ponta.
  * === === === === === === === === === === === === === === === === === ==*/
-// Novamente um simples campo, que armazena o dado.
-struct saida_da_iteracao_da_pl { generico_t item; };
-
 struct iterador_da_pilha_pl {
    // Instância do pilha-ligada que se itera.
     PilhaLigada instancia;
@@ -247,24 +254,30 @@ struct iterador_da_pilha_pl {
    // Referência ao próximo nó à iterar.
    Node cursor;
 };
-// Único item é nulo.
+
 const IterOutputPL NULO_PL = { NULL };
 
 IterPL cria_iter_pl(PilhaLigada a) {
-   struct iterador_da_pilha_pl iter; 
+   // Total de bytes do tipo de dado.
+   const int sz_iter = sizeof(struct iterador_da_pilha_pl);
+   IterPL self = malloc (sz_iter);
 
-   // Quantos itens há inicialmente nela(para constante verificação).
-   iter.inicial = tamanho_pl(a);
-   iter.cursor = a->topo;
-   // Começa, obviamente, com zero itens iterados.
-   iter.contagem = 0;
-   // A referência da instância que se está iterando...
-   iter.instancia = a;
-
-   return iter;
+   if (self != NULL) {
+      // Quantos itens há inicialmente nela(para constante verificação).
+      self->inicial = comprimento_pl(a);
+      self->cursor = a->topo;
+      // Começa, obviamente, com zero itens iterados.
+      self->contagem = 0;
+      // A referência da instância que se está iterando...
+      self->instancia = a;
+   }
+   return self;
 }
 
-size_t contagem_iter_set (IteradorRefPL iter) {
+bool consumido_iter_pl(IterPL iter) 
+   { return iter->contagem == iter->inicial; }
+
+size_t contagem_iter_set (IterPL iter) {
    // Verificando se o iterador é válido.
    bool iterador_e_valido = {
       iter != NULL 
@@ -279,7 +292,7 @@ size_t contagem_iter_set (IteradorRefPL iter) {
    abort();
 }
 
-IterOutputPL next_pl (IteradorRefPL iter) {
+IterOutputPL next_pl (IterPL iter) {
 // A iteração partirá do topo da pilha até o último nódulo dela.
    if (consumido_iter_pl(iter))
       return NULO_PL;
@@ -293,25 +306,40 @@ IterOutputPL next_pl (IteradorRefPL iter) {
    return (IterOutputPL){ .item=dado_no_nodulo };
 }
 
-bool consumido_iter_pl(IteradorRefPL iter) 
-   { return iter->contagem == iter->inicial; }
+IterPL clona_iter_pl(IterPL iter) {
+   IterPL novo = cria_iter_pl(iter->instancia);
 
-IterPL clona_iter_pl(IteradorRefPL iter) {
-   IterPL novo;
+   if (novo != NULL) {
    // Copiando informações, em seus atuais estados:
-   novo.instancia = iter->instancia;
-   novo.contagem = iter->contagem;
-   novo.inicial = tamanho_pl(iter->instancia);
-   novo.cursor = iter->cursor;
-
+      novo->instancia = iter->instancia;
+      novo->contagem = iter->contagem;
+      novo->inicial = comprimento_pl(iter->instancia);
+      novo->cursor = iter->cursor;
+   }
    return novo;
+}
+
+void destroi_iter_pl(IterPL a) {
+   // Não segura mais o container da estrutura.
+   a->instancia = NULL; 
+   // Livra-se também da referência do atual nódulo iterador nela.
+   a->cursor =NULL;
+   // libera tal instância.
+   free(a);
 }
 // === === === === === === === === === === === === === === === === === ===
 
 char* stack_to_str_pl(PilhaLigada s, ToString f) {
-   if (vazia_pl(s))
-      return "";
-   else if (tamanho_pl(s) > UINT16_MAX / 3) {
+   size_t char_sz = sizeof(char);
+   size_t t = comprimento_pl(s);
+   char* resultado_fmt, *dado_fmt;
+
+   if (vazia_pl(s)) {
+      char* vazio_fmt = malloc(15 * char_sz);
+
+      sprintf(vazio_fmt, "Pilha(%lu): []-[]", t);
+      return vazio_fmt;
+   } else if (comprimento_pl(s) > UINT16_MAX / 3) {
       const char* msg_erro = {
       "Não é possível transformar em "
       "string tal quantia"
@@ -321,34 +349,33 @@ char* stack_to_str_pl(PilhaLigada s, ToString f) {
 
    // Pilha temporária.
    IterPL i = cria_iter_pl(s);
-   IterPL j = clona_iter_pl(&i);
+   IterPL j = clona_iter_pl(i);
    size_t comprimento = 0;
-   char* resultado_fmt, *dado_fmt;
 
    // Medindo string com maior comprimento.
    do {
-      IterOutputPL a = next_pl(&i);
+      IterOutputPL a = next_pl(i);
       generico_t r = a.item;
       // Formata o dado.
       char* string_fmt = f(r);
 
       comprimento += strlen(string_fmt) + 2;
       free(string_fmt);
-   } while (!consumido_iter_pl(&i)); 
+   } while (!consumido_iter_pl(i)); 
 
    // Ajustando o comprimento para o cabeçalho, e os delimitadores:
    comprimento += 50;
    // Alocando e limpando a string.
-   resultado_fmt = malloc (comprimento * sizeof(char));
+   resultado_fmt = malloc (comprimento * char_sz);
    // Adicioção inicial.
-   IterOutputPL b = next_pl(&j);
+   IterOutputPL b = next_pl(j);
    dado_fmt = f(b.item);
-   sprintf(resultado_fmt, "Pilha(%lu): [%s]-[", tamanho_pl(s), dado_fmt);
+   sprintf(resultado_fmt, "Pilha(%lu): [%s]-[", t, dado_fmt);
    free(dado_fmt);
 
    // Criação da string, então concatenação.
-   do {
-      IterOutputPL a = next_pl(&j);
+   while (!consumido_iter_pl(j)) {
+      IterOutputPL a = next_pl(j);
       generico_t r = a.item;
       // Formata o dado.
       dado_fmt = f(r);
@@ -357,21 +384,27 @@ char* stack_to_str_pl(PilhaLigada s, ToString f) {
       strcat(resultado_fmt, ", ");
       // Libera string gerada momentaneamente.
       free(dado_fmt);
-   } while (!consumido_iter_pl(&j)); 
+   } 
 
    // Finalizando a lista em forma de string, então, retornando...
-   if (vazia_pl(s))
+   if (vazia_pl(s) || t == 1)
       strcat(resultado_fmt, "]");
    else
       strcat(resultado_fmt, "\b\b]");
+
+   destroi_iter_pl(i);
+   destroi_iter_pl(j);
    return resultado_fmt;
 }
 
 void imprime_pl(PilhaLigada s, ToString f) {
-   char* formatacao_da_pilha = stack_to_str_pl(s, f);
-   printf("%s\n", formatacao_da_pilha);
+   char* pilha_fmt;
+
+   pilha_fmt = stack_to_str_pl(s, f);
+   printf("%s\n", pilha_fmt);
+   fflush(stdout);
    // Então libera a string gerada.
-   free(formatacao_da_pilha);
+   free(pilha_fmt);
 }
 
 void extende_pl(PilhaLigada s, PilhaLigada p) {
@@ -400,6 +433,27 @@ void extende_pl(PilhaLigada s, PilhaLigada p) {
    destroi_pl(aux);
 }
 
+generico_t* pilha_to_array_pl(PilhaLigada S) {
+/* Faz uma cópia da pilha, e a transforma numa array, seguindo é claro a 
+ * propriedade de uma(LIFO). */
+   bool nenhum_item_na_pilha = vazia_pl(S);
+
+   if (nenhum_item_na_pilha)
+   // Com uma pilha vázia não será preciso alocar nada.
+      return NULL;
+
+   IterPL i = cria_iter_pl(S);
+   size_t sz = sizeof(generico_t), p = 0;
+   generico_t* the_array = malloc(sz);
+
+   while (!consumido_iter_pl(i)) {
+      IterOutputPL a = next_pl(i);
+      the_array[p] = a.item;
+      p++;
+   }
+   return the_array;
+}
+
 /* === === === === === === === === === === === === === === === === === ==
  *                Tradução de funções e métodos acimas 
  *
@@ -410,21 +464,32 @@ void extende_pl(PilhaLigada s, PilhaLigada p) {
  * métodos e tipos de dados não estão aqui, porque eles já estão de certo
  * modo em inglês, já outros, tenho que ainda decidir um nome.
  * === === === === === === === === === === === === === === === === === ==*/
-PilhaLigada new_pl (void) { return cria_pl(); }
+PilhaLigada new_pl (void) 
+   { return cria_pl(); }
 
-bool delete_pl (PilhaLigada s) { return destroi_pl(s); }
+bool delete_pl (PilhaLigada s)
+   { return destroi_pl(s); }
 
-bool push_pl(PilhaLigada s, generico_t e) { return coloca_pl(s, e); }
+bool push_pl(PilhaLigada s, generico_t e)
+   { return coloca_pl(s, e); }
 
-generico_t pop_pl(PilhaLigada s) { return retira_pl(s); }
+generico_t pop_pl(PilhaLigada s)
+   { return retira_pl(s); }
 
-size_t len_pl (PilhaLigada s) { return tamanho_pl(s); }
+size_t len_pl (PilhaLigada s)
+   { return comprimento_pl(s); }
 
-bool empty_pl (PilhaLigada s) { return vazia_pl(s); }
+bool empty_pl (PilhaLigada s)
+   { return vazia_pl(s); }
 
-void* top_pl (PilhaLigada s) { return topo_pl(s); }
+void* top_pl (PilhaLigada s)
+   { return topo_pl(s); }
 
-void print_pl (PilhaLigada s, ToString f) { imprime_pl(s, f);  }
+void print_pl (PilhaLigada s, ToString f) 
+   { imprime_pl(s, f);  }
+
+generico_t* stack_to_array_pl(PilhaLigada S) 
+   { return pilha_to_array_pl(S); }
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Testes Unitários 
@@ -462,7 +527,7 @@ void pilha_com_i32s (void) {
    int* qual_o_topo = topo_pl(stack);
    printf("topo da pilha: %d\n", *qual_o_topo);
 
-   assert (tamanho_pl(stack) == 1);
+   assert ((stack) == 1);
    assert (destroi_pl (stack));
 }
 
@@ -478,7 +543,7 @@ void pilha_de_strings (void) {
    coloca_pl(stack, "He said so tshirts");
    visualiza_pilha_string(stack);
 
-   assert (tamanho_pl(stack) == 4);
+   assert ((stack) == 4);
    assert (destroi_pl (stack));
 }
 
@@ -598,13 +663,13 @@ void amostra_simples_de_todos_seus_metodos(void) {
    PilhaLigada stack = cria_pl();
 
    printf("Está vázia? %s\n", bool_to_str(vazia_pl(stack)));
-   printf("Total de itens: %lu\n", tamanho_pl(stack));
+   printf("Total de itens: %lu\n", (stack));
    for (size_t k = 0; k < FRUTAS; k++) {
       char* e = (char*)frutas[k];
       printf("\tAdicionando agora '%s'...\n", e);
       assert (coloca_pl(stack, e));
    }
-   printf("Total de itens: %lu\n", tamanho_pl(stack));
+   printf("Total de itens: %lu\n", (stack));
    printf("Está vázia? %s\n", bool_to_str(vazia_pl(stack)));
    char* item_no_topo = topo_pl(stack);
    printf("No topo: '%s'\n", item_no_topo);

@@ -77,23 +77,34 @@ static void destroi_toda_lista_ligada (nodulo_t* lista) {
       free (remocao);
       // indo para remoção do outro nódulo ...
       destroi_toda_lista_ligada (lista);
+      return;
+   }
+}
+
+static void desaloca_lista_ligada_e_dados_internos (nodulo_t* lista, 
+  Drop fc, Drop gv) 
+{
+   if (lista != NULL) {
+      // obtendo primeiro item, antes que ele possa ser "perdido".
+      nodulo_t* remocao = lista;
+      lista = lista->seta;
+
+      /* Desalocando dados de ambos tipos, com os respectivos 
+       * descontrutores de cada. */
+      fc(remocao->chave);
+      gv(remocao->valor);
+      // resetando referências internas...
+      remocao->chave = NULL;
+      remocao->valor = NULL;
+
+      // Livrando-se do 'nó'...
+      free (remocao);
+      // indo para remoção do outro nódulo ...
+      destroi_toda_lista_ligada (lista);
+      return;
    }
 }
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-
-#ifdef _ALLOW_DEAD_CODE
-static bool destroi_nodulo (nodulo_t* item) {
-   if (item != INVALIDA) {
-      // apenas some com as referências primeiramente...
-      item->chave = NULL;
-      destroi_toda_lista_ligada (item->seta);
-      free (item);
-      // confirma destruição.
-      return true;
-   } 
-   return false;
-}
-#endif
 
 struct tabela_de_dispersao {
    // array de containers dos dados:
@@ -142,9 +153,11 @@ bool adiciona_metodos ( HashTable m, Hash hash, Eq eq) {
 }
 
 HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
-   HashTable mapa = malloc(sizeof(hashtable_t));
+   size_t size = sizeof(struct tabela_de_dispersao);
+   // HashTable mapa = malloc(sizeof(HashTable));
+    HashTable mapa = malloc(size);
    size_t Q = capacidade;
-   const size_t SIZE_REF = sizeof (nodulo_t*);
+   const size_t node_sz = sizeof (nodulo_t*);
 
    if (mapa != NULL) {
       #ifdef _CRIACAO_HT
@@ -152,7 +165,8 @@ HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
       #endif 
 
       // alocando a array de listas e registrando seu tamanho...
-      mapa->locais = malloc (Q * SIZE_REF);
+      // mapa->locais = malloc (Q * SIZE_REF);
+      mapa->locais = calloc (Q, node_sz);
       for (size_t k = 1; k <= Q; k++)
          mapa->locais[k - 1] = NULL;
       mapa->capacidade = Q;
@@ -200,13 +214,31 @@ bool destroi_ht(HashTable m) {
       nodulo_t* lista = m->locais[i - 1];
       destroi_toda_lista_ligada (lista);
    }
-   // 8463
-   free (m);
+   free(m->locais);
+   free(m);
 
    #ifdef _DESTRUICAO_HT 
    printf ("todas %lu lista internas foram destruídas.\n", i);
    puts ("a 'tabela' foi desalocada com sucesso.");
    #endif
+
+   // confirma que tudo está liberado.
+   return true;
+}
+
+bool destroi_interno_ht(HashTable m, Drop fk, Drop gv) {
+   size_t Q = m->capacidade, i = 1;
+
+   if (m == INVALIDA) 
+      return false; 
+
+   while (i < Q) {
+      nodulo_t* lista = m->locais[i - 1];
+      desaloca_lista_ligada_e_dados_internos(lista, fk, gv);
+   }
+   free(m->locais);
+   free(m);
+
    // confirma que tudo está liberado.
    return true;
 }
@@ -435,7 +467,7 @@ generico_t obtem_ht(HashTable m,  generico_t ch) {
  * este separador entre eles. Assim fica de fácil localização, e os métodos
  * de cada um não serão confundidos.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
-struct iteracao_da_hashtable {
+struct Iteracao_da_Hashtable_Ref {
    // contador de itens iterados.
    size_t contagem;
    // posição atual na array.
@@ -447,25 +479,29 @@ struct iteracao_da_hashtable {
    // garantidor de que a 'tabela' não foi alterada.
    size_t inicialmente;
    HashTable instancia;
+
 };
 
-// cédula em branco para indicar termino da iteração ou invalidação.
-const IterOutputHT NULO_HT = (IterOutputHT) {NULL, NULL};
+// O valor da iteração, quando não é mais possível consumir, será este.
+const IterOutputHT NULO_HT = {NULL, NULL};
 
 IterHT cria_iter_ht (HashTable m) {
-   IterHT i;
+   const int sz_iter = sizeof(struct Iteracao_da_Hashtable_Ref);
+   nodulo_t* no = m->locais[0];
+   IterHT self = malloc (sz_iter);
 
-   i.contagem = 0;
-   i.indice = 0;
-   i.cursor = m->locais[0];
-   i.inicialmente = tamanho_ht (m);
-   // referência ao próprio mapa, dicio, table,... como quiser chamar.
-   i.instancia = m;
-
-   return i;
+   if (self != NULL) {
+      self->contagem = 0;
+      self->indice = 0;
+      self->cursor = no;
+      self->inicialmente = tamanho_ht (m);
+      // referência ao próprio mapa, dicio, table,... como quiser chamar.
+      self->instancia = m;
+   }
+   return self;
 }
 
-static bool iterador_valido (IteradorHT iter) {
+static bool iterador_valido (IterHT iter) {
 /* Para realizar qualquer uma das operações abaixo, é necessário
  * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
  * tamanho que na criação da instância. */
@@ -474,7 +510,7 @@ static bool iterador_valido (IteradorHT iter) {
    return (iter->inicialmente == T && referencia_existe);
 }
 
-size_t contagem_iter_ht (IteradorHT iter) {
+size_t contagem_iter_ht (IterHT iter) {
 /* O restante de iterações é calculado na seguinte forma: total de itens 
  * na "lista" menos os já iterados. */
    if (iterador_valido (iter))
@@ -485,13 +521,12 @@ size_t contagem_iter_ht (IteradorHT iter) {
    abort();
 }
 
-IterOutputHT next_ht (IteradorHT iter) {
+IterOutputHT next_ht (IterHT iter) {
 /* O algoritmo que pega o próximo item da iteração. Seu modo de funcionar
  * é o seguinte; vai iterando o cada posição na array de listas-ligadas,
  * se não houver nada nela(sem lista), ele pula para o próximo índice 
  * nela, se houver um nó, seguir a lista ligada. Cada iteração com um
  * item válido(nó) é contabilizado. */
-   /* Casos que não retornar qualquer valor válido. */
    if (!iterador_valido(iter))
       return NULO_HT;
    else if (contagem_iter_ht(iter) == 0)
@@ -519,25 +554,147 @@ IterOutputHT next_ht (IteradorHT iter) {
    }
 }
 
-bool consumido_iter_ht(IteradorHT iter) 
+bool consumido_iter_ht(IterHT iter) 
 // Diz se o iterador se esgotou(contagem atingiu valor inicial).
    { return iter->contagem == iter->inicialmente; }
 
-IterHT clona_iter_ht(IteradorRefHT iter) {
+IterHT clona_iter_ht(IterHT iter) {
 /* Clona o iterador passado, à partir do estágio que está. A alteração 
  * deste novo clone, ou do original, não alteram a iteração de cada, más 
  * sim, a mudança da estrutura original, que não permite ambos realizar 
  * mais iterações. */ 
-   IterHT novo;
-   // Copiando informações:
-   novo.instancia = iter->instancia;
-   novo.contagem = iter->contagem;
-   novo.inicialmente = tamanho_ht(iter->instancia);
-   // Camos internos para iteração(até mais importante que os acimas):
-   novo.cursor = iter->cursor;
-   novo.indice = iter->indice;
+   IterHT novo = cria_iter_ht(iter->instancia);
 
+   // Copiando informações:
+   if (novo != NULL) {
+      novo->instancia = iter->instancia;
+      novo->contagem = iter->contagem;
+      novo->inicialmente = tamanho_ht(iter->instancia);
+      // Camos internos para iteração(até mais importante que os acimas):
+      novo->cursor = iter->cursor;
+      novo->indice = iter->indice;
+   }
    return novo;
+}
+
+void destroi_iter_ht(IterHT iter) {
+   iter->cursor = NULL;
+   iter->instancia = NULL;
+   free(iter);
+}
+
+void imprime_ht(HashTable m, ToString fk, ToString gv) {
+/* Usa o iterador para pegar cada entrada, transforma a chave e o valor em
+ * respectivas strings -- passados seus transformadores como argumento; 
+ * então imprime cada entrada, formatada, depois coloca um separador entre
+ * elas. No fim, apenas "fecha" tais formatações. A variável de iteração
+ * serve para mostrar o melhor fechamento, já que se usa caractéres 
+ * especias de backspace, e não quer se comer qualquer caractére imprimido.
+ */
+   IterHT iter = cria_iter_ht(m); 
+   bool iterado_alguma_vez = false;
+   size_t Q = tamanho_ht(m);
+   const size_t LIMITE = UINT16_MAX / 4;
+
+   if (Q > LIMITE) {
+   /* Ocupar recursos da máquina por muito tempo, processando um bocado
+    * de string. Tudo isso para um output totalmente inútil de visualizar
+    * para qualquer tipo de impressão, por isso o limite. Fututamente tal
+    * poderá ser desativado na compilação. */
+      perror(
+         "toma muito recursor imprimir tamanha instância"
+         " desta estrutura."
+      );
+      // Desaloca iterador, já que não vai continuar.
+      destroi_iter_ht(iter);
+      return;
+   }
+
+   printf("HashTable(%zu): {", Q);
+   while (!consumido_iter_ht(iter)) {
+      IterOutputHT S = next_ht(iter); 
+      char* key_str = fk(S.key);
+      char* value_str = gv(S.value);
+
+      printf("%s: %s, ", key_str, value_str);
+      free(key_str); free(value_str);
+
+      if (!iterado_alguma_vez)
+         iterado_alguma_vez = true;
+   }
+   if (iterado_alguma_vez)
+      puts("\b\b}");
+   else
+      puts("}");
+   destroi_iter_ht(iter);
+}
+
+generico_t* valores_ht(HashTable m) {
+/* Que uma array dinâmica, contendo todos genéricos dos valores dos itens
+ * na tabela; isso tudo seguindo a ordem de iteração. A array terá o 
+ * tamanho da quantia de itens da tabela de dispersão, obviamente! Se 
+ * tal tabela estiver vázia, o retorno é NULL ao invés do primeiro 
+ * objeto da array. */
+   size_t total = tamanho_ht(m); 
+   size_t size_g = sizeof(generico_t);
+   // Computando total de bytes que 'n' desta estrutura ocupa.
+   generico_t* data_array;
+   size_t p = 0;
+
+   /* Não continuar se não houver nenhum item no 'dicionário'. */
+   if (vazia_ht(m)) return NULL;
+
+   // Se chegou até aqui, então, alocar a array e criar o iterador...
+   data_array = malloc (total * size_g);
+   IterHT i = cria_iter_ht(m);
+
+   // Para a execução em caso de erro na alocação.
+   if (data_array == NULL) { 
+      perror("erro alocação de ArrayHT*");
+      abort();
+   }
+
+   while (!consumido_iter_ht(i)) 
+   {
+      IterOutputHT a = next_ht(i);
+      data_array[p++] = a.value;
+   }
+
+   destroi_iter_ht(i);
+   // Criando a estrutura array, colocando a array dinâmica(na heap), e
+   // copiando o total de itens nela.
+   return data_array;
+}
+
+generico_t* chaves_ht(HashTable m) {
+/* Exatamente o mesmo que acima, porém que para chaves ao invés dos
+ * valores. */
+   size_t total = tamanho_ht(m); 
+   size_t size_g = sizeof(generico_t);
+   // Computando total de bytes que 'n' desta estrutura ocupa.
+   generico_t* data_array = malloc (total * size_g);
+   IterHT i = cria_iter_ht(m);
+   size_t p = 0;
+
+   /* Não continuar se não houver nenhum item no 'dicionário'. Aqui também
+    * liberar a array alocada acima. */
+   if (vazia_ht(m)) {
+      free(data_array);
+      return NULL;
+   }
+
+   if (data_array == NULL) { 
+      perror("erro alocação de ArrayHT*");
+      abort();
+   }
+
+   while (!consumido_iter_ht(i)) 
+   {
+      IterOutputHT a = next_ht(i);
+      data_array[p++] = a.key;
+   }
+   destroi_iter_ht(i);
+   return data_array;
 }
 
 /* === === === === === === === === === === === === === === === === === ==
@@ -1018,21 +1175,21 @@ void uso_simples_da_iteracao (void) {
    print_inner_u16_e_str (M);
 
    IterHT I = cria_iter_ht (M);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
+   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
 
-   for (size_t count = contagem_iter_ht(&I); count > 0; count--) {
-      IterOutputHT i = next_ht (&I);
+   for (size_t count = contagem_iter_ht(I); count > 0; count--) {
+      IterOutputHT i = next_ht (I);
       assert (i.key != NULL && i.value != NULL);
       print_item_ht_u16_e_str (i);
-      printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
+      printf ("contagem em %lu ...\n", contagem_iter_ht(I));
    }
 
    printf ("tetando iterar mesmo esgotado ...");
-   IterOutputHT i = next_ht (&I);
+   IterOutputHT i = next_ht (I);
    assert (i.key == NULL && i.value == NULL);
-   i = next_ht (&I);
+   i = next_ht (I);
    assert (i.key == NULL && i.value == NULL);
-   i = next_ht (&I);
+   i = next_ht (I);
    assert (i.key == NULL && i.value == NULL);
    puts ("não funcionou!");
    destroi_ht (M);
@@ -1042,91 +1199,86 @@ void tentando_iterador_mapa_vazio (void) {
    HashTable M = cria_ht(hash_int, int_eq);
    IterHT I = cria_iter_ht (M);
 
-   IterOutputHT i = next_ht (&I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
+   IterOutputHT i = next_ht (I);
+   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
    assert (i.key == NULL && i.value == NULL);
 
-   i = next_ht (&I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
+   i = next_ht (I);
+   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
    assert (i.key == NULL && i.value == NULL);
 
-   i = next_ht (&I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(&I));
+   i = next_ht (I);
+   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
    assert (i.key == NULL && i.value == NULL);
 
    puts ("não funcionou com nenhuma!");
+   destroi_iter_ht(I);
    destroi_ht (M);
 }
 
-// ---...---...---...---... ---...---...---...---...---...---...---...---
+void transporte_de_hashtable_para_array(void) {
+   HashTable M = cria_ht(hash_int, int_eq);
+   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
+   generico_t* array_of_values, *array_of_keys; size_t qtd;
 
-typedef struct trechos { const char* inicio; uint8_t tamanho; } Trecho;
-
-#define STRINGFY(...) #__VA_ARGS__
-
-void filtra(const char* todos_argumentos) {
-   Trecho lista[5];
-   char SEP = ',';
-   char* ptr = (char*)todos_argumentos;
-   uint16_t contador = 0;
-
-   puts("visualizando ...");
-
-   __loop__ {
-      char* ptr_v = strchr(ptr, SEP);
-
-      // Abandona o laço se nenhum pointeiro for encontrado.
-      if (ptr_v == NULL) {
-         break; 
-      }
-
-      printf("%s\n", ptr);
-      size_t X = ptr_v - ptr;
-      lista[contador] = (Trecho){.inicio = ptr_v, .tamanho = X };
-      ptr += (X + 1);
-      contador++;
-   } 
-   // size_t X = strlen(todos_argumentos) - ptr;
-   size_t X = strlen(todos_argumentos) - strlen(ptr);
-   lista[contador++] = (Trecho){.inicio = ptr, .tamanho = X};
-
-   puts("Iterando trechos: ...");
-   for (size_t p = 1; p <= 5; p++) 
-   {
-      printf("%lu. '%s' (%u)\n", 
-            p, lista[p - 1].inicio, lista[p - 1].tamanho);
+   for (size_t p = 1; p <= 9; p++) {
+      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)legumes[p - 1];
+      insere_ht (M, key, value);
    }
-}
+   for (size_t p = 9; p <= 19; p++) {
+      // insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
+      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
+      char* value = (char*)boys_names[p - 9 - 1];
+      insere_ht (M, key, value);
+   }
+   visualizacao_mapa_u16_e_str (M);
+   print_inner_u16_e_str (M);
 
-void macro_de_insercao_especifico(void) 
-{
-   filtra(STRINGFY(
-      "dado": 5, "cestos": 80, "copos": 500,
-      "telas": 17, "latas": 158,
-   ));
+   array_of_values = valores_ht(M);
+   qtd = tamanho_ht(M);
+   puts("\nListagem em array dos valores...");
+
+   for (int p = 1; p <= qtd; p++) {
+      char* vl = (char*)array_of_values[p - 1];
+      printf("\t===> '%s'\n", vl);
+   }
+
+   array_of_keys = chaves_ht(M);
+   puts("\nListagem em array dos valores...");
+
+   for (int p = 1; p <= qtd; p++) {
+      uint16_t* ptr_key = (uint16_t*)array_of_keys[p - 1];
+      printf("\t===> %u\n", *ptr_key);
+   }
+
+   free(array_of_values);
+   free(array_of_keys);
+   destroi_ht (M);
 }
 
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
+
    executa_testes (
-      10, varias_entradas_genericas_diferentes, true,
-         alocao_e_desacalocao_simples_instancia, true,
-         aplicacao_de_simples_insercoes, true,
-         verifica_operacao_de_pertencimento, true,
-         // verificação de features do C.
-         ascii_code_de_wide_strings, true,
-         simples_atualizacoes_de_alguns_valores, true,
-         algumas_remocoes_feitas, true,
-         operacoes_negadas, true, 
-         metodo_get_verificacao_basica, true,
-         // Testando instânciação via macros:
-         macro_de_insercao_especifico, false
+      9, varias_entradas_genericas_diferentes, true,
+          alocao_e_desacalocao_simples_instancia, true,
+          aplicacao_de_simples_insercoes, true,
+          verifica_operacao_de_pertencimento, true,
+          metodo_get_verificacao_basica, true,
+          operacoes_negadas, true, 
+          algumas_remocoes_feitas, true,
+          simples_atualizacoes_de_alguns_valores, true,
+          // verificação de features do C.
+          ascii_code_de_wide_strings, true
    );
 
    // testes apenas do iteradores.
    executa_testes (
-      2, uso_simples_da_iteracao, true,
-      tentando_iterador_mapa_vazio, true
+      3, uso_simples_da_iteracao, true,
+         tentando_iterador_mapa_vazio, true,
+         transporte_de_hashtable_para_array, true
    );
 }
 #endif
