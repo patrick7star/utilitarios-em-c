@@ -7,6 +7,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef __linux__
+#include <malloc.h>
+#endif
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Implementação do Nó
@@ -34,22 +37,6 @@ static Node cria_nodulo(generico_t dt) {
       abort();
    }
    return instancia;
-}
-
-static void destroi_lista_ligada(Node a, Drop f, size_t* t) {
-   Node b; // Salva temporariamente o próximo 'nó'.
-
-   while (*t > 0) {
-   /* Contabilização cada desalocação ...*/
-      if (f != NULL)
-      // Apenas desaloca dada, se e somente se, o 'destrutor' for válido.
-         f(a->dado);
-      b = a->seta;
-      free(a);
-      a = b;
-      *t -= 1;
-   }
-   a = NULL;
 }
 
 /* === === === === === === === === === === === === === === === === === ==
@@ -165,37 +152,58 @@ bool rotaciona_fc(FilaCircular q) {
    return true;
 }
 
+static void remove_e_destroi_todos_itens(FilaCircular q, Drop del) {
+/* Aplica a operação de remoção até que a 'fila' tenha zero itens. Como
+ * tal operação retorna o 'dado' que ele guarda, usa a função desalocação
+ * de tal para liberar-lô, em caso de tal função ser inválida(null), nenhuma
+ * desalocação de 'dado' será feita.*/
+   Drop desaloca = del;
+
+   while (comprimento_fc(q) > 0) 
+   {
+      generico_t dt = retira_fc(q);
+      
+      if (desaloca != NULL)
+         desaloca(dt);
+   }
+   assert (comprimento_fc(q) == 0);
+}
+
 void destroi_fc(FilaCircular q) {
+/* Desaloca todos itens que ela retém, entretanto, não libera os 'dados'
+ * contido em cada 'nó', apenas destrói os 'nós'. Portanto, se você passou
+ * objetos dinâmicos, chamar tal função fará com que seu programa vaze
+ * memória. */
    if (q == NULL) {
       perror("não é possível destruir numa 'fila' inválida!");
       abort();
    }
    
-   size_t total = q->contagem;
-   destroi_lista_ligada(q->fim, NULL, &total);
+   remove_e_destroi_todos_itens(q, NULL);
    free(q); q = NULL;
-}
-
-static void remove_todos_itens(FilaCircular q, Drop del) {
-   while (comprimento_fc(q) > 0) 
-   {
-      generico_t dt = retira_fc(q);
-      del(dt);
-   }
-   assert (comprimento_fc(q) == 0);
 }
 
 void destroi_inner_fc(FilaCircular q, Drop del) 
 {
+/* Desalocação espaço que 'fila' ocupa, e também dos dados adicionados
+ * nela -- supondo é claro, que tal foram adicionados na heap. */
    if (q == NULL) {
    // Interrompe o programa em caso de uma 'fila' inválida.
       perror("não é possível destruir numa 'fila' inválida!");
       abort();
    }
 
-   remove_todos_itens(q, del);
+   remove_e_destroi_todos_itens(q, del);
    // Libera 'fila', e faz o ponteiro passado totalmente 'nulo'.
    free(q); q = NULL;
+
+   #ifdef __linux__
+   const int QTD_DE_BYTES = 0;
+
+   /* Ordem para aplicar todos 'free' chamados neste escopo, e nas funções
+    * que ele chama, uma liberação de memória imediata. */ 
+   malloc_trim(QTD_DE_BYTES);
+   #endif
 }
 
 void imprime_fc(FilaCircular q, ToString f) {
@@ -433,145 +441,15 @@ void nao_quebra_em_liberar_dados_de_fila_vazias(void) {
    puts("feito com sucesso.");
 }
 
-static size_t SEED_AIA = 0;
-// Apenas para alocar memória, o conteúdo em sí não importa.
-static int* aloca_inteiro_arbitrario(void) {
-   const int sz = sizeof(int);
-   int* X = malloc(sz);
-   size_t seed = SEED_AIA;
-
-   if (seed % 2 == 0)
-      *X = INT_MIN;
-   else if (seed % 3 == 0)
-      *X = INT_MAX / 2;
-   else if (seed % 5 == 0)
-      *X = 1 + INT_MAX / 2;
-   else if (seed % 7 == 0)
-      *X =  INT_MAX / 2 - 1;
-   else
-      *X = INT_MAX;
-
-   SEED_AIA++;
-   return X;
-}
-
-static void corta_na_metade_fila(FilaCircular Q, Drop del) {
-   size_t t = comprimento_fc(Q) / 2;
-   
-   while (comprimento_fc(Q) > t) {
-      int* ptr = retira_fc(Q);
-      del(ptr);
-   }
-}
-
-static size_t preenche_ela_com_muita_memoria(FilaCircular q) {
-   const size_t MEGABYTE = pow(2, 20);
-   const size_t sz = sizeof(int);
-   const size_t N = 15 * MEGABYTE / sz;
-   PG bar = cria_bp(Temporal, N, 63);
-
-   for (size_t i = 1; i <= N; i++) 
-   {
-      int* X = aloca_inteiro_arbitrario();
-      insere_fc(q, X);
-
-      // Referente a barra de progresso.
-      atualiza_bp(&bar, i);
-      visualiza_bp(&bar);
-   }
-   return N;
-}
-
-void libera_gigantesca_memoria_quando_ordenado(void) {
-   FilaCircular queue = cria_fc();
-
-   puts("Inserir 15 MiB nela?");
-   getchar();
-   preenche_ela_com_muita_memoria(queue);
-
-   printf("Tamanho da lista após inserção: %s\n", 
-      tamanho_legivel(tamanho_fc(queue, sizeof(int))
-   ));
-
-   puts("Cortar a 'fila' na metade?");
-   getchar();
-   corta_na_metade_fila(queue, desaloca_int32);
-   puts("Destrói a lista?");
-   getchar();
-   destroi_inner_fc(queue, desaloca_int32);
-   puts("Abandonar programa?");
-   getchar();
-   puts("Chega na finalização do programa.");
-}
-
-void verifica_se_inteiro_alocado_e_liberado(void) {
-   const size_t MEGABYTE = pow(2, 20);
-   const size_t N = 15 * MEGABYTE;
-   printf("1 MiB: %zu\n", MEGABYTE);
-
-   puts("Alocando 15 MiB, e libera em seguida...");
-   for (size_t i = 1; i <= N; i++) {
-      int* X = aloca_inteiro_arbitrario();
-      (*X)--;
-      (*X)++;
-      desaloca_int32(X);
-   }
-   breve_pausa(Segundo, 6);
-
-   puts("Alocando 15 MiB, e não libera...");
-   for (size_t i = 1; i <= N; i++) {
-      int* X = aloca_inteiro_arbitrario();
-      (*X)--;
-      (*X)++;
-   }
-   breve_pausa(Segundo, 4);
-   
-   // Realmente, uso de memória não sobre, tudo liberado imediatamente.
-   assert(true);
-}
-
-void liberando_array_gigantesca(void) {
-   const size_t MEGABYTE = pow(2, 20);
-   int int_sz = sizeof(int);
-   size_t tamanho = 15 * MEGABYTE / int_sz;
-   int* array = calloc(tamanho, int_sz); 
-
-   puts("Alocando todos 15 MiB...");
-   for (size_t i = 1; i < tamanho; i++)
-      array[i] = INT_MAX;
-
-   puts("Pausa de 9 seg...");
-   breve_pausa(Segundo, 9);
-   puts("Liberando memória...");
-   free(array);
-   puts("Pausa novamente, por 7 seg...");
-   breve_pausa(Segundo, 7);
-
-   // Realmente o uso de memória despenca, ou seja, é liberada.
-   assert(true);
-}
-
 int main(void) {
    executa_testes (
-      7, criacao_e_destruicao, false,
-         efetuando_operacoes, false,
-         verificando_rotacao, false,
-         simples_visualizacao_da_fila, false,
-         nao_quebra_em_liberar_dados_de_fila_vazias, false,
-         // [nota] desativado, pois o 'output' é gigantesco.
-         estressando_rotacao, false,
-         // [desativados] Consome muita memória ou CPU, ou ambos:
-         libera_gigantesca_memoria_quando_ordenado, true
+      6, criacao_e_destruicao, true,
+         efetuando_operacoes, true,
+         verificando_rotacao, true,
+         simples_visualizacao_da_fila, true,
+         nao_quebra_em_liberar_dados_de_fila_vazias, true,
+         estressando_rotacao, true
    ); 
-
-   executa_testes(
-      2, verifica_se_inteiro_alocado_e_liberado, false,
-         liberando_array_gigantesca, false
-
-      /* Nota: execute a primeira sozinha, ela realmente devora memória
-       * do programa(500 MB). A menos é claro, que você tenha bastante
-       * memória. */
-   );
 
    return EXIT_SUCCESS;
 }
