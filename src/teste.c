@@ -93,7 +93,9 @@ void debug_aqui(void) {
  *       - novo_suite_de_testes_unitarios
  *       - resultado_de_todos_testes_desativados
  */
+#ifdef _POSIX_C_SOURCE
 #include "teste/testador.c"
+#endif
 
 
 #ifdef _UT_TESTE
@@ -225,33 +227,51 @@ void testes_tal_declaracao_de_loop(void) {
 
 int main(int qtd, char* argumentos[], char* env_vars[]) {
    executa_testes(
-      7, teste_conversao_binaria_antiga_implementacao, true,
-         amostra_da_nova_implementacao_de_binario, true,
-         extracao_de_bits_implementacao_geral, true,
+      7, teste_conversao_binaria_antiga_implementacao, false,
+         amostra_da_nova_implementacao_de_binario, false,
+         extracao_de_bits_implementacao_geral, false,
          // iteração para gerar máscaras funciona!
-         verificando_obtendo_de_potencias_de_dois, true,
-         stringficacao_de_valores_primitivos, true,
-         converte_strings_de_valores_logicos, true,
+         verificando_obtendo_de_potencias_de_dois, false,
+         stringficacao_de_valores_primitivos, false,
+         converte_strings_de_valores_logicos, false,
          // consome bastante tempo...
-         testes_tal_declaracao_de_loop, true
+         testes_tal_declaracao_de_loop, false
    );
 
+   #ifdef _POSIX_C_SOURCE
    // Teste da função interna sem nada com atual módulo:
    executa_testes(
       5, percorrendo_string, false,
          transforma_toda_string_em_minuscula, false,
          verificando_saida_do_pipe_sem_multiprocessing, false,
-         captura_de_saida_via_named_pipe, false,
-         simple_teste_de_named_pipe, false
+         captura_de_output_via_pipe, false,
+         abrindo_np_como_um_file, false
    );
+
 
    puts("\nTestes especiais do novo suíte de testes-unitários:");
    executa_testes(
-      4, novo_suite_de_testes_unitarios, false,
+      9, novo_suite_de_testes_unitarios, false,
          resultado_de_todos_testes_desativados, false,
          executa_um_teste_unitario_e_coleta_informacoes, false,
-         funcao_que_captura_sinal_e_saida, false
+         funcao_que_captura_sinal_e_saida, false,
+         resultado_apos_aborto_do_processo, false,
+         novo_tipo_de_captura_criado_via_pipes, false,
+         novo_relator_de_execucao_de_teste, false,
+         gerador_de_relatorio_sem_captura, false,
+         primeiro_simples_teste_final_do_suite, false
    );
+
+   puts("\nTeste o paralelismo do 'Suite Testador'...");
+   executa_testes(
+      6, trabalhando_no_paralelismo, false,
+         usando_arrays_para_compactar_o_codigo_acima, false,
+         verificando_se_a_thread_nao_bagunca_o_output, false,
+         visualizacao_do_join_temporario, false,
+         manuseio_de_duas_threads, false,
+         rodando_um_testeset_via_join_timeout, false
+   );
+   #endif
 
    return EXIT_SUCCESS;
 }

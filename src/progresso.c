@@ -28,20 +28,8 @@ const size_t COMPRIMENTO = 45;
 static size_t qtd_de_chamadas_bps = 0;
 #endif
 
-/* A impressão da barra se dá por dada variação percentual. */
-struct progresso_simples {
-   /* valores atual e o que têm que ser atingido para ser finalizado. */
-   size_t atual;
-   size_t total;
-
-   // quantos blocos de comprimento têm a 'barra'.
-   uint8_t comprimento;
-
-   /* marca a atual porcentagem do 'progresso' para computar a variação. */
-   float marco;
-
-};
-typedef struct progresso_simples simple_progress_t;
+// Apelido mais usado abaixo:
+typedef PS simple_progress_t; 
 
 bool esgotado_bps (RefPS p)
 /* Verifica se */
@@ -141,20 +129,8 @@ simple_progress_t cria_padrao_bps (size_t total)
 /* == == == == == == == == == == == == == == == == == == == == == == == == == 
  *                          Progresso Temporal
  * == == == == == == == == == == == == == == == == == == == == == == == == */
-typedef struct progresso_tempo {
-   /* valores atual e o que têm que ser atingido para ser finalizado. */
-   size_t atual; size_t total;
-
-   // informa se o progresso está esgotado.
-   bool esgotado;
-
-   // quantos blocos de comprimento têm a 'barra'.
-   uint8_t comprimento;
-
-   /* marcador da variação de tempo.*/
-   time_t inicio;
-
-} time_progress_t;
+// Apelido usado na implementação abaixo:
+typedef PT time_progress_t;
 
 time_progress_t cria_bpt(size_t total, uint8_t qB) {
    time_progress_t instancia;
@@ -250,15 +226,6 @@ time_progress_t cria_padrao_bpt (size_t total)
 /* == == == == == == == == == == == == == == == == == == == == == == == == =
  *                         Temporizador Genérico
  * == == == == == == == == == == == == == == == == == == == == == == == = */
-union selecao { simple_progress_t simples; time_progress_t temporal; };
-typedef struct barra_de_progresso_generica {
-   // Identificação do tipo de progresso.
-   TipoDeProgresso classe;
-
-   // Usará apenas a memória do selecionado.
-   union selecao progresso;
-} PG, *RefPG;
-
 PG cria_bp(TipoDeProgresso t, size_t total, uint8_t comprimento) {
    PG instancia;
    instancia.classe = t;
