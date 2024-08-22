@@ -29,7 +29,8 @@
 
  /* Operações que verificam informações sobre as estruturas: total de itens,
   * valor no topo da pilha e etc. */
- size_t tamanho_pl (PilhaLigada);
+ size_t comprimento_pl(PilhaLigada);
+ size_t tamanho_pl (PilhaLigada, size_t);
  bool vazia_pl (PilhaLigada);
  void* topo_pl (PilhaLigada);
  
@@ -38,25 +39,30 @@
  void imprime_pl (PilhaLigada, ToString); 
  char* stack_to_str_pl (PilhaLigada, ToString);
 
-/* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
- *                     Iterador da pilha-ligada
- *                        e seus métodos
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -- */
- typedef struct iterador_da_pilha_pl IterPL, *IteradorRefPL;
- typedef struct saida_da_iteracao_da_pl IterOutputPL;
- // Constante que representa nenhum item iterado.
- const IterOutputPL NULO_SET;
+ /* Cria uma array, com a mesma quantidade de itens na pilha, com todos
+  * itens empilhados do topo à base, que na array fica respectivamente
+  * da esquerda à direita. */
+ generico_t* pilha_to_array_pl (PilhaLigada); 
 
- // Métodos de criação, mudança e atual estado:
- IterPL cria_iter_pl (PilhaLigada); 
- /* Faz a clonagem do iterador dado, inclusive seu estado(consumido ou 
-  * não), no mesmo estágio do que foi usado.*/
- IterPL clona_iter_pl(IteradorRefPL);
- // Total de itens ainda a consumir.
- size_t contagem_iter_pl (IteradorRefPL);
- IterOutputPL next_pl (IteradorRefPL); 
- // Verifica se todos itens do 'conjunto' foram consumido via iterador.
- bool consumido_iter_pl (IteradorRefPL);
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Iteradores e seus
+ *                         Métodos
+ * === === === === === === === === === === === === === === === === === ==*/
+ typedef struct iterador_da_pilha_pl *IterPL, *IteradorPL;
+ /* O dado retornado quanod iterador 'IterPL'.*/
+ typedef struct saida_da_iteracao_da_pl { generico_t item; } IterOutputPL;
+
+ /* Retorna isso quando o iterador está consumido por inteiro. */
+ extern const IterOutputPL NULO_PL;
+
+ // Criação e desalocação do iterador:
+ IteradorPL cria_iter_pl(PilhaLigada);
+ IterPL clona_iter_pl(IteradorPL);
+
+ // Acesso a informação ou muda sua estrutura:
+ bool consumido_iter_pl (IteradorPL); 
+ size_t contagem_iter_set (IteradorPL);
+ IterOutputPL next_pl (IteradorPL);
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários 
@@ -77,5 +83,7 @@
  void* top_pl (PilhaLigada);
 
  void print_pl (PilhaLigada, ToString); 
+
+ generico_t* stack_to_array_pl (PilhaLigada); 
 
 #endif

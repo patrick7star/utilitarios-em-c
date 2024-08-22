@@ -58,8 +58,6 @@ void executa_teste_interruptor(char*, Fn, bool);
 
  // Todos possíveis nomes para função acima:
  #define TestesUnitarios(COUNT, ...) testes_unitarios(COUNT, __VA_ARGS__)
- #define TESTES_UNITARIOS(COUNT, ...) testes_unitarios(COUNT, __VA_ARGS__)
- #define UNIT_TESTS(COUNT, ...) testes_unitarios(COUNT, __VA_ARGS__)
 
  /* Executa vários testes, assim como o 'executa_testes', porém aqui já
   * mostra o nome da função de testes que executa; também muito mais dados
