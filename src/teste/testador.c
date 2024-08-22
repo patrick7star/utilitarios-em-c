@@ -1,18 +1,56 @@
-
+// Biblioteca padrão do C:
 #include <stdarg.h>
+#include <errno.h>
+// Bibliotecas do sistema POSIX:
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
+// A maioria da 'libc' codica tais valores como sucesso/e fracrasso.
 // Modo de localizar-se na array de pipes anônimos.
-const size_t IN = 0, OUT = 1;
+// const size_t IN = 0, OUT = 1;
+enum vias_dos_pipes { IN = 0, OUT };
 // Para delimitar visualização de textos formatados.
 const char* ASPAS = "\"\"\"";
 
 // Tuplas retornadas ou referênciadas nas funções abaixas:
 typedef struct { char* nome; int saida; } RetornoTst;
+// A configuração de um testes unitário:
 typedef struct { char* nome; FnTst funcao; bool confirmacao; } TesteSet;
+// String com determinado com seu comprimento dado:
 typedef struct { char* bytes; size_t length; } String;
+/* Saída da função que cuida de executar a rotina passada como argumento. */
+typedef struct saidas_da_rotina {
+   // String dinâmica e seu comprimento.
+   String content;
+
+   // Código de saída da função.
+   int code; 
+
+   // Tempo medido durante toda sua execução.
+   double elapsed;
+} SR;
+/* Info mais completa que a acima. Além de processar os dados da acima, ela
+ * engloba todo relatório de um teste-unitário. */
+typedef struct { 
+   // Nome da função trabalhada.
+   char* nome; 
+
+   // Código de um erro controlado.
+   int codigo;
+
+   // Output gerado pela execução do programa.
+   String conteudo;
+
+   // Se a execução do teste quebrou em algum momento.
+   bool falhou;
+
+   // Tempo que durou toda esta execução.
+   double decorrido;
+
+} TesteRelatorio, TR;
+
 
 static char* substitui_separadores_do_nome(const char* nome_original) {
 /*   Pega o nome da função e substitui seus separadores do identificador por
@@ -53,6 +91,7 @@ static TesteSet pack(char* name, FnTst function, bool execution) {
    pack(TOKEN_TO_STR(FUNCAO), FUNCAO, CONFIRMACAO)
 
 static void desenha_seperador() {
+   putchar('\n');
    for (size_t i = 1; i <= 60; i++)
       putchar('-');
    putchar('\n');
@@ -154,235 +193,332 @@ void testes_unitarios(const uint8_t total, ...) {
    );
 }
 
-typedef struct { 
-   // Nome da função trabalhada.
-   char* nome; 
 
-   // Código de um erro controlado.
-   int codigo;
-
-   // Output gerado pela execução do programa.
-   String conteudo;
-
-   // Se a execução do teste quebrou em algum momento.
-   bool falhou;
-
-   // Tempo que durou toda esta execução.
-   double decorrido;
-
-} TesteRelatorio, TR;
-
-typedef struct saidas_da_rotina {
-   // String dinâmica e seu comprimento.
-   String content;
-
-   // Código de saída da função.
-   int code; 
-
-   // Tempo medido durante toda sua execução.
-   double elapsed;
-} SR;
+static void handle(int s) {
+   // close(fileno(stdout));
+   // stdout = fdopen(STDOUT_FILENO, "w");
+   _exit(EXIT_FAILURE);
+}
 
 static SR executa_e_captura_saida(FnTst rotina) {
-/* Obs.: não é uma função multithread, então cuidado! */
-   const size_t TAMANHO_BUFFER = 10000;
-   size_t lido, size;
-   char buffer[TAMANHO_BUFFER];
-   char nome_do_stream[100];
-   FILE* novo_stream;
-   FILE* antigo_stream = stdout;
-   SR result;
-   Cronometro M;
-
-   // Formando nome do arquivo usado com meio.
-   sprintf(nome_do_stream, "conteudo.%u.txt", getpid());
-   novo_stream = fopen(nome_do_stream, "w+r");
-   // Desligando output padrão na tela, e ligando-o numa array.
-   stdout = novo_stream;
-
-   // Registrando código de saída, e medindo o tempo de execução.
-   M = cria_cronometro();
-   result.code = rotina();
-   result.elapsed = marca(M);
-   destroi_cronometro(M);
-
-   // Lendo dados escritos no arquivo temporário...
-   rewind(novo_stream);
-   lido = fread(buffer, sizeof(char), TAMANHO_BUFFER, novo_stream);
-   size = lido * sizeof(char);
-   result.content.length = lido + 1;
-
-   // Copiando para string, então fecha o stream.
-   result.content.bytes = malloc(size);
-   strcpy(result.content.bytes, buffer);
-
-   // Fecha stream temporário, e remove arquivo relacionado.
-   fclose(novo_stream);
-   remove(nome_do_stream);
-   // Retornando stream padrão da tela.
-   stdout = antigo_stream;
-
-   return result;
-}
-
-/*   O mesmo que o acima, porém usando named pipes, ao invés de arquivos 
- *   temporários.
- * Obs.: não é uma função multithread, então cuidado! */
-static SR executa_e_captura_saida_i(FnTst rotina) {
-   char nome_do_stream[100];
-   FILE* antigo_stream = stdout;
-   SR result;
-   Cronometro M;
-
-   // Formando nome do arquivo usado com meio.
-   sprintf(nome_do_stream, "conteudo.%u", getpid());
-   mkfifo(nome_do_stream, umask(0777));
-   chmod(nome_do_stream, umask(0));
-   // Desligando output padrão na tela, e ligando-o numa array.
-   int saida = open(nome_do_stream, O_WRONLY);
-   char* msg = "Any shit data in ...";
-   write(saida, msg, strlen(msg) + 1);
-   stdout = fdopen(saida, "w");
-
-   // Registrando código de saída, e medindo o tempo de execução.
-   M = cria_cronometro();
-   result.code = rotina();
-   result.elapsed = marca(M);
-   destroi_cronometro(M);
-
-   // Lendo dados escritos no arquivo temporário...
-   char buffer[UINT16_MAX];
-   int entrada = open(nome_do_stream, O_RDONLY);
-   int lido = read(entrada, buffer, UINT16_MAX);
-   assert (lido < UINT16_MAX);
-   result.content.length = lido + 1;
-
-   // Copiando para string, então fecha o stream.
-   size_t size = result.content.length * sizeof(char);
-   result.content.bytes = malloc(size);
-   strcpy(result.content.bytes, buffer);
-
-   // Fechando todos pipes e streams ...
-   close(entrada);
-   fclose(stdout);
-   stdout = antigo_stream;
-   close(saida);
-
-   return result;
-}
-
-static TesteRelatorio executa_unico_teste(TesteSet a) {
-/* Executa teste e colhe dados. No caso, a saída que tal programa gera;
- * o retorno final do teste(exit code); se o programa quebrou; e por fim,
- * o tempo que levou(em segundos). */
-   int tubos_rw[2];
-   TesteRelatorio report;
    pid_t subprocesso;
-   size_t size = sizeof(TesteRelatorio);
+   int tubo[2], code, lido;
+   Cronometro T;
+   SR report;
+   const int N = 1000;
+   char buffer[N];
 
-   pipe(tubos_rw);
+   pipe(tubo);
+   // Duplicando este processo.
    subprocesso = fork();
+   // Disparando cronômetro...
+   T = cria_cronometro();
 
-   if (subprocesso == 0) {
-      // Dentro do subprocesso(filho)...
+   if (subprocesso == Okay) {
+      // Fechando pipe de entrada, já que é irrelevante nesta abstração.
+      close(tubo[IN]);
+      
+      // Redirecionando standard output para saída do processo.
+      int old_stdout = dup(STDOUT_FILENO);
+      int result = dup2(tubo[OUT], STDOUT_FILENO);
+      close(tubo[OUT]);
 
-      // Colocando todas informações do relatório no tipo de dado adequado.
-      report.nome = a.nome;
-      // SR result_a = executa_e_captura_saida(a.funcao);
-      SR result_a = executa_e_captura_saida(a.funcao);
-      report.decorrido = result_a.elapsed;
-      report.conteudo = result_a.content; ;
-      report.codigo = result_a.code;
-      // Ainda a trabalhar tal mudança de valor...
-      report.falhou = false;
+      if (result == Failed) perror(strerror(errno));
 
-      // Transferindo dados para o processo pai...
-      write(tubos_rw[OUT], &report, size);
-      // Transferindo string dinâmica, por que está na heap
-      // deste processo apenas, somente threads compartilham memŕoria
-      size_t bloco = sizeof(char) * report.conteudo.length;
-      write(tubos_rw[OUT], report.conteudo.bytes, bloco);
+      // Retornando o 'standard output'.
+      signal(SIGABRT, handle);
+      // Executando rotina dada.
+      int sinal = rotina();
 
-      exit(EXIT_SUCCESS);
-   } else {
-      // Ainda no processo principal(pai)...
-      read(tubos_rw[IN], &report, size);
+      result = dup2(old_stdout, STDOUT_FILENO);
+      close(old_stdout);         // duvidosa inserção!
 
-      char buffer[10000]; 
-      size_t t = report.conteudo.length;
-      size_t bloco = sizeof(char) * t;
+      if (result == Failed) perror(strerror(errno));
 
-      // Recebendo cópia da string dinâmica no outro processo.
-      read(tubos_rw[IN], buffer, t);
-      // Copiando a string para a estrutura.
-      report.conteudo.bytes = malloc (bloco);
-      strcpy(report.conteudo.bytes, buffer);
+      // Não é preciso nesta thread.
+      destroi_cronometro(T);
+      // Saindo após finalizar a execução deste bloco.
+      exit(sinal);
    }
+   // Fechando via de saída, porque é inútil.
+   close(tubo[OUT]);
+
+   // Aguardando finalização do processo.
+   wait(&code);
+
+   // Começar a medir o tempo daqui, também começa formação do relatório.
+   report.elapsed = marca(T);
+   report.code = code;
+
+   // Lendo saído do programa lançado em paralelo...
+   lido = read(tubo[IN], buffer, N);
+   close(tubo[IN]);
+
+   // Coloca(copia) string para o relatório...
+   report.content.length = lido;
+   report.content.bytes = malloc(lido * sizeof(char));
+   memcpy(report.content.bytes, buffer, lido);
+
    return report;
 }
 
-static void visualiza_teste_relatorio(TesteRelatorio* r) {
-   char* bool_str = bool_to_str(r->falhou);
-   assert (r->conteudo.bytes != NULL);
+static SR executa_sem_captura(FnTst rotina) {
+   pid_t subprocesso;
+   int code;
+   Cronometro T;
+   SR report;
+
+   // Duplicando este processo.
+   subprocesso = fork();
+   // Disparando cronômetro...
+   T = cria_cronometro();
+
+   if (subprocesso == Okay) {
+      // Em caso de interrupção, apenas abandona com "sinal de falha".
+      signal(SIGABRT, handle);
+      // Executando rotina dada.
+      int sinal = rotina();
+
+      // Não é preciso nesta thread.
+      destroi_cronometro(T);
+      // Saindo após finalizar a execução deste bloco.
+      exit(sinal);
+   }
+   // Aguardando finalização do processo.
+   wait(&code);
+
+   // Começar a medir o tempo daqui, também começa formação do relatório.
+   report.elapsed = marca(T);
+   report.code = code;
+
+   // A captura não foi feita, então "zerar" tal variável.
+   report.content.length = 0;
+   report.content.bytes = NULL;
+
+   return report;
+}
+
+static TesteRelatorio executa_unico_teste(TesteSet a) {
+/* Basicamente reprocessamento de alguns dados, e simples cópia de outros.
+ * Quando executado o teste aqui, usando de 'wrapper' que pega output,
+ * 'código de saída' e 'tempo', este não apenas copias tais dados, como
+ * reprocessa e incrementa-os. */
+   TesteRelatorio report;
+
+   /* Executa a rotina, e também detalhes importantes... */
+   SR result_a = executa_e_captura_saida(a.funcao);
+
+   // Colocando todas informações do relatório no tipo de dado adequado.
+   report.nome = a.nome;
+   report.decorrido = result_a.elapsed;
+   report.codigo = result_a.code;
+   // Ainda a trabalhar tal mudança de valor...
+   report.falhou = (result_a.code != Okay);
+   report.conteudo = result_a.content;
+
+   return report;
+}
+
+static void visualiza_teste_set(TesteSet* a) {
+   bool logico = a->confirmacao;
+   const char* status = bool_to_str(logico);
+
+   printf("==> %s(%s)\n", a->nome, status);
+}
+
+static void resumo_do_relatorio_tr(char* nome, bool falhou, int max_recuo, bool estado) 
+{
+/* Modo melhor formatado para exibição dos testes dados. Passado o relatório
+ * e o comprimento da maior string; este último é importante que ele 
+ * comprienda o comprimento do maior teste, qualquer coisa menor que isso
+ * causará erro de formatação, por isso o programa aqui irá parar se 
+ * detectar um valor inferior, em tempo de compilação. */
+   char resultado[100];
+   const int MARGEM = 11;
+   int max = MARGEM + max_recuo + 2 + 1;
+   char separador[max];
+   int comprimento = strlen(nome);
+
+   if (!estado) {
+   // Em caso de o teste não for executado.
+      strcpy(resultado, "skip");
+   } else {
+      if (falhou)
+         strcpy(resultado, "fail");
+      else
+         strcpy(resultado, "ok");
+   }
+   // Limpando array primeiramente...
+   memset(separador, '\0', max);
+   // Colocando separador.
+   memset(separador, '.', MARGEM + max - comprimento);
+
+   printf("  o teste '%s'", nome);
+   // printf("%s::%s", __FILE__, nome);
+   printf("%s%s\n", separador, resultado);
+}
+
+static void compilado_final_tr(TR* relatorios, int habilitados, 
+  int total_de_testes) 
+{
+   // Acumulador de tempo decorrido de cada teste ativo.
+   double tempo_total = 0.0;
+   // Testes que não executaram corretamente.
+   int falharam = 0;
+   int qtd_de_testes = habilitados;
+
+   /* Computando tempo total levado, que é a soma de todos. Também contando
+    * a quantidade de testes que passaram, assim, consequentemente se 
+    * calcula o total que falharam.  */
+   for (int i = 1; i <= qtd_de_testes; i++)
+   {
+      TR a = relatorios[i - 1];
+      tempo_total += a.decorrido;
+      
+      // Contabilizando testes que fracassaram.
+      if (a.falhou) falharam++;
+   }
+   int passaram = habilitados - falharam;
+   int desabilitados = total_de_testes - habilitados;
+
+   desenha_seperador();
    printf(
-      "\nVisualizando o relatório:\n\tnome da função: '%s'\n\t"
-      "código de saída: %d\n\ttempo de execução: %0.4lfs\n\t"
-      "falhou? %s\n\tsaída(%lu): %s\n%s\n\t%s\n",
-      r->nome, r->codigo, r->decorrido, bool_str,
-      r->conteudo.length, ASPAS, r->conteudo.bytes, ASPAS
+      "Levaram %0.4lfs; estados dos testes: %u on | %u off; "
+      "total de testes: %u; passaram: %u\n", 
+      tempo_total, habilitados, desabilitados, habilitados, passaram
    );
 }
 
-void testes_unitarios_i(bool mostrar_saida, bool paralelizacao, 
-  bool desativa_suite, const uint8_t total, ...) 
+static TesteRelatorio executa_unico_teste_sem_captura(TesteSet a, 
+  uint8_t indice) 
+{
+/* Retorna relatório como nome, código de saída, tempo decorrido da 
+ * função e etc; valores de um relatório, entretanto, este aqui não
+ * captura a saída, que é mostrada no console. */
+   size_t comprimento = strlen(a.nome);
+   char mensagem_padrao[comprimento + 10];
+   char* referencia = mensagem_padrao;
+
+   // Adiciona enumeração ao nome.
+   sprintf(referencia, "[%uº] %s", indice, a.nome);
+   nome_do_teste(referencia); 
+
+   /* Executa a rotina, e também detalhes importantes... */
+   SR result = executa_sem_captura(a.funcao);
+
+   puts("");
+   return (TesteRelatorio){ 
+      .nome = a.nome,
+      .decorrido = result.elapsed, 
+      .conteudo = result.content,
+      // Copia ponteiro, que parece ter um tempo de vida igual a duração
+      // do programa(estático).
+      .codigo = result.code,
+      .falhou = (result.code != Okay)
+   };
+}
+
+void testes_unitarios_a(bool mostrar_saida, bool paralelizacao, 
+  bool desativa_todos, const uint8_t total, ...) 
 {
 /* O mesmo que acima, porém permite desligar o output dos testes na 
  * saída padrão, assim como também permite a paralelização dos testes
  * unitários. */
    va_list args;
-   // Contabilização de testes que são para executar.
-   // uint8_t habilitados = 0;
-   // Array com espaço para todos testes habilitados.
-   // RetornoTst resultados[total];
-   // Contador dos testes que não passaram, retorna algum erro previsível.
-   // uint8_t nao_passaram = 0;
-   TesteSet colecao[total];
-   // Utilitário está apenas disponível para sistemas Unix's.
-   // Cronometro medidor;
-
-   #ifdef _NOVO_SUITE_COMPLETO
-   printf(
-      "Comandos argumentos:\n\ttotal: %u\n\tmostrar saída: %s\n\t"
-      "paralelização: %s\n\tdesativar suíte: %s\n\n",
-      total, bool_to_str(mostrar_saida), 
-      bool_to_str(paralelizacao),
-      bool_to_str(desativa_suite)
-   );
-   puts("\nColhendo testes, e listagem de suas configurações:");
-   #endif
    va_start(args, total);
+   TesteSet testes[total];
+   int maior_str = 0;
 
-   for (uint8_t i = 1; i <= total; i++) {
-      colecao[i - 1] = va_arg(args, TesteSet);   
+   #ifdef _NOVO_SUITE
+   printf("Total demandado: %u\n", total);
+   #endif
 
-      uint8_t p = i - 1;
-      FnTst endereco_fn = colecao[p].funcao;
-      char* nome_fn = colecao[p].nome;
-      bool ativado_fn = colecao[p].confirmacao;
-      const char* okay_str = bool_to_str(ativado_fn);
-
-      #ifdef _NOVO_SUITE_COMPLETO
-      printf(
-         "\t[%p] '%s', acionada? %s.\n", 
-         endereco_fn, nome_fn, okay_str
+   // O número de argumentos é inválido.
+   if (total == 0) {
+      perror(
+         "O total de argumentos tem quer ser dado, e ser também "
+         "correspondente com o real número de argumentos. Mais irá "
+         "quebrar o programa; já menos, não irá executar alguns testes; e "
+         "zero nunca é possível, subindo esta mensagem."
       );
-      #endif
+      abort();
    }
-   va_end(args); 
 
-   // Começando a contabilizar a execução de cada teste...
-   // medidor = cria_cronometro();
-   // destroi_cronometro(medidor);
+   // Coletando todos testes passados...
+   for (uint8_t i = 1; i <= total; i++) 
+   {
+      // Apenas filtrando testes passados...
+       testes [i - 1] = va_arg(args, TesteSet);   
+
+       int length = strlen(testes[i - 1].nome);
+       // Computando também a função com maior nome.
+       if (maior_str < length)
+         maior_str = length;
+   }
+   va_end(args);
+
+   #ifdef _NOVO_SUITE
+   puts("Verificando que testes estão 'on' e 'off':");
+   for (int i = 1; i <= total; i++) 
+       visualiza_teste_set(&testes[i - 1]);
+   #endif
+
+   /* Se o 'suite' foi desativado, então o programa termina aqui. */
+   if (desativa_todos) {
+      puts("Todos testes abaixos, apesar do seu status, foram desativados:");
+      for (int i = 1; i <= total; i++) {
+         TesteSet teste = testes[i - 1];
+         const char* str_on_off; 
+         char* nome = teste.nome;
+
+         if (teste.confirmacao)
+            str_on_off = "on";
+         else
+            str_on_off = "off";
+
+         printf("\t- '%s'\t\t[%s]\n", nome, str_on_off);
+      }
+
+      putchar('\n');
+      // Abandonando o suite...
+      return;
+   }
+
+   puts("\nAs seguintes funções estão sendo executados e analisadas:\n");
+   // Armazém para todos relatórios gerados.
+   TesteRelatorio reports[total];
+   // Onde o próximo relatório será encaixado na array, e também onde
+   // contador de quantia de testes habilitados.
+   int habilitados = 0;
+
+   // Gerando os relatórios(executando o teste configurado)...
+   for (int i = 0; i < total; i++) 
+   {
+      TesteSet a = testes[i];
+      bool teste_ativo = a.confirmacao;
+      bool teste_fracassou;
+      char* nome_da_funcao = a.nome;
+
+      if (teste_ativo) {
+         reports[habilitados] = executa_unico_teste(a);
+         // Estado da execução do teste.
+         teste_fracassou = reports[habilitados].falhou;
+         // Contabiliza testes habilitados.
+         habilitados++;
+      } else
+         /* Apesar de marcar como "fracasso", indica mais sobre a
+          * disponibilidade do teste do que seu resultado. */
+         teste_fracassou = false;
+
+      // Breve resumo dos dados do testes aplicado.
+      resumo_do_relatorio_tr(
+         nome_da_funcao, teste_fracassou, 
+         maior_str, teste_ativo
+      );
+   }
+   /* Mostra um resumo geral de todos testes, tempo total(soma de todas),
+    * o que realmente executaram, o que executaram e passaram/falharam. */
+   compilado_final_tr(reports, habilitados, total);
 }
 
 /* == == == == == == == == == == == == == == == == == == == == == == == ==
@@ -394,68 +530,33 @@ void testes_unitarios_i(bool mostrar_saida, bool paralelizacao,
  * == == == == == == == == == == == == == == == == == == == == == == == = */
 #ifdef _UT_TESTE
 #include "dados_testes.h"
-#include "barra_de_progresso.h"
 #include <unistd.h>
 #include <errno.h>
 
-int capitaliza_palavras(void) {
-   puts("Capitalizando tais palavras ...");
+/* Funções para realizar muitos testes abaixos:
+ *    - capitaliza_palavras
+ *    - string_alternada
+ *    - carregando_ate_cem
+ *    - simples_mensagem_do_fortune
+ *    - executa_algo_mas_crash
+ */
+#include "amostras.c"
 
-   for (size_t i = 1; i <= FRUTAS; i++) {
-      char* fruta = (char*)frutas[i - 1];
-      size_t size = strlen(fruta) + 1;
-      char copia[size];
-
-      strcpy(copia, fruta);
-      copia[0] = (char)toupper(copia[0]);
-      printf("\t%s ===> %s\n", fruta, copia);
-   } 
-   return EXIT_SUCCESS;
-}
-
-int string_alternada(void) {
-   puts("Colocando caractéres de forma alternada ...");
-   for (size_t i = 1; i <= GIRLS_NAMES; i++) {
-      char* nome = (char*)girls_names[i - 1];
-      size_t size = strlen(nome) + 1;
-      char copia[size];
-
-      strcpy(copia, nome);
-
-      for (size_t i = 0; i < strlen(copia); i++) {
-         if (i % 2 == 0) 
-            copia[i] = toupper(copia[i]);
-         else
-            copia[i] = tolower(copia[i]);
-      }
-      printf("\t%s ===> %s\n", nome, copia);
-   } 
-   return EXIT_SUCCESS;
-}
-
-// Função falha sempre(não chega a retornar o código(exit code) de sucesso.
-int carregando_ate_cem(void) {
-   PS bps = novo_bps(100, 50);
-   size_t contagem = 1;
-   // 70 milisegundos ...
-   struct timespec pausa = { 0, 70000000 };
-
-   do {
-      visualiza_bps(bps);
-      atualiza_bps(bps, contagem++);
-      nanosleep(&pausa, NULL);
-
-      if (contagem == 70)
-         return EXIT_FAILURE;
-   } while (contagem <= 100);
-
-   return EXIT_SUCCESS;
-}
+/* Alguns pontos importados do arquivo aqui:
+ *
+ *    Testes:
+ *       - trabalhando_no_paralelismo 
+ *       - usando_arrays_para_compactar_o_codigo_acima
+ *       - verificando_se_a_thread_nao_bagunca_o_output
+ *
+ *    Funções:
+ */
+#include "paralelismo.c"
 
 void novo_suite_de_testes_unitarios(void) {
    puts("Chamada no escopo para ver se funciona, e como fica: ");
 
-   TestesUnitarios (
+   testes_unitarios (
       3, Unit(capitaliza_palavras, false),
          Unit(string_alternada, true),
          Unit(carregando_ate_cem, true)
@@ -486,19 +587,32 @@ void funcao_que_captura_sinal_e_saida(void) {
    );
 }
 
+static void visualiza_teste_relatorio(TesteRelatorio* r) {
+   char* bool_str = bool_to_str(r->falhou);
+   assert (r->conteudo.bytes != NULL);
+   printf(
+      "\nVisualizando o relatório:\n\tnome da função: '%s'\n\t"
+      "código de saída: %d\n\ttempo de execução: %0.4lfs\n\t"
+      "falhou? %s\n\tsaída(%lu): %s\n%s\n\t%s\n",
+      r->nome, r->codigo, r->decorrido, bool_str,
+      r->conteudo.length, ASPAS, r->conteudo.bytes, ASPAS
+   );
+}
+
 void executa_um_teste_unitario_e_coleta_informacoes(void) {
    puts("\n\nNovo testador é só a versão acima, porém completa:");
-   TesteSet t1 = Unit(capitaliza_palavras, false);
-   TesteSet t2 = Unit(string_alternada, false);
+   TesteSet t1 = Unit(simples_mensagem_do_fortune, true);
+   TesteSet t2 = Unit(string_alternada, true);
    TesteSet t3 = Unit(carregando_ate_cem, true);
 
-   testes_unitarios_i (false, true, false, 3, t1, t2, t3);
-
-   // TesteRelatorio r1 = executa_unico_teste(t1);
+   TesteRelatorio r1 = executa_unico_teste(t1);
+   puts("Passou a primeira execução.");
    TesteRelatorio r2 = executa_unico_teste(t2);
+   puts("Passou a segunda execução.");
    TesteRelatorio r3 = executa_unico_teste(t3);
+   puts("Passou a terceira execução.");
 
-   // visualiza_teste_relatorio(&r1);
+   visualiza_teste_relatorio(&r1);
    visualiza_teste_relatorio(&r2);
    visualiza_teste_relatorio(&r3);
 }
@@ -529,51 +643,175 @@ void verificando_saida_do_pipe_sem_multiprocessing(void) {
    puts(buffer);
 }
 
-void simple_teste_de_named_pipe(void) {
-   const char* NOME = "named_pipe_teste";
-   const int OK = 0;
-   const int FAIL = -1;
-
-   remove(NOME);
-   mkfifo(NOME, umask(0001));
+void resultado_apos_aborto_do_processo(void) {
+   TesteSet t = Unit(executa_algo_mas_crash, true);
+   TR r = executa_unico_teste(t);
+   visualiza_teste_relatorio(&r);
 }
 
-void captura_de_saida_via_named_pipe(void) {
-   puts("O teste é um testes de capturar a saída padrão via 'named pipe'.");
-   const char* NOME = "via_de_transferencia";
-   const int OK = 0;
-   const int FAIL = -1;
-   mode_t atributo = umask(0664);
-   int result;
+void abrindo_np_como_um_file(void) {
+   FILE* stream_np = fopen("tubo", "w+");
+   char buffer[100];
 
-   result = mkfifo(NOME, umask(0));
-   if (result == OK)
-      printf("[%s]!\n", strerror(errno));
+   fputs("Can't stop to shit with you dick\n", stream_np);
+   // Nota: 'fgets' apenas funciona, porque há uma quebra-de-linha.
+   fgets(buffer, 100, stream_np);
+   // Nota: não é possível usar fread, sem fim-de-arquivo, por ser um NP.
+   // fread(buffer, sizeof(char), 100, stream_np);
+   fclose(stream_np);
+
+   printf("\nIsso foi o que foi lido:\n\t\"%s\"\n", buffer);
+}
+
+int listagem_de_veiculos_exemplo(void) {
+   for (int p = 1; p <= VEICULOS; p++) 
+      printf("\t%dª. %s\n", p, veiculos[p - 1]);
+   return EXIT_FAILURE;
+}
+
+void captura_de_output_via_pipe(void) {
+   pid_t subprocesso;
+   int tubo[2];
+
+   pipe(tubo);
+   // Duplicando este processo.
+   subprocesso = fork();
+
+   if (subprocesso == 0) {
+      // Fechando pipe de entrada, já que é irrelevante nesta abstração.
+      close(tubo[0]);
+      
+      // Redirecionando standard output para saída do processo.
+      int old_stdout = dup(STDOUT_FILENO);
+      int result = dup2(tubo[1], STDOUT_FILENO);
+      close(tubo[1]);
+
+      if (result == -1)
+         perror(strerror(errno));
+
+      result = listagem_de_veiculos_exemplo();
+
+      // Retornando o 'standard output'.
+      result = dup2(old_stdout, STDOUT_FILENO);
+
+      if (result == -1)
+         perror(strerror(errno));
+
+      // Saindo após finalizar a execução deste bloco.
+      exit(result);
+   }
+   // Fechando via de saída, porque é inútil.
+   close(tubo[1]);
+   // Aguardando finalização do processo.
+   int code;
+   wait(&code);
+
+   const int N = 1000;
+   char buffer[N];
+   int lido = read(tubo[0], buffer, N);
+   close(tubo[0]);
+
+   printf("Conteudo(%d bytes | %d):\n%s\n", lido, code, buffer);
+}
+
+void visualiza_dado_sr(SR* obj) {
+   puts("\nVisualização do tipo SR:");
+   printf("\t\b\b\bexit code: %d\n", obj->code);
+   printf("\t\b\b\bdecorrido: %0.4lfseg\n",obj->elapsed);
+   printf(
+      "\t\b\b\bsaída(%zu bytes): %s\n%s\t%s\n", 
+      obj->content.length, ASPAS, obj->content.bytes, ASPAS
+   );
+}
+
+void novo_tipo_de_captura_criado_via_pipes() {
+   SR r = executa_e_captura_saida(string_alternada);
+   visualiza_dado_sr(&r);
+
+   SR ra = executa_e_captura_saida(capitaliza_palavras);
+   visualiza_dado_sr(&ra);
+
+   SR rb = executa_e_captura_saida(executa_algo_mas_crash);
+   visualiza_dado_sr(&rb);
+}
+
+static void simples_nota_sobre_tr(TR* report) {
+   char resultado[30];
+
+   printf("  o teste '%s'", report->nome);
+
+   if (report->falhou)
+      strcpy(resultado, "fail");
    else
-      puts("Named Pipe criado com sucesso.");
+      strcpy(resultado, "ok");
 
-   result = chmod(NOME, umask(770));
-   if (result == FAIL)
-      printf("[%s]!\n", strerror(errno));
-   else
-      puts("Permissão alterada com sucesso.");
+   printf("\t\t\t...%s\n", resultado);
+}
 
-   /*
-   int saida = open(NOME, O_WRONLY);
-   FILE* novo_stream_de_saida = fdopen(saida, "w");
-   FILE* stream_padrao = stdout;
-   puts("Arquivo do 'named pipe' foi aberto com sucesso.");
-   */
-   /*
-   printf("Mudando a saída padrão ...");
-   fflush(stdout);
-   stdout = novo_stream_de_saida;
-   puts("feito");*/
+void novo_relator_de_execucao_de_teste() {
+   puts("\n\nNovo testador é só a versão acima, porém completa:");
+   TesteSet t1 = Unit(string_alternada, true);
+   TesteSet t3 = Unit(simples_mensagem_do_fortune, true);
+   TesteSet t2 = Unit(carregando_ate_cem, true);
+   TesteSet t4 = Unit(executa_algo_mas_crash, true);
+   TesteSet t5 = Unit(capitaliza_palavras, true);
 
-   freopen(NOME, "wt", stdout);
-   puts("Testando saídas ...");
 
-   for (int i = 1; i <= 15; i++) 
-      printf("\t%dª mensagem.\n", i);
+   TesteRelatorio r1 = executa_unico_teste(t1);
+   simples_nota_sobre_tr(&r1);
+
+   TesteRelatorio r2 = executa_unico_teste(t2);
+   simples_nota_sobre_tr(&r2);
+
+   TesteRelatorio r3 = executa_unico_teste(t3);
+   simples_nota_sobre_tr(&r3);
+
+   TesteRelatorio r4 = executa_unico_teste(t4);
+   simples_nota_sobre_tr(&r4);
+
+   TesteRelatorio r5 = executa_unico_teste(t5);
+   simples_nota_sobre_tr(&r5);
+
+   visualiza_teste_relatorio(&r1);
+   visualiza_teste_relatorio(&r2);
+   visualiza_teste_relatorio(&r3);
+   visualiza_teste_relatorio(&r4);
+   visualiza_teste_relatorio(&r5);
+   puts("\nStandard output chegou ileso!\n");
+}
+
+void gerador_de_relatorio_sem_captura(void) {
+   puts("\nTeste de um executor que não utiliza de forques e nada, sem falar que não captura o resultado.");
+   TesteSet t1 = Unit(string_alternada, true);
+   TesteSet t3 = Unit(simples_mensagem_do_fortune, true);
+   TesteSet t2 = Unit(carregando_ate_cem, true);
+   TesteSet t4 = Unit(executa_algo_mas_crash, true);
+   TesteSet t5 = Unit(capitaliza_palavras, true);
+
+
+   puts("Geração do relatório por meio de execução:");
+   TesteRelatorio r1 = executa_unico_teste_sem_captura(t1, 10);
+   TesteRelatorio r2 = executa_unico_teste_sem_captura(t2, 11);
+   TesteRelatorio r3 = executa_unico_teste_sem_captura(t3, 12);
+   TesteRelatorio r4 = executa_unico_teste_sem_captura(t4, 13);
+   TesteRelatorio r5 = executa_unico_teste_sem_captura(t5, 14);
+
+   // Notas de todas execuções:
+   simples_nota_sobre_tr(&r1);
+   simples_nota_sobre_tr(&r2);
+   simples_nota_sobre_tr(&r3);
+   simples_nota_sobre_tr(&r4);
+   simples_nota_sobre_tr(&r5);
+}
+
+void primeiro_simples_teste_final_do_suite(void) {
+   testes_unitarios_a(
+      true,  true, true, 5,
+      Unit(string_alternada, true),
+      Unit(simples_mensagem_do_fortune, true),
+      Unit(carregando_ate_cem, true),
+      Unit(executa_algo_mas_crash, false),
+      Unit(capitaliza_palavras, true)
+   );
 }
 #endif
