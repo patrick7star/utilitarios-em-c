@@ -62,7 +62,6 @@ compila-objetos-principais: \
 	terminal.o \
 	tempo.o \
 	teste.o \
-	barra-de-progresso.o \
 	aleatorio.o \
 	ponto.o \
 	progresso.o
@@ -82,17 +81,15 @@ tempo.o:
 teste.o:
 	gcc -I include/ -c src/teste.c -o build/teste.o
 
-barra-de-progresso.o:
-	gcc -I include/ -c src/barra_de_progresso.c -o build/barra_de_progresso.o
-
 ponto.o:
 	clang -I include/ -Wall -c -o build/ponto.o src/ponto.c
 
 progresso.o:
 	clang -I include/ -Wall -c -o build/progresso.o src/progresso.c
 
-aleatorio.o: src/aleatorio.c
-	gcc -I include/ -c src/aleatorio.c -o build/aleatorio.o -lm
+aleatorio.o:
+	gcc -O3 -I include/ -Wall -Werror -c \
+		-o build/aleatorio.o  src/aleatorio.c
 
 # ~~~ ~~~ ~~~  ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~
 compila-objetos-colecoes: \
@@ -192,14 +189,13 @@ ponto: teste.o
 		-Wall -lm -Wno-main
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-OBJETOS = build/teste.o build/teste.o build/tempo.o build/legivel.o 
-OBJS = build/teste.o build/tempo.o build/legivel.o build/terminal.o
-EXE = bin/tests/ut_aleatorio
-SOURCE = src/aleatorio.c
-FLAGS = -I include/ -D_UT_ALEATORIO -Wall -Wno-return-type
+OBJS_RANDOM = build/teste.o build/tempo.o build/legivel.o build/terminal.o
+EXE_RANDOM = bin/tests/ut_aleatorio
+SOURCE_RANDOM = src/aleatorio.c
+FLAGS_RANDOM = -I include/ -D_UT_ALEATORIO -Wall -Werror
 
-aleatorio: legivel.o terminal.o tempo.o teste.o
-	gcc $(FLAGS) -o $(EXE) $(SOURCE) -lm $(OBJS) 
+aleatorio:
+	gcc $(FLAGS_RANDOM) -o $(EXE_RANDOM) $(SOURCE_RANDOM) $(OBJS_RANDOM) -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
@@ -228,24 +224,17 @@ estringue: terminal.o
 	gcc -Wall -I ./include $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(DEPS_STR) -lm
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-barra-de-progresso:
-	@echo "criando objetos(artefatos) do 'barra de progresso'..."
-	gcc -c src/barra_de_progresso.c -D_UT_BARRA_DE_PROGRESSO -o build/progresso.o
-	@echo "lincando todos objetos num executável..."
-	gcc -o bin/tests/ut_barra_de_progresso build/progresso.o -Wall -lm
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 impressao: terminal.o lista-array-ref.o
 	clang -I include/ -D_UT_IMPRESSAO -o bin/tests/ut_impressao src/impressao.c build/terminal.o build/listaarray_ref.o
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-legivel: teste.o
+legivel:
 	clang -O0 -std=c2x -I include/ -Wall \
 		-D_UT_LEGIVEL \
 		-o bin/tests/ut_legivel src/legivel.c -lm \
 		-L bin/static -lteste -ltempo -lterminal
 
-progresso: teste.o
+progresso:
 	clang -O0 -std=gnu2x -I include/ -Wall \
 		-D_UT_PROGRESSO \
 		-o bin/tests/ut_progresso src/progresso.c -lm \
@@ -277,9 +266,9 @@ conjunto-ref: libaleatorio
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 EXE_PL = bin/tests/ut_pilha_ligada
 MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL
-DEPS_PL = build/barra_de_progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
+DEPS_PL = build/progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
 
-pilha-ligada-ref: barra-de-progresso.o
+pilha-ligada-ref:
 	clang $(MOSTRA_PL) -I include/ -O0 -Wall -Wall \
 		-o $(EXE_PL) src/estrutura-de-dados/pilhaligada_ref.c -lm $(DEPS_PL)
 
@@ -361,7 +350,8 @@ compila-bibliotecas: \
 compila-bibliotecas-colecoes: \
 	cria-raiz-de-artefatos \
 	lib-hashtable-ref \
-	lib-pilha-ligada-ref
+	lib-pilha-ligada-ref \
+	lib-fila-circular-ref
 
 EXE_LIBPROGRESSO_I = ./bin/shared/libprogresso.so
 EXE_LIBPROGRESSO_II = ./bin/static/libprogresso.a
@@ -415,11 +405,11 @@ libterminal: terminal.o
 	@echo "compilação de uma biblioteca estática."
 
 libaleatorio: aleatorio.o
-	@clang -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libaleatorio.so src/aleatorio.c
-	@echo "biblioteca compartilhada 'libaaleatorio.so'compilada."
-	@ar crs bin/static/libaleatorio.a build/terminal.o
-	@echo "biblioteca estática 'libaleatorio.a' compilada."
+	@gcc -O3 -I include/ -fPIC -shared -Wall -Werror \
+	-o bin/shared/libaleatorio.so build/aleatorio.o
+	@echo "compilação de uma biblioteca compartilhada 'libealeatorio.so'."
+	@ar crs bin/static/libaleatorio.a build/aleatorio.o
+	@echo "compilação de uma biblioteca estática 'libaleatorio.a'."
 
 libponto: ponto.o
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
@@ -449,6 +439,12 @@ lib-lista-array-ref: lista-array-ref.o
 	@ar crs bin/static/liblaref.a build/listaarray_ref.o
 	@echo "biblioteca estática 'liblaref.a' compilada."
 
+lib-fila-circular-ref: fila-circular-ref.o
+	@clang -O3 -std=gnu2x -I include/ -shared -fPIC -Wall \
+		-o bin/shared/libfcref.so src/estrutura-de-dados/filacircular_ref.c
+	@echo "biblioteca compartilhada 'libflref.so' compilada."
+	@ar crs bin/static/libfcref.a build/filacircular_ref.o
+	@echo "biblioteca estática 'libflref.a' compilada."
 
 # === === ===  === === === === === === === === === === === === === === ===
 #
@@ -490,3 +486,9 @@ frequencia-de-letras-do-dicionario: hashtable-ref.o pilha-ligada-ref.o progresso
 		tests/frequencia_de_letras_do_dicionario.c \
 		build/hashtable_ref.o build/pilhaligada_ref.o \
 		build/aleatorio.o -lm build/progresso.o
+
+processo-de-desalocacao:
+	gcc -O3 -std=gnu2x -I include/ -Wall \
+	-o bin/tests/it_processo_de_desalocacao tests/processo_de_desalocacao.c \
+	-L bin/static -lteste -ltempo -llegivel -lterminal \
+	-lprogresso -lplref -lfcref -laleatorio -lm
