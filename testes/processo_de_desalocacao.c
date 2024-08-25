@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include "filacircular_ref.h"
-#include "pilhaligada_ref.h"
-#include "aleatorio.h"
-#include "legivel.h"
-#include "progresso.h"
 #include <malloc.h>
 #include <math.h>
+#include "progresso.h"
+#include "filacircular_ref.h"
+#include "pilhaligada_ref.h"
+#include "legivel.h"
+#include "teste.h"
+#include "aleatorio.h"
 
 static size_t SEED_AIA = 0;
 const int QTD_MINIMA = 0;
@@ -71,11 +72,12 @@ static int QTD_STR = 1;
 char* string_aleatoria(void) {
    int sz = sizeof(char);
    char buffer[50], *string = malloc(50 * sz);
-   int total = inteiro_positivo(20, 45);
+   size_t total = inteiro_positivo(20, 45);
 
    for (int i = 1; i <= 50; i++) {
       if ((i - 1) < total)
-         buffer[i - 1] = ascii_char_aleatorio();
+         // buffer[i - 1] = ascii_char_aleatorio();
+         buffer[i - 1] = alfabeto_aleatorio();
       else
          buffer[i - 1] = '\0';
    }
@@ -93,6 +95,19 @@ void fill_up_with_random_str(FilaCircular q, size_t n) {
    for (size_t k = 1; k <= n; k++) {
       char* X = string_aleatoria(); 
       insere_fc(q, X);
+
+      // Referente a barra de progresso.
+      atualiza_bp(&bar, k);
+      visualiza_bp(&bar);
+   }
+}
+
+void fill_stack_up_with_random_str(PilhaLigada q, size_t n) {
+   PG bar = cria_bp(Temporal, n, 63);
+
+   for (size_t k = 1; k <= n; k++) {
+      char* X = string_aleatoria(); 
+      coloca_pl(q, X);
 
       // Referente a barra de progresso.
       atualiza_bp(&bar, k);
@@ -197,7 +212,7 @@ void libera_metade_da_pilha(PilhaLigada s) {
 void desalocacao_da_pilha_array(void) {
    PilhaLigada stack = cria_pl();
 
-   fill_up_with_random_str(stack, 60);
+   fill_stack_up_with_random_str(stack, 60);
    printf(
       "Total de itens(%s): %zu\n", 
       tamanho_legivel(tamanho_pl(stack, 30)), 
@@ -223,7 +238,11 @@ void desalocacao_da_pilha_array(void) {
 }
 
 int main(void) {
-   desalocacao_da_fila_circular();
+   // desalocacao_da_fila_circular();
    // libera_gigantesca_memoria_quando_ordenado();
+
+   executa_testes (
+      1, desalocacao_da_pilha_array
+   );
    return EXIT_SUCCESS;
 }
