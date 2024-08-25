@@ -195,7 +195,7 @@ bool destroi_interno_pl (PilhaLigada s, Drop del) {
    if (s == NULL) return false;
 
    #ifdef _DESTROI_PL
-   size_t parada =  (s) / 2;
+   size_t parada =  comprimento_pl(s) / 2;
    size_t cortes = 0;
    #endif
 
@@ -206,7 +206,7 @@ bool destroi_interno_pl (PilhaLigada s, Drop del) {
 
       #ifdef _DESTROI_PL
       assert (dado == NULL);
-      size_t quantia =  (s);
+      size_t quantia =  comprimento_pl(s);
       bool chegou = quantia < parada;
       if (chegou) {
          printf (
@@ -502,7 +502,7 @@ generico_t* stack_to_array_pl(PilhaLigada S)
 #include <unistd.h>
 #include <string.h>
 // Própria biblioteca:
-#include "barra_de_progresso.h"
+#include "progresso.h"
 #include "teste.h"
 #include "dados_testes.h"
 
@@ -527,7 +527,7 @@ void pilha_com_i32s (void) {
    int* qual_o_topo = topo_pl(stack);
    printf("topo da pilha: %d\n", *qual_o_topo);
 
-   assert ((stack) == 1);
+   assert (comprimento_pl(stack) == 1);
    assert (destroi_pl (stack));
 }
 
@@ -543,7 +543,7 @@ void pilha_de_strings (void) {
    coloca_pl(stack, "He said so tshirts");
    visualiza_pilha_string(stack);
 
-   assert ((stack) == 4);
+   assert (comprimento_pl(stack) == 4);
    assert (destroi_pl (stack));
 }
 
@@ -567,7 +567,7 @@ bool deleta_u16(generico_t dt) { free(dt); return true; }
 void verificando_vazamento_de_memoria (void) {
    // inteiros de 4 bytes(int) de 50MiB deles.
    size_t total_de_unidades = unidades_por_megabytes(50, sizeof (int));
-   PT barra = novo_bpt (total_de_unidades, 40);
+   PG barra = cria_bp (Temporal, total_de_unidades, 40);
    PilhaLigada stack = cria_pl();
    int* X;
 
@@ -580,7 +580,7 @@ void verificando_vazamento_de_memoria (void) {
       *X = rand() % (30 + 1); 
 
       coloca_pl (stack, X);
-      visualiza_e_atualiza_bpt (barra, i);
+      atualiza_e_visualiza_bp (&barra, i);
    }
    puts ("destruído, mas ainda na memória?");
    // uma liberação logo em seguida.
@@ -626,7 +626,7 @@ void verificando_vazamento_de_memoria_i (void) {
    PilhaLigada stack = cria_pl();
    // size_t Q = unidades_por_megabytes (300, sizeof (nodulo_t));
    size_t Q = unidades_por_megabytes (300, NODULO_SZ);
-   PT barra = novo_bpt (Q, 40);
+   PT barra = cria_bpt (Q, 40);
    // char* mesmo_dado = calloc (50, sizeof (char));
    // strcpy (mesmo_dado,"uma string muito grande, bem grande mesmo.");
    // um bocado de zeros:
@@ -641,7 +641,7 @@ void verificando_vazamento_de_memoria_i (void) {
    for (size_t i = 1; i <= Q; i++) {
       // referênciando o mesmo dado milhões de vezes.
       coloca_pl (stack, mesmo_dado);
-      visualiza_e_atualiza_bpt (barra, i);
+      visualiza_e_atualiza_bpt (&barra, i);
    }
    puts ("fazendo todos items na pilha 'dangling points' ...");
    sleep (15);
@@ -663,13 +663,13 @@ void amostra_simples_de_todos_seus_metodos(void) {
    PilhaLigada stack = cria_pl();
 
    printf("Está vázia? %s\n", bool_to_str(vazia_pl(stack)));
-   printf("Total de itens: %lu\n", (stack));
+   printf("Total de itens: %lu\n", comprimento_pl(stack));
    for (size_t k = 0; k < FRUTAS; k++) {
       char* e = (char*)frutas[k];
       printf("\tAdicionando agora '%s'...\n", e);
       assert (coloca_pl(stack, e));
    }
-   printf("Total de itens: %lu\n", (stack));
+   printf("Total de itens: %lu\n", comprimento_pl(stack));
    printf("Está vázia? %s\n", bool_to_str(vazia_pl(stack)));
    char* item_no_topo = topo_pl(stack);
    printf("No topo: '%s'\n", item_no_topo);
