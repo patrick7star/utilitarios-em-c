@@ -268,14 +268,66 @@ void visualiza_bp(RefPG a) {
    };
 }
 
+bool atualiza_e_visualiza_bp(RefPG a, size_t v)
+{
+   switch(a->classe)
+   {
+   case Temporal:
+      atualiza_bpt(&a->progresso.temporal, v);
+      visualiza_bpt(&a->progresso.temporal);
+   case Simples:
+      atualiza_bps(&a->progresso.simples, v);
+      visualiza_bps(&a->progresso.simples);
+   };
+   return true;
+}
+
+/* == == == == == == == == == == == == == == == == == == == == == == == == =
+ *                         Interface em Inglês
+ *
+ *   Não só em inglês os nomes ficam mais simples e legíveis, como também
+ * possibilita uma compreensão ainda mais universal de tal estrutura
+ * com outras por aí.
+ * == == == == == == == == == == == == == == == == == == == == == == == = */
+ PG new_bp(TipoDeProgresso t, size_t n, uint8_t c)
+   { return cria_bp(t, n, c); }
+
+ bool finished_bp(RefPG a) 
+   { return esgotado_bp(a); }
+
+ bool update_bp(RefPG a, size_t v) 
+   { return atualiza_bp(a, v); }
+
+ void print_bp(RefPG a) 
+   { return visualiza_bp(a); }
+
+ bool update_e_print_bp(RefPG b, size_t v)
+   { return atualiza_e_visualiza_bp(b, v); }
+
 /* == == == == == == == == == == == == == == == == == == == == == == == == == 
  *                     Testes Unitários e seus Auxiliares
  * == == == == == == == == == == == == == == == == == == == == == == == == */
 #ifdef _UT_PROGRESSO
 /* Testes, em suas respectivas plataformas, estão separados entre os 
  * definitivos macros. */
+void taxa_de_aumento(size_t* t) 
+{
+   size_t T = *t;
+
+   // Taxas de crescimento dependendo do progresso.
+   if (T < 100)
+      *t += 5;
+   else if (T >= 100 && T < 200)
+      *t += 3;
+   else if (T >= 200 && T <= 400)
+      *t += 2;
+   else 
+      (*t)++;
+}
+
 #ifdef __linux__
 #include "teste.h"
+#include "tempo.h"
 #include <assert.h>
 #include <time.h>
 #include <unistd.h>
@@ -334,25 +386,26 @@ void progresso_temporal() {
    }
 }
 
+void duas_chamadas_ao_mesmo_tempo_pg(void)
+{
+   size_t i = 0, T = 500;
+   const size_t ms = 100;
+   PG bar = cria_bp(Simples, T, 50);
+
+   do {
+      taxa_de_aumento(&i);
+      atualiza_e_visualiza_bp(&bar, i);
+
+      breve_pausa(Miliseg, 400);
+   } while (i < T);
+}
+
 #elif defined(_WIN64)
 #include <windows.h>
 
 size_t units_MiB (uint8_t n) 
    { return n * pow(2, 20); }
 
-void taxa_de_aumento(size_t* t) {
-   size_t T = *t;
-
-   // Taxas de crescimento dependendo do progresso.
-   if (T < 100)
-      *t += 5;
-   else if (T >= 100 && T < 200)
-      *t += 3;
-   else if (T >= 200 && T <= 400)
-      *t += 2;
-   else 
-      (*t)++;
-}
 
 void novos_metodos_do_progresso_temporal (void) {
    size_t T = units_MiB(25);
@@ -404,6 +457,7 @@ void uso_simples_da_barra_generica(void) {
       Sleep(ms);
    } while (i < T);
 }
+
 #endif
 
 int main (void) {
@@ -421,9 +475,11 @@ int main (void) {
    puts("Śérie de testes no Linux.\n");
 
    executa_testes (
-      3, progresso_simples, true,
+      4, progresso_simples, true,
          progresso_simples_varios_tamanhos, true,
-         progresso_temporal, true
+         progresso_temporal, true,
+         // Desativado, pois consome muito tempo:
+         duas_chamadas_ao_mesmo_tempo_pg, false
    );
 #endif
 
