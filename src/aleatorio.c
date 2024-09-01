@@ -5,6 +5,12 @@
 #include <stdbool.h>
 #include <time.h>
 #include <iso646.h>
+#ifdef _POSIX_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#endif
 
 // Número em que os bits internos são sempre modificados.
 static bool EXECUTADO_ALGUMA_VEZ = false;
@@ -86,6 +92,91 @@ char ascii_char_aleatorio(void)
 /* Selecionando só caractéres válidos. Portanto, aqueles acima de 32. */
    { return inteiro_positivo(33, 126); }
 
+#ifdef _POSIX_SOURCE
+char* palavra_aleatoria(void) {
+   /*   O algoritmo para ser eficiente fará da seguinte forma, ao invés de 
+    * carregar todas palavras na memória, contabilizará o tamanho do 
+    * arquivo(em bytes) e sorteará um número entre 0(o ínicio) e o total 
+    * de bytes(o tamanho do arquivo mencionado). Este número sorteado 
+    * randomicamente será onde começará a lê caractéres. Com a ajuda de
+    * dois demarcadores, um para a primeira quebra-de-linha, e o outro para
+    * segunda. Feito isso, o que restá é posicionar o cursor do arquivo
+    * onde foi marcado a primeira quebra-de-linha, e lê até a segunda. E
+    * pronto, aí está a palavra lida, apenas resta retorna-lá. 
+    *
+    *   NOTA: ainda precisa-se de uma abordagem para tratar como pegar as 
+    * palavras no começo e no final do arquivo, digo, literalmente, a
+    * primeira e a última palavra. O algoritmo apresentado não cuida deste
+    * caso. */
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   puts("a função 'palavra_aleatoria' iniciou.");
+
+   void letra_lida_e_onde(size_t p, char _char) {
+      printf("cursor: %lu\tcaractére: '%c'\n", p, _char);
+      sleep(1);
+   }
+   #endif
+
+   const char caminho[] = "/usr/share/dict/american-english";
+   FILE* arquivo = fopen(caminho, "rt");
+   size_t inicio = SIZE_MAX, fim =SIZE_MAX, nl = 0;
+   size_t cursor = inteiro_positivo(0, 900000);
+   char letra;
+   bool bloco_executado = false;
+
+   // sorteio um byte aleatoriamente no arquivo.
+   fseek(arquivo, cursor, SEEK_SET);
+
+   // buscando dois caractéres de quebra-de-linha.
+   while (nl  < 2) {
+      letra = getc(arquivo);
+      #ifdef _DEBUG_PALAVRA_ALEATORIA
+      letra_lida_e_onde(ftell(arquivo), letra);
+      #endif
+
+      if (letra == '\n') {
+         if (!bloco_executado) {
+            // marca o ínicio da palavra.
+            inicio = ftell(arquivo);
+            bloco_executado = true;
+         } else
+            // marca o fim dela.
+            fim = ftell(arquivo);
+         // conta uma quebra-de-linha.
+         nl++;
+      }
+   }
+
+   // extraindo o conteúdo entre tais posições...
+   size_t byte = sizeof(char);
+   /* como estamos tratando de palavras aqui, cinquenta bytes é mais do que 
+    * o necessário,... ou você conhece uma palavra(em inglês) que necessite
+    * mais do que isso. 
+    */
+   char* buffer = malloc(50 * byte);
+   memset(buffer, '\0', 50);
+   size_t qtd = fim - (inicio + 1);
+
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   printf("serão lidos %lu caractéres\n", qtd);
+   #endif
+   // lendo entre o que foi marcado pelas iterações...
+   fseek(arquivo, inicio, SEEK_SET);
+   size_t lido = fread(buffer, byte, qtd, arquivo);
+
+   #ifdef _DEBUG_PALAVRA_ALEATORIA
+   printf("o que foi lido: '%s'\n", buffer);
+   #endif
+
+   if (lido != qtd) {
+      perror ("não leu-se todos bytes demandados.");
+      abort();
+   }
+
+   fclose(arquivo);
+   return buffer;
+}
+#endif
 
 #ifdef _UT_ALEATORIO
 /* === === === === === === === === === === === === === === === === === ==
@@ -204,6 +295,35 @@ void distribuicao_de_valores_logicos(void)
    assert (variacao < MINIMO);
 }
 
+static void todos_caracteres(char* texto)
+{
+   int t = strlen(texto);
+
+   for (int k = 1; k <= t; k++)
+      printf("\t\b\b - %c\n", texto[k - 1]);
+}
+
+void sorteio_de_palavra(void)
+{
+   for (size_t i = 1; i <= 10; i++) {
+      char* resultado = palavra_aleatoria();
+      printf("\nConteúdo: \"%s\"\n", resultado);
+      todos_caracteres(resultado);
+   }
+}
+
+void obtendo_tempo_de_sorteio_da_palavra(void)
+{
+   Cronometro contagem = cria_cronometro();
+
+   for (size_t k = 1; k <= 45000; k++) 
+       palavra_aleatoria(); 
+
+   marca(contagem);
+   printf("decorrido: %s\n",cronometro_to_str(contagem));
+
+}
+
 int main(int qtd, char* args[], char* vars[]) 
 {
    #ifdef _WIN64
@@ -212,12 +332,14 @@ int main(int qtd, char* args[], char* vars[])
    #elif __linux__
    puts ("Testes apenas para Linux:");
    executa_testes(
-      6, tempo_do_primeiro_inteiro_positivo_sorteado, false,
+      8, tempo_do_primeiro_inteiro_positivo_sorteado, false,
          sorteio_de_caracteres_ascii, true,
          sorteio_de_letras_do_alfabeto, true,
          amostra_pequena_inteiros_positivos, true,
          amostra_gigante_inteiros_positivos, false,
-         distribuicao_de_valores_logicos, true
+         distribuicao_de_valores_logicos, true,
+         sorteio_de_palavra, true,
+         obtendo_tempo_de_sorteio_da_palavra, true
    );
    #endif
 
