@@ -13,9 +13,12 @@
  // coloca um valor de modo mais legivel.
  extern char* valor_legivel(size_t); 
 
- /* Muitas funções em bibliotecas do sistema, ou padrões do ISO C, retorna
-  * os seguintes valores como resultado. Apenas criando um enum, assim com
-  * tais valores conversíveis com rótulos legíveis adequados. */
- enum resultado_generalizado_de_retorno { Failed = -1, Okay = 0 };
+ /* Muitas chamadas de sistema(systemcall), ou fuções do ISO C, retornam
+  * os seguintes valores como resultado: o valor negativo(-1) para 
+  * resultados fracassados, e o valor(0) como retornos positivos. Por isso,
+  * estou criando um enum, assim com tais valores conversíveis com rótulos 
+  * que deixaram os códigos mais legíveis e estéticamente mais belos. 
+  */
+ enum resultado_generalizado_de_retorno { Fail = -1, Okay = 0 };
 
 #endif //LEGIVEL_H

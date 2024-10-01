@@ -1,15 +1,10 @@
-#include <stdbool.h>
-#include <stddef.h>
-#include <inttypes.h>
 
 #ifndef ARRAYLISTA_H
 #define ARRAYLISTA_H
+#include "definicoes.h"
 
- /* A referência genérica com um nome mais legível do que se trata. */
- typedef void* generico_t;
  // todos os apelidos desta estrutura fornecidos:
  typedef struct array_lista *ArrayLista, *Vetor, vetor_t;
- typedef char* (*ToString)(generico_t);
  
  // criação e destruição do tipo de dado.
  ArrayLista cria_al();

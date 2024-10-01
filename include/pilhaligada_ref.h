@@ -1,18 +1,12 @@
-#include <stdbool.h>
-#include <stddef.h>
 
 #ifndef _PILHA_LIGADA_REF
 #define _PILHA_LIGADA_REF
- // qualquer referência, de qualquer tipo.
- typedef void* generico_t;
+#include "definicoes.h"
+
  // Todos nomes que eles podem assumir.
  typedef struct pilha_ligada_abstracao 
    *PilhaLigada, PL, pilha_ligada_t, 
    PILHA_LIGADA, *LinkedStack;
- /* Funções importantes para alguns operações sejam aplicadas sobre os 
-  * dados que a pilha porta: visualização, desalocação e etc. */
- typedef bool (*Drop)(generico_t);
- typedef char* (*ToString)(generico_t);
 
  // Funções que criam e destró a instância do tipo de dado:
  PilhaLigada cria_pl (void);

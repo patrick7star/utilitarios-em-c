@@ -1,18 +1,11 @@
 
-#include <stddef.h>
-#include <stdbool.h>
+#ifndef __CONJUNTO_REF_H__
+#define __CONJUNTO_REF_H__
+#include "definicoes.h"
 
-#ifndef _CONJUNTO_REF
- // Valor genérico, cĺássico apelido:
- typedef void* generico_t;
  // Todos apelidos que a estrutura 'conjunto' assume:
  typedef struct tabela_de_dispersao set_t, conjunto_t,
   *Conjunto, *Set, SET, CONJUNTO;
-
- // Renomeando todos traços referênte aos 'fat pointers' abaixo:
- typedef size_t (*Hash)(generico_t, size_t);
- typedef bool (*Eq)(generico_t, generico_t);
- typedef char* (*ToString)(generico_t);
 
  // Alocação e desalocação da estrutura:
  Conjunto cria_com_capacidade_set(size_t, Hash, Eq);

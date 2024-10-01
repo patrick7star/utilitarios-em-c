@@ -15,28 +15,18 @@
  * importante nestes casos.
  */
 
-// biblioteca padrões em C:
-#include <stddef.h>
-#include <stdbool.h>
 
 #ifndef HASHTABLE_H_REF
 #define HASHTABLE_H_REF
- // todos apelidos dados:
+// Tipo de dado genérico trabalhado e template de funções:
+#include "definicoes.h"
+
+ // Todos apelidos dados para a 'tabela de dispersão':
  typedef struct tabela_de_dispersao
    // Formas estáticas(para pegarem o objeto, precisam de ponteiros):
    hashtable_t,  HASHTABLE,
    // Ponteiros, ambas formas são comumente escritas:
    *Hashtable, *HashTable;
- // Nome do tipo genérico:
- typedef void* generico_t;
- // Método essencial de cálculo do índice na tabela.
- typedef size_t (*Hash)(generico_t, size_t);
- // Método essencial para comparação de itens inseridos nela.
- typedef bool (*Eq)(generico_t, generico_t);
- // Método essencial para desalocar memória de objeto genérico.
- typedef bool (*Drop)(generico_t);
- // Propriedade de transformar o dado genérico numa string.
- typedef char* (*ToString)(generico_t);
 
  // criação e destruição da instância da estrutura de dados.
  HashTable cria_com_capacidade_ht (size_t, Hash, Eq);
