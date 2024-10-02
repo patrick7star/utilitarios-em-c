@@ -3,18 +3,12 @@
  * alguns métodos que exigem a cópia impossíveis aqui. 
  */
 
-#include <stdbool.h>
-#include <stddef.h>
-
 #ifndef FILA_CIRCULAR_H
 #define FILA_CIRCULAR_H
- // Diz exatamente qualquer referência pode ser armazenada.
- typedef void* generico_t;
+#include "definicoes.h"
+
  // todos apelidos da estrutura dada.
  typedef struct lista_circular fila_circular_t, FC, *FilaCircular;
- // Propriedade de transformar o dado genérico numa string.
- typedef char* (*ToString)(generico_t);
- typedef bool (*Drop)(generico_t);
 
  // operações de desalocação e alocação do novo tipo de dado:
  FilaCircular cria_fc (void); 

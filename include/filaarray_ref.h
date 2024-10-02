@@ -1,13 +1,10 @@
 
 
-#include <stddef.h>
-#include <stdbool.h>
-
 #ifndef FILA_ARRAY_I_H
 #define FILA_ARRAY_I_H
- // ponteiro 'void' aceita qualquer referência passada para ela.
- typedef void* generico_t;
- typedef struct fila_de_array fila_array_t, *FilaArray, FA;
+#include "definicoes.h"
+
+ typedef struct fila_de_array_referencia fila_array_t, *FilaArray, FA;
 
  // alocação e desalocação de recursos.
  fila_array_t* cria_com_capacidade_fa (size_t); 
@@ -26,9 +23,8 @@
  bool coloca_fa (fila_array_t* q, generico_t e); 
  generico_t retira_fa (fila_array_t* q); 
 
- #define __to_string__ char* (__str__)(generico_t)
  /* Visualização genérica, que exige que se passe um método de transformação
   * de strign para ela, assim ela pode imprimir tal estrutura de dados. */
- void print_fila_fa(FilaArray, __to_string__); 
+ void print_fila_fa(FilaArray, ToString); 
 
 #endif
