@@ -480,8 +480,9 @@ void encolhimento_automatico(void) {
 
 
 int main(int total, char* argumentos[], char* variaveis[]) {
-   executa_testes(
-      3, testando_valores_genericos, true,
+   executa_testes_a(
+      true, 3, 
+			testando_valores_genericos, true,
          visualizando_escolhimento_e_expansao, true,
          encolhimento_automatico, true
    );

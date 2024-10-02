@@ -1106,10 +1106,10 @@ void demonstracao_simples_da_conversao_em_str(void) {
 }
 
 int main(int total, char* args[], char* vars[]) {
-   executa_testes (
+	executa_testes_a(
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-   7, operacoes_basicas_na_estrutura, true,
+   true, 7, operacoes_basicas_na_estrutura, true,
       rejeicao_de_entradas_duplicadas_em_massa, true,
       iteracao_simples_para_testar_a_implmentacao, true,
       simples_clonagem_inicial_de_iteradores, true,
@@ -1117,7 +1117,7 @@ int main(int total, char* args[], char* vars[]) {
       // Desativados, pois consomem CPU e tempo:
       monitorando_propriedades_sobre_estresse, false,
       insercoes_stats_havendo_redimensionamento, false
-   );
+	);
 
    return EXIT_SUCCESS;
 }

@@ -1261,8 +1261,8 @@ void transporte_de_hashtable_para_array(void) {
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
 
-   executa_testes (
-      9, varias_entradas_genericas_diferentes, true,
+   executa_testes_a (
+      true, 9, varias_entradas_genericas_diferentes, true,
           alocao_e_desacalocao_simples_instancia, true,
           aplicacao_de_simples_insercoes, true,
           verifica_operacao_de_pertencimento, true,
@@ -1275,8 +1275,8 @@ void main(void) {
    );
 
    // testes apenas do iteradores.
-   executa_testes (
-      3, uso_simples_da_iteracao, true,
+   executa_testes_a (
+      true, 3, uso_simples_da_iteracao, true,
          tentando_iterador_mapa_vazio, true,
          transporte_de_hashtable_para_array, true
    );
