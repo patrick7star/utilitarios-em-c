@@ -2,11 +2,11 @@
  * armazenar os fatores(na verdade sua forma fatorada). Cada número será
  * representado como um mapa. */
 
-#include "hashtable_ref.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
+#include "hashtable_ref.h"
 
 size_t localizacao(generico_t dt, size_t c) {
    size_t n = *((size_t*)dt);
