@@ -2,13 +2,11 @@
  * desejar trocar o tipo dela futuramente, apenas altere as linhas iniciais.
  */
 
+#include "filaligada_ref.h"
 // bibliotecas do C:
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
-// tal ponteiro pode assumir qualquer valor.
-typedef void* generico_t;
 // representação de tal objeto não sendo referênciado.
 #define INVALIDO NULL
 
@@ -34,7 +32,7 @@ bool destroi_no(no_t* m) {
    return true;
 }
 
-typedef struct fila_ligada {
+typedef struct fila_ligada_ref {
    // total de itens nela:
    size_t tamanho;
 
@@ -119,8 +117,7 @@ generico_t comeco_fl(fila_ligada_t* f) {
    return NULL;
 }
 
-#ifdef _UT_FILA_LIGADA
-
+#ifdef __UT_FILA_LIGADA_REF__
 // várias entradas para seus testes.
 char entradas[] = { 'm', 'z', 'i', 'L' };
 

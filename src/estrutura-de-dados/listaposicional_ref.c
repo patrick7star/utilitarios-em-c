@@ -16,6 +16,7 @@
  * bem menores no tipo(III).
  */
 
+#include "definicoes.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -25,13 +26,9 @@
 #include <assert.h>
 // Declaração das funções, métodos e estruturas abaixos:
 
-// tipo vázio que pode assumir qualquer endereço.
-typedef void* generico_t;
 // Assinatura da 'function pointer' que desaloca o objeto que a 'lista'
 // guarda dentro dos seus nódulos.
 typedef void (*Destrutor)(generico_t);
-// Assinatura do 'function pointer' que permite conversão de string do dado.
-typedef char* (*ToString)(generico_t);
 // Nomeando nódulo para melhor legibilidade.
 typedef struct item_nodulo nodulo_t, *Node; 
 // Um índice inválido, é o último inteiro que a máquina permite registrar.
@@ -476,7 +473,9 @@ void destroi_n_lp(int qtd, ...) {
 }
 
 #ifdef _UT_LISTA_POSICIONAL
-// bibliotecas necessárias:
+/* === === === === === === === === === === === === === === === === === ==
+ *                         Testes-Unitários
+ * === === === === === === === === === === === === === === === === === ==*/
 #include <stdio.h>
 #include <assert.h>
 #include <inttypes.h>

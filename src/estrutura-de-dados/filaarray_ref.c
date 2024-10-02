@@ -19,7 +19,7 @@
 typedef void* generico_t;
 typedef struct { generico_t* dados; size_t total; } Array;
 
-typedef struct fila_de_array {
+typedef struct fila_de_array_referencia {
    // tamanho inicial da array.
    size_t capacidade;
 
