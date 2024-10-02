@@ -180,8 +180,8 @@ void o_grosso_de_grande_valores(void) {
 }
 
 int main(void) {
-   executa_testes(
-      3, legibilidade_do_tempo, true,
+   executa_testes_a(
+      true, 3, legibilidade_do_tempo, true,
          legibilidade_de_tamanhos, true,
 		   o_grosso_de_grande_valores, true
 	);

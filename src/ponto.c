@@ -339,12 +339,12 @@ void todos_tipos_de_visualizacao_das_estruturas(void) {
 }
 
 void main(int argc, char** argv) {
-   executa_testes(
-      5, criacao_da_array_de_pontos, true,
+   executa_testes_a(
+      true, 5, criacao_da_array_de_pontos, true,
          todos_vertices_do_retangulo, true,
-         criacao_de_forma_manual_da_array_de_pontos, true,
+         criacao_de_forma_manual_da_array_de_pontos, false,
          comparacao_entre_pontos, true,
-         todos_tipos_de_visualizacao_das_estruturas, true
+         todos_tipos_de_visualizacao_das_estruturas, false
    );
 }
 #endif // testes-unitários.

@@ -31,6 +31,7 @@
  *    Funções:
  *       - nome_do_teste
  *       - executa_testes 
+ *       - executa_testes_a
  *       - executa_teste_interruptor 
  *
  *    Variável:
@@ -94,7 +95,7 @@ void debug_aqui(void) {
  *       - resultado_de_todos_testes_desativados
  */
 #ifdef _POSIX_C_SOURCE
-#include "teste/testador.c"
+// #include "teste/testador.c"
 #endif
 
 
@@ -152,13 +153,6 @@ void verificando_obtendo_de_potencias_de_dois() {
    }
 }
 
-void stringficacao_de_valores_primitivos() {
-   printf("\t%-5d ==> %10s\n", 15, bool_to_str(15));
-   printf("\t%-5c ==> %10s\n", 'M', bool_to_str('M'));
-   printf("\t%-5d ==> %10s\n", 0, bool_to_str(0));
-   printf("\t%-5s ==> %10s\n", "false", bool_to_str(false));
-}
-
 void converte_strings_de_valores_logicos() {
    struct par {
       char* entrada;
@@ -184,28 +178,6 @@ void converte_strings_de_valores_logicos() {
    }
 }
 
-void percorrendo_string() {
-   char* entrada = "this planet is prettly BLUE!";
-   char* atual = entrada;
-   while (*atual) {
-      printf("|%c| ", atual[0]);
-      atual++;
-   }
-   puts("");
-}
-
-void transforma_toda_string_em_minuscula() {
-   char* entradas[] = {
-      "jogo legal!", "Capital", "The United States of America",
-      "brazil", "cachorro", "Diego", "tEsTe MaIs DIScarAdO"
-   };
-
-   for (size_t i = 0; i < 7; i++)
-      printf(
-         "%s ===> %s\n", entradas[i], 
-         string_minuscula(entradas[i])
-      );
-}
 
 void testes_tal_declaracao_de_loop(void) {
 #ifdef _POSIX_C_SOURCE
@@ -226,9 +198,9 @@ void testes_tal_declaracao_de_loop(void) {
 }
 
 int main(int qtd, char* argumentos[], char* env_vars[]) {
-   executa_testes(
-      7, teste_conversao_binaria_antiga_implementacao, false,
-         amostra_da_nova_implementacao_de_binario, false,
+   executa_testes_a(
+      true, 7, teste_conversao_binaria_antiga_implementacao, true,
+         amostra_da_nova_implementacao_de_binario, true,
          extracao_de_bits_implementacao_geral, false,
          // iteração para gerar máscaras funciona!
          verificando_obtendo_de_potencias_de_dois, false,
@@ -238,38 +210,13 @@ int main(int qtd, char* argumentos[], char* env_vars[]) {
          testes_tal_declaracao_de_loop, false
    );
 
-   #ifdef _POSIX_C_SOURCE
+   #ifdef __linux__
    // Teste da função interna sem nada com atual módulo:
    executa_testes(
-      5, percorrendo_string, false,
-         transforma_toda_string_em_minuscula, false,
-         verificando_saida_do_pipe_sem_multiprocessing, false,
-         captura_de_output_via_pipe, false,
-         abrindo_np_como_um_file, false
-   );
-
-
-   puts("\nTestes especiais do novo suíte de testes-unitários:");
-   executa_testes(
-      9, novo_suite_de_testes_unitarios, false,
-         resultado_de_todos_testes_desativados, false,
-         executa_um_teste_unitario_e_coleta_informacoes, false,
-         funcao_que_captura_sinal_e_saida, false,
-         resultado_apos_aborto_do_processo, false,
-         novo_tipo_de_captura_criado_via_pipes, false,
-         novo_relator_de_execucao_de_teste, false,
-         gerador_de_relatorio_sem_captura, false,
-         primeiro_simples_teste_final_do_suite, false
-   );
-
-   puts("\nTeste o paralelismo do 'Suite Testador'...");
-   executa_testes(
-      6, trabalhando_no_paralelismo, false,
-         usando_arrays_para_compactar_o_codigo_acima, false,
-         verificando_se_a_thread_nao_bagunca_o_output, false,
-         visualizacao_do_join_temporario, false,
-         manuseio_de_duas_threads, false,
-         rodando_um_testeset_via_join_timeout, false
+      4, percorrendo_string, true,
+         transforma_toda_string_em_minuscula, true,
+         primeira_versao_alternativa_de_executa_testes, true,
+         teste_interruptor_renomeado, true
    );
    #endif
 

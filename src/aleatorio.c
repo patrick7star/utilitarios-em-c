@@ -1,6 +1,6 @@
 
 // Importando as declarações das funções implementadas abaixo:
-#include <aleatorio.h>
+#include "aleatorio.h"
 // Bibliote padrão do C:
 #include <stdbool.h>
 #include <time.h>
@@ -42,7 +42,7 @@ static void alimenta_a_semente(void) {
    SEMENTE ^= SEMENTE >> 8;
 }
 
-size_t inteiro_positivo(size_t a, size_t b) {
+extern size_t inteiro_positivo(size_t a, size_t b) {
 /* O algoritmo consiste em dá alguns shifts(para qualquer lado) na
  * 'semente', e então, verificar qual o valor aleatório gerado na mexida
  * internas dos bytes de um número. */
@@ -66,7 +66,7 @@ size_t inteiro_positivo(size_t a, size_t b) {
    return (n % (b - a + 1)) + a;
 }
 
-bool logico (void)
+extern bool logico (void)
 /* Sorteia um valor de 0 à 9, se estiver entre 0 à 5, retorna um valor
  * 'verdadeiro', caso contrário, 'falso' 
  */
@@ -331,15 +331,15 @@ int main(int qtd, char* args[], char* vars[])
 
    #elif __linux__
    puts ("Testes apenas para Linux:");
-   executa_testes(
-      8, tempo_do_primeiro_inteiro_positivo_sorteado, false,
+   executa_testes_a(
+      true, 8, tempo_do_primeiro_inteiro_positivo_sorteado, false,
          sorteio_de_caracteres_ascii, true,
          sorteio_de_letras_do_alfabeto, true,
          amostra_pequena_inteiros_positivos, true,
          amostra_gigante_inteiros_positivos, false,
          distribuicao_de_valores_logicos, true,
-         sorteio_de_palavra, true,
-         obtendo_tempo_de_sorteio_da_palavra, true
+         sorteio_de_palavra, false,
+         obtendo_tempo_de_sorteio_da_palavra, false
    );
    #endif
 

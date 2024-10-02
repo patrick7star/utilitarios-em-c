@@ -261,12 +261,15 @@ void teste_desconhecido_ii(void) {
 
 int main(int qtd, char* argumentos[], char* envp[]) 
 {
+	/* Os códigos estão sendo chamados de forma crua, porque a módulo que 
+	 * provém testes precisa deste módulo como depedência. */
    alocacao_e_desalocacao();
    visualizacao_dos_marcos();
    stringficacao_do_temporizador();
    dois_tais_ate_o_esgotamento();
    reutilizacao_do_temporizador();
    disparando_o_cronometro();
+
    return EXIT_SUCCESS;
 }
 #endif

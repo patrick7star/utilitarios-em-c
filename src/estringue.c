@@ -18,11 +18,9 @@
 #define CARACTERE_NAO_ENCONTRADO 10
 #define SIZE_STR sizeof(struct string_dinamica)
 #define WCHAR_SIZE sizeof(wchar_t)
+
 // Sinifica que todas ocorrências serão feitas.
 const int64_t TODOS = -1;
-/* Uma apelido mais palatável(curto) para função geral de ocorrências de 
- * algum caractére. */
-typedef size_t* (*BUSCA_TOC)(String, wchar_t, int64_t, bool);
 
 #ifdef _UT_STRING
 static void visualiza_array(size_t* array, size_t t) {
@@ -375,36 +373,6 @@ static size_t* busca_todas_ocorrencias_do_caractere(String s,
    return indices;
 }
 
-size_t busca_str(String s, char c) {
-/* Pega o primeiro caractére que ocorrer na travessia, esta partindo da 
- * esquerda à direita. */
-   wchar_t b; size_t* posicao, local ;
-
-   // Convertendo caractére para um equivalente em Unicode.
-   mbtowc(&b, &c, sizeof(char));
-   // Então retornando tal posição.
-   posicao = BUSCA_TOC(s, b, 1, true);
-   // Copiando valor, então liberando memória alocada na função terceira.
-   local = *posicao;
-   free(posicao);
-
-   return local;
-}
-
-size_t rbusca_str(String s, char c) {
-// O mesmo que acima, porém inverso(direita à esquerda).
-   wchar_t b; size_t* posicao, local ;
-
-   // Convertendo caractére para um equivalente em Unicode.
-   mbtowc(&b, &c, sizeof(char));
-   // Então retornando tal posição.
-   posicao = BUSCA_TOC(s, b, 1, false);
-   // Copiando valor, então liberando memória alocada na função terceira.
-   local = *posicao;
-   free(posicao);
-
-   return local;
-}
 
 // Funções de strings retiradas do módulo testes:
 uint64_t total_substrings(char* str) {
@@ -428,6 +396,7 @@ char* copia_substring(size_t i, size_t f, char* str) {
       (f >= t) ||
       (i >= t)
    );
+	size_t tamanho = f - i;
    char* copia = malloc(tamanho);
    const char NULO = '\0';
 
@@ -468,7 +437,17 @@ char* concatena_literais_str(int total, ...) {
    return resultado;
 }
 
+void preenche_str(String s, char c, int n)
+{	
+	while (n-- > 0) 
+		adiciona_str(s, c);
+}
+
 #ifdef _UT_STRING
+/* === === === === === === === === === === === === === === === === === ==
+ *                       Testes 
+ *                            Unitários
+ * === === === === === === === === === === === === === === === === === ==*/
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -477,14 +456,14 @@ char* concatena_literais_str(int total, ...) {
 
 void testes_basico_da_reparticao_em_palavras(void) {
    for (size_t i = 1; i <= 5; i++) {
-      char* phrase = frases_i[i - 1];
+      char* phrase = (char*)frases_i[i - 1];
       printf ("\nsobre: '%s'\n", phrase);
       palavras(phrase);
    }
 }
 
 void visualizacao_da_reparticao_em_palavras(void) {
-   OutcomePalavras result = palavras (frase_ii);
+   OutcomePalavras result = palavras ((char*)frase_ii);
 
    puts ("listando o resultado: ...");
    for (size_t q = 1; q <= result.total; q++)
@@ -604,15 +583,29 @@ void motor_de_busca_de_ocorrencias(void) {
    destroi_str(amostra_i);
 }
 
-int main(int qtd, char* args[], char* vars[]) {
-   executa_testes(
-      6, testes_basico_da_reparticao_em_palavras, false,
-         visualizacao_da_reparticao_em_palavras, false,
-         experimento_concatenacao_de_multiplas_strings, false,
+void preenchimento_da_string(void) {
+	String obj = cria_str();
+
+	preenche_str(obj, '-', 5);
+	imprime_string(obj);
+	preenche_str(obj, '+', 13);
+	imprime_string(obj);
+
+	destroi_str(obj);
+}
+
+int main(int qtd, char* args[], char* vars[]) 
+{
+   executa_testes_a(
+      true, 7, 
+			testes_basico_da_reparticao_em_palavras, true,
+         visualizacao_da_reparticao_em_palavras, true,
+         experimento_concatenacao_de_multiplas_strings, true,
          // Testes específicos do tipo String:
          criacao_simples_de_uma_instancia_String, true,
          diversos_tipos_basicos_de_insercao_String, true,
-         motor_de_busca_de_ocorrencias, true
+         motor_de_busca_de_ocorrencias, true,
+			preenchimento_da_string, true
    );
 
    return EXIT_SUCCESS;
