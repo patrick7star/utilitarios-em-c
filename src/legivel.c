@@ -3,16 +3,20 @@
  * ou outros campos. 
  */
 
+// Declaração das funções abaixo:
+#include "legivel.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
+
 char* tempo_legivel(double segundos) {
    // variável com uma letra para agilizar codificação.
    double s = segundos;
-   char* resultado = calloc(30, sizeof(char));
+   const int N = 30, sz = sizeof(char);
+   char* resultado = malloc(N * sz);
 
    // para comparação ...
    const double MINUTO = 60.0;
@@ -43,13 +47,16 @@ char* tempo_legivel(double segundos) {
          sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
       else {
 			// qualquer quantia abaixo disso, será considerado zero!
+         #ifdef __linux__
 			strcpy (resultado, "0seg");
+         #elif defined(_WIN32)
+         strcpy_s (resultado, N, "0seg");
+         #endif
 		}
    }
    return resultado;
 }
 
-// #include "legivel/calculo_potencia.c"
 static uint64_t potencia(uint64_t b, uint8_t e) {
 /* Calcula uma pontência, porém retorna ela como um grande inteiro --
  * o maior tipo que existe, já que na falta de um deste na biblioteca

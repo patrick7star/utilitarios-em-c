@@ -13,7 +13,7 @@
 #include <time.h>
 
 // Atributos do objeto.
-#ifdef _WIN64
+#ifdef _WIN32
 const char BARRA = '*';
 #elif defined(__linux__)
 const char BARRA = 'o';
@@ -21,9 +21,9 @@ const char BARRA = 'o';
 const char VACUO = '.';
 const size_t COMPRIMENTO = 45;
 
-/* == == == == == == == == == == == == == == == == == == == == == == == == == 
+/* == == == == == == == == == == == == == == == == == == == == == == == ==
  *                          Progresso Simples 
- * == == == == == == == == == == == == == == == == == == == == == == == == */
+ * == == == == == == == == == == == == == == == == == == == == == == == =*/
 #ifdef _IMPRESSAO_BPS
 static size_t qtd_de_chamadas_bps = 0;
 #endif

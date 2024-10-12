@@ -162,15 +162,29 @@ char* array_ponto_to_str(ArrayPonto a, size_t t) {
    resultado_fmt[0] = '[';
 
    for (uint64_t k = 1; k <= t; k++) {
+      #ifdef __linux__
       strcat(resultado_fmt, ponto_to_str(a[k - 1]));
       strcat(resultado_fmt, ", ");
+      #elif defined(_WIN32)
+      char* trecho = ponto_to_str(a[k - 1]);
+      strcat_s(resultado_fmt, strlen(trecho), trecho);
+      free(trecho);
+      trecho = ", ";
+      strcat_s(resultado_fmt, strlen(trecho), trecho);
+      #endif
    }
+
+   #ifdef __linux__
    strcat(resultado_fmt, "\b\b]");
+   #elif defined(_WIN32)
+   char* trecho = "\b\b]";
+   strcat_s(resultado_fmt, strlen(trecho), trecho);
+   #endif
 
    return resultado_fmt;
 }
 
-void imprime_array_ponto(ArrayPonto a, uint64_t t) {
+void imprime_array_ponto(ArrayPonto a, size_t t) {
    printf("Array de Ponto: [\n\t");
    for (uint64_t k = 1; k <= t; k++) {
       char* formatacao = ponto_to_str(a[k - 1]);

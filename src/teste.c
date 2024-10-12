@@ -7,7 +7,11 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <assert.h>
+#ifdef __linux__
 #include <tgmath.h>
+#elif defined(_WIN32)
+#include <math.h>
+#endif
 // para não compilar no Windows, assim mantém compatibilidade
 #ifndef _WIN64
 #include "tempo.h"
