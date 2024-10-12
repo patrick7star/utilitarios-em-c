@@ -43,7 +43,13 @@ extern char* binario_str(size_t decimal) {
  * array como o último "dígito" na string. 
  */
    if (decimal == 0) return "0000";
+   #ifdef __linux__
    uint8_t qtd_digitos = floor(log2(decimal)) + 1;
+   #elif defined(_WIN32)
+   double x = log2((double)decimal);
+   double y = floor(x);
+   uint8_t qtd_digitos = y + 1;
+   #endif
    /* criando a VLA depois de calcular a quantidade de dígitos exata.*/
    uint8_t digitos[qtd_digitos];
    // acrescenta mais uma 'vagão' na string para o caractére nulo.

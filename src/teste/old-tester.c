@@ -78,7 +78,7 @@ void executa_teste_interruptor(char* descricacao, Fn call, bool acionado)
       puts("DESATIVADO TEMPORIAMENTE!");
 }
 
-void executa_testes(const uint8_t total, ...) {
+void executa_testes(int total, ...) {
    Cronometro medicao = cria_cronometro();
    va_list args;
    size_t habilitados = 0;
@@ -112,6 +112,7 @@ void executa_testes(const uint8_t total, ...) {
          "\ntodos testem levaram %s\n", 
          tempo_legivel(tempo_total)
       );
-   #endif
+   #elif defined(__linux__)
    printf ("há %lu testes desativados.\n", total - habilitados);
+   #endif
 }

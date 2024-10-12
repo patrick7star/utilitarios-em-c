@@ -1,6 +1,5 @@
 
-#ifndef _WIN64
-// Só compatível na plataforma Windows.
+#ifndef _WIN32
 #include <time.h>
 
 enum submultiplo_de_tempo { NANOSEG, MICROSEG, MILISEG, SEG };
