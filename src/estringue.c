@@ -8,9 +8,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <ctype.h>
+#include <stddef.h>
 // Definições das funções abaixo:
 #include "estringue.h"
 
@@ -21,6 +24,9 @@
 
 // Sinifica que todas ocorrências serão feitas.
 const int64_t TODOS = -1;
+// Tupla de retorno que retorna 'posições na array' e seu 'comprimento'.
+typedef struct posicoes_dos_padroes { ptrdiff_t* array; int size; } 
+   Posicoes;
 
 #ifdef _UT_STRING
 static void visualiza_array(size_t* array, size_t t) {
@@ -52,7 +58,7 @@ static char* copia_trecho (char* string, size_t i, size_t f) {
    return palavra;
 }
 
-static OutcomeStrings reparte_string_by_char(char* string, const char sep) 
+static ListaStrings reparte_string_by_char(char* string, const char sep) 
 {
 /* Separa em string à partir de qualquer caractére dado, seja ele 
  * 'imprimível' ou não.
@@ -116,17 +122,17 @@ static OutcomeStrings reparte_string_by_char(char* string, const char sep)
       printf ("\tpalavra: '%s'\n", word);
       #endif
    }
-   return (OutcomePalavras) {lista, total};
+   return (ListaStrings) {lista, total};
 }
 
-OutcomePalavras palavras(char* string) {
+ListaStrings palavras(char* string) {
    /* Pega todos trechos entre espaços em branco, sejam eles palavras 
     * legítimas ou não. */
    const char ESPACO_SEPARADOR = ' ';
    return reparte_string_by_char (string, ESPACO_SEPARADOR);
 }
 
-OutcomeStrings split_linhas(char* conteudo) {
+ListaStrings split_linhas(char* conteudo) {
 /* Dado uma grande string, está separada com quebras-de-linhas, aqui
  * será retornado uma cópia de todas linhas do conteúdo(sendo este 
  * provavalmente vindo de algum arquivo). */
@@ -134,19 +140,23 @@ OutcomeStrings split_linhas(char* conteudo) {
    return reparte_string_by_char (conteudo, ESPACO_SEPARADOR);
 }
 
-char* concatena_strings(uint8_t quantia, ...) {
+char* concatena_strings(int quantia, ...) 
+{
 /* Cocatena uma quantia limitada de strings, dado a quantia delas. 
  *
  * Nota: Como tal argumentos para função só podem ser manualmente o 
  *    tipo de inteiros que ele aceita é um de 8 bits, ou seja, só cabem
  *    apenas 256 argumentos tal função. Bastante, porém limitada, mas 
  *    mesmo com isso é um baita de quebra-galho para o tipo existente. */
+   assert(quantia > 0);
+
    va_list argumentos;
    va_start (argumentos, quantia);
    size_t comprimento = 0;
    char* referencias[UINT8_MAX];
 
-   for (size_t i = 1; i <= quantia; i++) {
+   for (int i = 1; i <= quantia; i++) 
+   {
       char* strptr = va_arg (argumentos, char*);   
       comprimento += strlen (strptr);
       // guardando a string para futura concatenação.
@@ -168,7 +178,8 @@ char* concatena_strings(uint8_t quantia, ...) {
    char* grande_string = malloc (quantia * sizeof (char) * comprimento);
    size_t cursor = 0;
    // criando string concatenada...
-   for (size_t i = 1; i <= quantia; i++) {
+   for (size_t i = 1; i <= quantia; i++) 
+   {
       char* atualstr = referencias[i - 1];
       while (*atualstr != '\0') {
          grande_string[cursor++] = *atualstr;
@@ -442,6 +453,354 @@ void preenche_str(String s, char c, int n)
 	while (n-- > 0) 
 		adiciona_str(s, c);
 }
+/* == == == == == == == == == == == == == == == == == == == == == == == == 
+ *                      Funções Auxiliares para
+ *                         Strings Puras em C
+ *
+ *   Tal função altera ou gera raw-strings em C(array de caractéres), ao 
+ * invés da estrutura string acima. Há vários métodos e funções que outras
+ * linguagem tem como padrão, porém o C não coloca elas.
+ * == == == == == == == == == == == == == == == == == == == == == == ==  */
+char* maiuscula_ascii(char* str)
+{
+/* Faz a string, multibyte, para toda uppercase(maiúscula). */
+   size_t t = strlen(str);
+   const int m = 0x61 - 0x41;
+   size_t sz = sizeof(char);
+   size_t size = (t + 1) * sz;
+   char* result = malloc(size);
+
+   for (size_t i = 0; i < t; i++)
+   {
+      int code = str[i];
+
+      if (islower(code))
+         result[i] = (char)(code - m);
+      else
+         result[i] = (char)code;
+   }
+
+   result[t] = '\0';
+   return result;
+}
+
+char* minuscula_ascii(char* str)
+{
+/* Faz uma string ascii toda para lowercase(minúscula). */
+   size_t t = strlen(str);
+   const int m = 0x61 - 0x41;
+   size_t sz = sizeof(char);
+   size_t size = (t + 1) * sz;
+   char* result = malloc(size);
+
+   for (size_t i = 0; i < t; i++)
+   {
+      int code = str[i];
+
+      if (isupper(code))
+         result[i] = (char)(code + m);
+      else
+         result[i] = (char)code;
+   }
+
+   result[t] = '\0';
+   return result;
+}
+
+char* capitaliza_ascii(char* str)
+{
+/* Acha o primeiro caractére ASCII minúsculo na string, então coloca de 
+ * forma capitalizada. Se o primeiro caractére já está 'capitalizado', 
+ * então nada é alterado.
+ */
+   size_t t = strlen(str);
+   const int m = 0x61 - 0x41;
+   size_t size = (t + 1) * sizeof(char);
+   char* result = malloc(size);
+   bool acionado = false; 
+
+   for (size_t i = 0; i < t; i++)
+   {
+      int code = str[i];
+
+      if (isupper(code))
+         acionado = true;
+
+      if (islower(code) && !acionado)
+      {
+         result[i] = (char)(code - m);
+         acionado = true;
+      } else
+         result[i] = (char)code;
+   }
+
+   result[t] = '\0';
+   return result;
+}
+
+char* alterna_case_ascii(char* str)
+{
+/* Alterna a capitalização de cada letra, se ela está minúscula, então 
+ * fica maiúscula, e vice-versa. */
+   size_t t = strlen(str);
+   const int M = 0x61 - 0x41;
+   size_t size = (t + 1) * sizeof(char);
+   char* result = malloc(size);
+
+   for (size_t i = 0; i < t; i++)
+   {
+      int code = str[i];
+
+      // Apenas realização a alteração nos símbolos alfabéticos do ASCII.
+      if (isalpha(code))
+      {
+         if (islower(code))
+            result[i] = (char)(code - M);
+         else
+            result[i] = (char)(code + M);
+      } else
+         result[i] = code;
+   }
+
+   result[t] = '\0';
+   return result;
+}
+
+char* extrai_letras_ascii(char* str)
+{
+/* Apara qualquer outro caractére não alfabético -- tem que ser um caractére
+ * ASCII, da string. As letras são colocadas na ordem que são encontradas.
+ */ 
+   size_t t = strlen(str);
+   size_t size = (t + 1) * sizeof(char);
+   char* result = malloc(size);
+   // Cursor da resultante, e do argumento passado.
+   size_t k = 0, p = 0;
+
+   while (p < t) {
+      if (isalpha(str[p]) || str[p] == '.')
+         result[k++] = str[p];
+      p++;
+   }
+   result[k] = '\0';
+
+   return result;
+}
+
+char* extrai_digitos_ascii(char* str)
+{
+/* O mesmo que acima, porém agora para números. Neste caso aqui também se 
+ * o valor for um decimal, será pego, más não garante se a sintaxe de tal
+ * está correta. */ 
+   size_t t = strlen(str);
+   size_t size = (t + 1) * sizeof(char);
+   char* result = malloc(size);
+   // Cursor da resultante, e do argumento passado.
+   size_t k = 0, p = 0;
+
+   while (p < t) {
+      if (isdigit(str[p]) || str[p] == '.')
+         result[k++] = str[p];
+      p++;
+   }
+   result[k] = '\0';
+
+   return result;
+}
+
+char* repete_caractere_ascii(char p, int qtd)
+{
+/* Cria uma string baseada no caractére dado, para que seja preenchida por
+ * ele 'qtd' de vezes demandada. */
+   char* fmt = malloc(qtd * sizeof(char));
+
+   for (int i = 0; i < qtd; i++) fmt[i] = p;
+   fmt[qtd] = '\0';
+
+   return fmt;
+}
+
+static Posicoes acha_posicoes(char* str, char* pattern)
+{
+   Posicoes result;
+   const int N = 20, sz = sizeof(ptrdiff_t);
+   int cursor = 0;
+   ptrdiff_t*  posicoes = malloc(N * sz);
+   char* aux_str = str, *ptr;
+
+   /* Acha posições de todos padrões, e registra todos eles em ordem de 
+    * encontro. Só para o loop quando a busca não achar nenhum começo de
+    * sub-estringue, retornando assim um ponteiro nulo. */
+   do {
+      // Redimensiona array caso precise.
+      if (cursor >= N) 
+      {
+         // Aumenta em 20% da capicidade atual.
+         int nc = (int)((float)cursor * 1.20);
+         posicoes = realloc(posicoes, nc * sz);
+      }
+
+      if (strlen(pattern) > 1)
+         ptr = strstr(aux_str, pattern);
+      else
+         ptr = strchr(aux_str, *pattern);
+
+      // Abandona loop em caso da procura não ter encontrada nada.
+      if (ptr == NULL) 
+         break;
+      else {
+         // Posição relativa ao ínicio da estringue(s).
+         ptrdiff_t d = ptr -str;
+
+         #ifdef __debug__
+         /* Mostrando um trecho de onde está na estringue geral, e também
+          * o ínicio do padrão encontrado, e quanto correu da última 
+          * posição.
+          */
+         // Quanto passou do último trecho da sub-estringue.
+         ptrdiff_t c = ptr - aux_str;
+         char trecho[N];
+         memcpy(trecho, aux_str + c, N * sizeof(char));
+         if (strlen(aux_str) > N)
+            printf("\t-->'%s...'\t%ld\n", trecho, d);
+         else
+            printf("\t-->'%s'\t%ld\n", trecho, d);
+         #endif
+
+         posicoes[cursor++] = d;
+         /* Adianta o trecho da estringue para depois do padrão novo
+          * achado, mais uma casa adiante. */
+         aux_str = str + (d + 1);
+      }
+   } while(aux_str != NULL);
+
+   result.array = malloc(cursor * sz);
+   result.size = cursor;
+
+   assert (result.array != NULL);
+   memcpy(result.array, posicoes, cursor * sz);
+   // Não mais necessária tal alocação.
+   free(posicoes);
+
+   #ifdef __debug__
+   printf("Encontrado(%d): {", cursor);
+
+   for (int k = 0; k < result.size; k++)
+      printf("%ld, ", result.array[k]);
+
+   puts("\b\b}\n");
+   #endif
+
+   return result;
+}
+
+char* substitui_ascii(char* s, char* a, char* b)
+{
+/*   Troca todos padrões(a) na string(s) pelo o novo padrão(b). 
+ *   O algoritmo consiste no seguinte: primeiro é registrado todos inicios
+ * de posições de cada padrão na estringue(s), na ordem que foram achados
+ * é claro, então depois a mesma estringue(s) é varrida até a primeira 
+ * posição registrada -- isso se ter sido encontrado alguma; neste ponto 
+ * ao invés de apenas copiar os ordinários caractéres da estringue(s), ele
+ * copia a estringue de substituição(b). Se tal estringue(b) for menor que
+ * o padrão anterior(estringue a), então os demais caractéres faltantes
+ * serão preenchidos com um "símbolo neutro". Terminado tal substituição
+ * do primeiro, o cursor muda para próxima posição encontrada. */
+   Posicoes posicoes = acha_posicoes(s, a);
+   // Comprimento do padrão/e o substituto que será substituído.
+   const int ta = strlen(a), tb = strlen(b), t = strlen(s);
+   const int sz = sizeof(char);
+   // Aumenta em 25% o atual tamanho da array de caractéres.
+   const int calculo = (int)((float)t * 1.25);
+   char* output = malloc(calculo * sz);
+   /* Cursor de escrita na estringue(x), de leitura(y), e por último, o 
+    * cursor da próxima posição na array. */
+   int w = 0, r = 0, p = 0;
+
+   #ifdef __debug__
+   printf("\nAtual tamanho: %d\n", t);
+   printf("Cálculo da alocação: %d\n", calculo);
+   #endif
+
+   while (p < posicoes.size || r < t) 
+   {
+      // Se encontrar um 'padrão', começar reescreve-lo...
+      if (r == posicoes.array[p]) 
+      {
+         #ifdef __debug__
+         printf("Atual posição trabalhada: %ld\n", posicoes.array[p]);
+         #endif
+
+         for (int i = 0; i < tb; i++)
+            output[w + i] = b[i];
+         /* Cursor avança o quanto foi escrito. Já o segundo avança quanto
+          * foi lido da string original. O primeiro é o 'substítuto', o 
+          * segundo é o 'padrão' dado como argumento. */
+         w += tb; r += ta;
+         // Próxima posição a analizar.
+         p++;
+
+         if (tb == 0)
+         // Em caso de o substítuto ser uma estringue vázia, retira um
+         // avanço no 'cursor de escrita' para não ficar um espaço em 
+         // branco a mais onde será substituido.
+            w -= 1;
+
+      } else 
+         // Um caractére lido, um caractére escrito.
+         output[w++] = s[r++];
+   }
+   // Liberando array de posições alocadas...
+   free(posicoes.array);
+   // Crava o final dela.
+   output[w] = '\0';
+   return output;
+}
+
+ListaStrings reparte_ascii(char* str, char* pattern)
+{
+/* Retorna lista de estringues baseado no separador dado. Se não houver
+ * nenhum dos padrões dados o retorno será uma lista com tamanho nulo, e
+ * nenhuma cópia de estringue. */
+   Posicoes pontos = acha_posicoes(str, pattern);
+   int sz = sizeof(char*);
+   // Total de pontos que referência cada padrão encontrado na estringue.
+   // Também o total de espaços reservados para as cópias de estringues.
+   size_t t = pontos.size;
+   size_t q = t + 1;
+   // Comprimento do 'padrão' a achar.
+   int x = strlen(pattern);
+   // 'Lista' contendo todos trechos copiados.
+   ListaStrings result;
+
+   // A literal númerica um representa a parte alocada manualmente.
+   result.lista = (char**)malloc(q * sz);
+   result.total = 0;
+
+   /* Faz a cópia para cada intervalo obtido. */
+   for (size_t p = 0; p < t; p++) 
+   {
+      // Pula também o "divisor" dado.
+      int i = pontos.array[p] + x, f;
+
+      /* Define o final normalmente, até que chega na última, neste caso,
+       * fica algo entre tal posição e o restante da estringue. */
+      if (p < (t - 1))
+         f = pontos.array[p + 1];
+      else
+         f = strlen(str);
+
+      assert(f != 0);
+      result.lista[p] = copia_trecho(str, i, f);
+      result.total += 1;
+   }
+
+   // Liberar a alocação se não foi encontrado nada.
+   if (result.total == 0)
+      free(result.lista);
+   return result;
+}
+
 
 #ifdef _UT_STRING
 /* === === === === === === === === === === === === === === === === === ==
@@ -463,7 +822,7 @@ void testes_basico_da_reparticao_em_palavras(void) {
 }
 
 void visualizacao_da_reparticao_em_palavras(void) {
-   OutcomePalavras result = palavras ((char*)frase_ii);
+   ListaStrings result = palavras ((char*)frase_ii);
 
    puts ("listando o resultado: ...");
    for (size_t q = 1; q <= result.total; q++)
@@ -594,10 +953,160 @@ void preenchimento_da_string(void) {
 	destroi_str(obj);
 }
 
+void fazendo_strings_maiusculas_e_minusculas(void)
+{
+   puts("Transformação das strings ...");
+   for (int i = 1; i <= GIRLS_NAMES; i++)
+   {
+      char* q = (char*)girls_names[i - 1];
+      char* r = maiuscula_ascii(q);
+      char* s = minuscula_ascii(r);
+
+      printf("\b\b\b\b\t'%s' ===> '%s', '%s'\n", q, r, s);
+      free(r); free(s);
+   }
+}
+
+void capitalizacao_das_strings(void) 
+{
+   puts("Transformação das strings ...");
+
+   for (int i = 1; i <= FRUITS; i++)
+   {
+      char* q = (char*)fruits[i - 1];
+      char* r = capitaliza_ascii(q);
+
+      printf("\b\b\b\b\t'%s' ===> '%s'\n", q, r);
+      free(r);
+   }
+}
+
+void metodos_de_extracao(void)
+{
+   const char* inputs[] = {
+      " 501Estou# falando desta % aqui.&|",
+      "kda15amI.4ll5", "__#c87A()s-a8+$$",
+      "aaaa5eee_$$5---kfnas0"
+   };
+
+   puts("Antes ===> depois:");
+
+   char* a = (char*)inputs[0];
+   char* b = extrai_letras_ascii(a);
+   printf("'%s' ===> '%s'\n", a, b);
+   assert(strcmp(b, "Estoufalandodestaaqui.") == 0);
+   free(b);
+
+   a = (char*)inputs[1];
+   b = extrai_digitos_ascii(a);
+   printf("'%s' ===> '%s'\n", a, b);
+   assert(strcmp(b, "15.45") == 0);
+   free(b);
+
+   a = (char*)inputs[2];
+   b = extrai_letras_ascii(a);
+   printf("'%s' ===> '%s'\n", a, b);
+   free(b);
+
+   a = (char*)inputs[3];
+   b = extrai_digitos_ascii(a);
+   printf("'%s' ===> '%s'\n", a, b);
+   assert(strcmp(b, "550") == 0);
+   free(b);
+}
+
+void criacao_de_string_homogenea(void)
+{
+   char tipos[] = {'+', '-', '=', '*'};
+   char* aux = NULL, *simbolo = tipos;
+
+   do {
+      aux = repete_caractere_ascii(*simbolo, 31); 
+      puts(aux);
+      free(aux);
+   } while(*simbolo++);
+}
+
+void buscando_por_padroes_na_estringue(void)
+{
+   char* exemplo = {
+      "Today is the day, for a lot of thing, it is gonna be okay, because "
+      "it is already okay, is she here?! For get more stuff, you need "
+      "go away, right now! Look there a lot of weed, let's go!"
+   };
+   printf("\"%s\"(%lu)\n", exemplo, strlen(exemplo));
+
+   Posicoes a = acha_posicoes(exemplo, "is");
+   Posicoes b = acha_posicoes(exemplo, "okay");
+   Posicoes c = acha_posicoes(exemplo, "e");
+   Posicoes d = acha_posicoes(exemplo, "a");
+
+   free(a.array); free(b.array); free(c.array); free(d.array);
+}
+
+void metodo_de_substituicao_de_string(void)
+{
+   char* exemplo = {
+      "Today is the day, for a lot of thing, it is gonna be okay, because "
+      "it is already okay, is she here?! For get more stuff, you need "
+      "go away, right now!"
+   };
+   char* padroes[] = { "is", "okay", ",", "stuff" };
+   const int TOTAL = sizeof(padroes) / sizeof(char*);
+
+   printf("\"%s\"(%lu)\n", exemplo, strlen(exemplo));
+   
+   for (int i = 0; i < TOTAL; i++)
+   {
+      char* item = padroes[i];
+      char* output_a = substitui_ascii(exemplo, item, "**");
+      char* output_b = substitui_ascii(exemplo, item, "******");
+      char* output_c = substitui_ascii(exemplo, item, "*");
+      char* output_d = substitui_ascii(exemplo, item, "");
+
+      printf("\n - mesmo tamanho: '%s'\n", output_a);
+      printf("\n - maior: '%s'\n", output_b);
+      printf("\n - apenas um: '%s'\n", output_c);
+      printf("\n - vázio: '%s'\n", output_d);
+
+      free(output_d);
+      free(output_c);
+      free(output_b);
+      free(output_a);
+   }
+}
+
+void reparticao_da_strings_dado_padrao(void)
+{
+   char* inputs[] = {
+      "gato&&cachorro&&comédia&&porta&&alicáte&&pessoas",
+      "gato.cachorro.comédia.porta.alicáte.pessoas",
+      "gato.cachorro&.comédia&.porta.&alicáte&.pessoas",
+      "gato.cachorro.comédia.porta.alicáte.pessoas",
+      // Uma estringue vázia.
+      ""
+   };
+   char* padroes[] = {"&&", ".", "&.", "***", "#"};
+
+   for (int k = 0; k < 5; k++)
+   {
+      ListaStrings output = reparte_ascii(inputs[k], padroes[k]);
+      size_t n = output.total;
+
+      printf("\n\"%s\"\nTodos %lu resultados:\n", padroes[k], n);
+
+      for (int i = 0; i < output.total; i++) {
+         printf("\t- '%s'\n", output.lista[i]);
+         free(output.lista[i]);
+      }
+      // free(output.lista);
+   }
+}
+
 int main(int qtd, char* args[], char* vars[]) 
 {
    executa_testes_a(
-      true, 7, 
+     false, 7, 
 			testes_basico_da_reparticao_em_palavras, true,
          visualizacao_da_reparticao_em_palavras, true,
          experimento_concatenacao_de_multiplas_strings, true,
@@ -606,6 +1115,18 @@ int main(int qtd, char* args[], char* vars[])
          diversos_tipos_basicos_de_insercao_String, true,
          motor_de_busca_de_ocorrencias, true,
 			preenchimento_da_string, true
+   );
+
+   executa_testes_a(
+     true, 8,
+      fazendo_strings_maiusculas_e_minusculas, false,
+      capitalizacao_das_strings, false,
+      metodos_de_extracao, true,
+      criacao_de_string_homogenea, true,
+      buscando_por_padroes_na_estringue, true,
+      metodo_de_substituicao_de_string, true,
+      reparticao_da_strings_dado_padrao, true,
+      experimento_concatenacao_de_multiplas_strings, true
    );
 
    return EXIT_SUCCESS;
