@@ -48,7 +48,7 @@ clean:
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.1.7
+VERSAO = v1.2.1
 OPCOES = --exclude=ut* -cvf
 NOME = utilitarios.$(VERSAO).tar 
 LOCAL = ../versions
@@ -59,7 +59,8 @@ salva:
 
 # visualizar todos backups deste projeto.
 lista-backups:
-	ls --sort=time -1 $(LOCAL)/utilitarios*.tar
+	@echo "\nTodos backups feitos:\n"
+	@ls -hs --sort=time -1 $(LOCAL)/utilitarios*.tar
 
 # Listagem de todos testes por tamanho:
 lista-todos-testes:
@@ -221,7 +222,7 @@ OBJ_TERM = build/terminal_teste.o
 EXE_TERM = ./bin/tests/ut_terminal
 
 terminal:
-	@echo "Compilando artefato 'terminal.o' em 'build' ..."
+	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
 	@clang -std=gnu18 -Wall -I ./include -c \
 		-D_UT_TERMINAL \
 		-Wno-main-return-type \
@@ -266,17 +267,19 @@ tempo:
 	@echo "Compilado os testes-unitários de 'tempo' em bin/tests."
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS
+COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
 EXE_STR = bin/tests/ut_estringue
 DEPS_STR = $(OBJS_TESTE) build/teste.o
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 estringue:
-	@gcc -Wall -I ./include $(COMPILAR_STR) -o $(EXE_STR) src/estringue.c $(DEPS_STR) -lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
+	@gcc -O0 -g -Wall -I ./include $(COMPILAR_STR) \
+		-o $(EXE_STR) src/estringue.c $(DEPS_STR) \
+		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
 	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-impressao: terminal.o lista-array-ref.o
+impressao:
 	@clang -I include/ -D_UT_IMPRESSAO -o bin/tests/ut_impressao src/impressao.c build/terminal.o build/listaarray_ref.o
 	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
 
@@ -305,6 +308,7 @@ conversao:
 
 run-conversao:
 	./bin/tests/ut_conversao
+
 # === === ===  === === === === === === === === === === === === === === ===
 #
 # 					Compilação e Coleção de Estruturas de Dados
@@ -317,7 +321,8 @@ compila-testes-unitarios-colecoes: \
 	hashtable-ref \
 	pilha-ligada-ref \
 	lista-posicional-ref \
-	lista-array-ref
+	lista-array-ref \
+	fila-ligada-ref
 
 roda-testes-unitarios-colecoes:
 	@$(EXE_PL)
@@ -328,26 +333,22 @@ roda-testes-unitarios-colecoes:
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 OBJS_SET_REF = -L bin/static -lteste -llegivel -ltempo -lterminal
-COMPILA_SET_REF = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO 
+COMPILA_SET_REF = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__
 EXE_SET_REF = bin/tests/ut_conjunto_ref
 SRC_SET_REF = src/estrutura-de-dados/conjunto_ref.c
 DEPS_SET_REF_SHARED = -Lbin/shared -lteste -llegivel -ltempo -lterminal
 
 conjunto-ref:
-	@clang -O0 -std=gnu18 -I include/ -Wall $(COMPILA_SET_REF) \
-		-o $(EXE_SET_REF)  $(SRC_SET_REF) $(OBJS_SET_REF) -lm
-	@echo "Teste 'ut_conjunto_ref' compilado."
-
-conjunto-ref-i:
 	@clang -O0 -std=gnu18 -Wall -I include/ $(COMPILA_SET_REF) \
-		-o bin/tests/ut_conjunto_ref_i $(SRC_SET_REF) \
+		-Wno-gnu-folding-constant \
+		-o bin/tests/ut_conjunto_ref $(SRC_SET_REF) \
 		$(OBJS_SET_REF) -lm \
 		-L bin/shared -lteste -llegivel -ltempo -lterminal
-	@echo "Teste \"ut_conjunto_ref_i\" compilado com bibliotecas compartilhadas."
+	@echo "Teste 'ut_conjunto_ref' compilado."
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 EXE_PL = bin/tests/ut_pilha_ligada
-MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL
+MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL -D__debug__
 DEPS_PL = build/progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
 
 pilha-ligada-ref:
@@ -409,6 +410,14 @@ fila-circular-ref:
 		-o bin/tests/ut_filacirular_ref \
 		src/estrutura-de-dados/filacircular_ref.c \
 		-Lbin/static -lteste -ltempo -llegivel -lterminal -lprogresso -lm
+	
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+fila-ligada-ref:
+	clang -Wall -Wextra -Iinclude/ -D__UT_FILA_LIGADA_REF__ \
+		-Wno-unused-parameter \
+		-o bin/tests/ut_fila_ligada_ref \
+		src/estrutura-de-dados/filaligada_ref.c
+
 # === === ===  === === === === === === === === === === === === === === ===
 #
 # 					 Compilação de Bibliotecas Estáticas
@@ -476,7 +485,7 @@ lib-tempo: legivel.o tempo.o
 	@ar crs $(EXE_TIME_II) build/tempo.o
 	@echo "compilação de uma biblioteca estática."
 
-lib-terminal: terminal.o
+lib-terminal:
 	@clang -I include/ -shared -fPIC -Wall \
 		-o bin/shared/libterminal.so build/terminal.o
 	@echo "biblioteca compartilhada 'libterminal.so'compilada."
