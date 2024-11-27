@@ -190,7 +190,7 @@ bool destroi_set(Conjunto S) {
    return true;
 }
 
-void destroi_interno_set(Conjunto S) { 
+void destroi_interno_set(Conjunto S, Drop g) { 
    if (S == INVALIDA) return ; 
 
    size_t Q = S->capacidade, i = 1;
@@ -360,7 +360,7 @@ size_t tamanho_set(Conjunto S)
 /* A saída da iteração é apenas um ponteiro que guarda endereços de objetos
  * genéricos, neste caso aqui apenas 'chave', porque o valor na estrutura
  * conjunto é inútil. */
-struct saida_da_iteracao_do_set { generico_t item; };
+// struct saida_da_iteracao_do_set { generico_t item; };
 
 struct iterador_do_conjunto {
 /* Necessita de algumas coisas: a referência do conjunto que ele itera; 
@@ -383,6 +383,9 @@ struct iterador_do_conjunto {
    size_t indice;
 };
 
+// Definindo constante de iteração inválida(ou nula) do iterador:
+// const IterOutputSet NULO_SET = { NULL };
+
 IterSet cria_iter_set(Conjunto a) {
 /* O iterador é criado estaticamente(na stack), e, apenas funciona enquanto
  * o conjunto que e ele itera existe. */
@@ -400,9 +403,6 @@ IterSet cria_iter_set(Conjunto a) {
 
    return iter;
 }
-
-// Definindo constante de iteração inválida(ou nula) do iterador:
-const IterOutputSet NULO_SET = { NULL };
 
 static bool iterador_valido (IteradorRefSet iter) {
 /* Para realizar qualquer uma das operações abaixo, é necessário
@@ -482,7 +482,7 @@ IterSet clona_iter_set(IteradorRefSet iter) {
 
    return novo;
 }
-// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
+// === === === === === === === === === === === === === === === === === ===
 
 char* set_to_str(Conjunto S, ToString f) {
 /* Converte uma string para string, dado a função que transforma o dado
@@ -577,6 +577,135 @@ void impressao_generica(Conjunto S, ToString funcao) {
    puts("\b\b}");
 }
 
+void imprime_set(Conjunto a, ToString f)
+   { return impressao_generica(a, f); }
+
+bool limpa_set(Conjunto a) {
+/*   Remove todos itens do conjunto. O algoritmo para realizar isso é 
+ * obter a lista(uma array) de itens, indexar uma por uma, e pedir para
+ * o método apropriado do conjunto faça isso. Retorno lógico funciona de
+ * modo simples, 'falso' se ela estava vázia, ou seja, não era precisa 
+ * remover nada; 'verdadeiro' caso contrário. */
+   if (vazia_set(a))
+      return false;
+
+   IterSet iterador = cria_iter_set(a);
+   IterOutputSet lista[tamanho_set(a)];
+   size_t t = 0;
+
+   // Listando itens numa array-fixa ...
+   while (!consumido_iter_set(&iterador))
+      lista[t++] = next_set(&iterador);
+   // Zerando para indexação seguinte ...
+   t = 0;
+
+   while (!vazia_set(a))
+      // Agora aplicando a remoção ...
+      deleta_set(a, lista[t++].item);
+   
+   return true;
+}
+
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Operações envolvendo 
+ *                            Conjuntos
+ *
+ *   Veja que é necessário tomar precação com estas operações, porque o 
+ * resultado é um conjunto novo, porém compartilhando o endereço dos 
+ * itens de cada conjunto passado, ou seja, se você liberar algum deles
+ * com destruição dos itens, ou o resultado das operações, é possível que 
+ * causa problemas de memórias tipo 'dangling pointers'.
+ * === === === === === === === === === === === === === === === === === ==*/
+Conjunto uniao_set(Conjunto a, Conjunto b)
+{
+/*   Pega dois conjuntos não vázio, então junta todos itens, distintos e 
+ * iguais de cada, sem duplicar o item em sí. O retorno será um conjunto
+ * com ambos itens de cada conjunto.
+ *   O algoritmo para conseguir tal conjunto resultante é o seguinte: Ambos
+ * conjuntos serão iterados, e adicionado ao resultante, que cuida 
+ * internamente com itens já adicionados(duplicados). */
+   bool ambos_iteradores_esgotados = false;
+   /* Funções hashes, e de comparação, de cada uma, são as mesmas, ou 
+    * resultam no mesmo valor para inputs semelhantes. */
+   Hash hash = a->__hash__; Eq equal = a->__iguais__;
+   Conjunto resultado = cria_set(hash, equal);
+   IterSet ia = cria_iter_set(a), ib = cria_iter_set(b);
+   
+   do {
+      IterOutputSet x = next_set(&ia);
+      IterOutputSet y = next_set(&ib);
+
+      /* Adiciona se, e somente se, a saída de iterador for válida. Assim,
+       * evita que um iterador que se esgotou quebre a lógica da inserção.
+       */
+      if (x.item != NULO_SET.item)
+         adiciona_set(resultado, x.item);
+      if (y.item != NULO_SET.item)
+         adiciona_set(resultado, y.item);
+
+      // Verificando se ambos iteradores se esgotarem de novas itens.
+      ambos_iteradores_esgotados = (
+         !consumido_iter_set(&ia) ||
+         !consumido_iter_set(&ib)
+      );
+
+   } while (ambos_iteradores_esgotados);
+
+   #ifdef __debug__
+   printf("Total de itens: %lu\n", tamanho_set(resultado));
+   #endif
+
+   return resultado;
+}
+
+Conjunto intersecao_set(Conjunto a, Conjunto b)
+{
+/* O algoritmo de interseção é o seguinte: pegue o iterador de algum dos
+ * argumentos, na iteração, verifique se tal item já está no outro, se 
+ * estiver, então adicione tal item. */
+   Hash hash = a->__hash__; Eq equal = a->__iguais__;
+   Conjunto result = cria_set(hash, equal);
+   IterSet iA = cria_iter_set(a);
+
+   do {
+      IterOutputSet e = next_set(&iA);
+
+      if (e.item != NULO_SET.item)
+      {
+         if (pertence_set(b, e.item))
+         // Apenas adiciona tal elemento, na resultante, se o outro 
+         // conjunto também tem ele.
+            adiciona_set(result, e.item);
+      }
+   } while (!consumido_iter_set(&iA));
+
+   return result;
+}
+
+Conjunto diferenca_set(Conjunto a, Conjunto b)
+{
+/* Algoritmo da diferença de conjuntos -- observe que aqui a ordem das 
+ * operações importam, segue estritamente a definição da operação: todos
+ * itens de A, que não estão em B. Basicamente, podemos fazer isso seguindo
+ * o algoritmo de interseção, porém adicionar apenas itens que não fazem
+ * interção, uma negação neste trecho de tal algoritmo. */
+   Hash hash = a->__hash__; Eq equal = a->__iguais__;
+   Conjunto result = cria_set(hash, equal);
+   IterSet iA = cria_iter_set(a);
+
+   do {
+      IterOutputSet e = next_set(&iA);
+
+      if (e.item != NULO_SET.item)
+      {
+         // O elemento, para inserção, não pode está também contido em B.
+         if (!pertence_set(b, e.item))
+            adiciona_set(result, e.item);
+      }
+   } while (!consumido_iter_set(&iA));
+
+   return result;
+}
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
@@ -629,6 +758,9 @@ void insercoes_randomicas(conjunto_t* s, size_t qtd) {
    }
 }
 
+static bool free_byte(generico_t x) 
+   { free(x); return true; }
+
 void operacoes_basicas_na_estrutura(void) {
    Conjunto S = cria_branco_set();
    adiciona_metodos_set(S, hash_byte, eq_byte);
@@ -671,7 +803,7 @@ void operacoes_basicas_na_estrutura(void) {
    for (size_t i = 1; i <= 6; i++)
       deleta_set(S, &input[i - 1]);
    // assert (destroi_set(S));
-   destroi_interno_set(S);
+   destroi_interno_set(S, free_byte);
 }
 
 void rejeicao_de_entradas_duplicadas_em_massa(void) {
@@ -698,7 +830,7 @@ void rejeicao_de_entradas_duplicadas_em_massa(void) {
    print_byte_set(S);
 
    assert ((TOTAL - rejeicoes) == tamanho_set(S));
-   destroi_interno_set(S);
+   destroi_interno_set(S, free_byte);
 }
 
 size_t total_de_bytes(Conjunto S, size_t tipo_size) {
@@ -746,6 +878,8 @@ size_t* int_sorteio(size_t a, size_t b) {
    return X;
 }
 
+bool free_usize(generico_t x)
+   { free(x); return true; }
 
 size_t media_itens_por_slot(Conjunto S) {
    size_t C = S->capacidade;
@@ -773,7 +907,7 @@ size_t media_itens_por_slot(Conjunto S) {
    printf("total de índices: %lu\n", tamanho_set(I));
    #endif
 
-   destroi_interno_set(I);
+   destroi_interno_set(I, free_usize);
    return rol / L;
 }
 
@@ -933,7 +1067,7 @@ void monitorando_propriedades_sobre_estresse(void) {
       info_controlada(S, size, &rejeicoes, t);
    }
    destroi_temporizador(timer);
-   destroi_interno_set(S);
+   destroi_interno_set(S, free_usize);
 }
 
 void insercoes_stats_havendo_redimensionamento(void) {
@@ -954,7 +1088,7 @@ void insercoes_stats_havendo_redimensionamento(void) {
       info_controlada(S, size, &rejeicoes, t);
    }
    destroi_temporizador(timer);
-   destroi_interno_set(S);
+   destroi_interno_set(S, free_usize);
 }
 
 void iteracao_simples_para_testar_a_implmentacao(void) {
@@ -1105,19 +1239,134 @@ void demonstracao_simples_da_conversao_em_str(void) {
    destroi_set(S);
 }
 
-int main(int total, char* args[], char* vars[]) {
+void teste_primario_de_operacoes_de_conjuntos(void) 
+{
+   const int N = 10;
+   uint16_t input_b[N] = { 1, 3, 6, 9, 12, 15, 18, 21, 24, 27};
+   uint16_t input_a[N] = { 1, 2, 4, 6, 8, 12, 14, 16, 18, 20 };
+   Conjunto B = cria_set(hash_u16, eq_u16); 
+   Conjunto A = cria_set(hash_u16, eq_u16);
+   uint16_t* X, *Y;
+   ToString f = u16_to_str;
+
+   for (size_t i = 0; i < N; i++) 
+   {
+      X = &input_b[i];
+      Y = &input_a[i];
+      adiciona_set(B, X);
+      adiciona_set(A, Y);
+   }
+
+   puts("Amostras dos conjuntos B e A, respectivamente:");
+   imprime_set(B, f);
+   imprime_set(A, f);
+
+   Conjunto C = uniao_set(B, A);
+   Conjunto D = intersecao_set(A, B);
+   Conjunto E = diferenca_set(A, B);
+
+   puts(
+      "\nResultados das iterseção, união e diferença, respectivamente, "
+      "referentes aos conjuntos A e B:"
+   );
+   imprime_set(D, f);
+   imprime_set(C, f);
+   imprime_set(E, f);
+
+   destroi_set(B); destroi_set(A); destroi_set(C); destroi_set(D);
+   destroi_set(E);
+}
+
+void efetuando_operacoes_com_conjuntos_vazios(void)
+{
+   uint16_t input_a[] = { 1, 2, 4, 6, 8};
+   Conjunto B = cria_set(hash_u16, eq_u16); 
+   Conjunto A = cria_set(hash_u16, eq_u16);
+   uint16_t *Y;
+   ToString f = u16_to_str;
+   int sz = sizeof(input_a) / sizeof(uint16_t);
+
+   for (int i = 0; i < sz; i++) {
+      Y = &input_a[i];
+      adiciona_set(A, Y);
+   }
+
+   puts("Amostras dos conjuntos B e A, respectivamente:");
+   imprime_set(B, f);
+   imprime_set(A, f);
+
+   Conjunto C = uniao_set(B, A);
+   Conjunto D = intersecao_set(A, B);
+   Conjunto E = diferenca_set(A, B);
+   Conjunto F = diferenca_set(B, A);
+   
+   puts(
+      "\n\t\tPrimeiro com um conjunto vázio e outro cheio:"
+      "\nResultados das iterseção, união e diferença, respectivamente, "
+      "referentes aos conjuntos A e B:"
+   );
+   imprime_set(D, f);
+   imprime_set(C, f);
+   imprime_set(E, f);
+   imprime_set(F, f);
+
+   destroi_set(C); destroi_set(D); destroi_set(E); destroi_set(F);
+
+   limpa_set(A);
+   puts("Amostras dos conjuntos B e A, respectivamente:");
+   imprime_set(B, f);
+   imprime_set(A, f);
+
+   C = uniao_set(B, A);
+   D = intersecao_set(A, B);
+   E = diferenca_set(A, B);
+   F = diferenca_set(B, A);
+   
+   puts(
+      "\n\t\tSegundo com ambos conjuntos vázios:"
+      "\nResultados das iterseção, união e diferença, respectivamente, "
+      "referentes aos conjuntos A e B:"
+   );
+   imprime_set(D, f);
+   imprime_set(C, f);
+   imprime_set(E, f);
+   imprime_set(F, f);
+
+   destroi_set(B); destroi_set(A); destroi_set(C); destroi_set(D);
+   destroi_set(E); destroi_set(F);
+}
+
+int main(int total, char* args[], char* vars[]) 
+{
 	executa_testes_a(
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-   true, 7, operacoes_basicas_na_estrutura, true,
-      rejeicao_de_entradas_duplicadas_em_massa, true,
-      iteracao_simples_para_testar_a_implmentacao, true,
-      simples_clonagem_inicial_de_iteradores, true,
-      demonstracao_simples_da_conversao_em_str, true,
-      // Desativados, pois consomem CPU e tempo:
-      monitorando_propriedades_sobre_estresse, false,
-      insercoes_stats_havendo_redimensionamento, false
+      false, 7, 
+         operacoes_basicas_na_estrutura, true,
+         rejeicao_de_entradas_duplicadas_em_massa, true,
+         iteracao_simples_para_testar_a_implmentacao, true,
+         simples_clonagem_inicial_de_iteradores, true,
+         demonstracao_simples_da_conversao_em_str, true,
+         // Desativados, pois consomem CPU e tempo:
+         monitorando_propriedades_sobre_estresse, false,
+         insercoes_stats_havendo_redimensionamento, false
 	);
+
+	executa_testes_a(
+   /* Teste referentes apenas das implementações de iteradores: */
+      false, 2, 
+         iteracao_simples_para_testar_a_implmentacao, true,
+         simples_clonagem_inicial_de_iteradores, true
+	);
+
+   executa_testes_a(
+   /* Principalmente as operações de conjuntos em sí. As mais importantes
+    * que são implementadas depois que toda estrutura principal foi 
+    * construída. */
+      true, 2,
+         teste_primario_de_operacoes_de_conjuntos, true,
+         efetuando_operacoes_com_conjuntos_vazios, true
+   );
 
    return EXIT_SUCCESS;
 }
