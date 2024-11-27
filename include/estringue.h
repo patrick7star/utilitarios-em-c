@@ -5,8 +5,7 @@
 #include <stdbool.h>
 
  // Tupla contendo array de strings e a quantia disto.
- typedef struct { char** lista; size_t total; } OutcomePalavras;
- typedef OutcomePalavras OutcomeStrings;
+ typedef struct { char** lista; size_t total; } ListaStrings;
  typedef char* char_t, CHAR, Char;
 
  /* Uma representação de string já codificada como Unicode. */
@@ -20,15 +19,13 @@
     // A capacidade atual da array.
     size_t total; 
 
- } string_t, STRING, STR, *String;
+ } string_t, STRING, STR, *String, *Str;
 
  // retorna todas strings representando palavras(entre espaços).
- OutcomePalavras palavras(char*); 
+ ListaStrings palavras(char*); 
  // retorna tupla com strings entre quebra-de-linhas.
- OutcomeStrings split_linhas(char*);
+ ListaStrings split_linhas(char*);
 
- /* Retorna uma string concatenando todas strings passadas.*/
- char* concatena_strings(uint8_t, ...);
 
  /* Operações em cima da estrutura String, sendo que elas podem ou não,
   * modificar o interno da estrutura. */
@@ -48,5 +45,29 @@
  size_t comprimento_str(String);
  // Quantos caractéres da 'capacidade' ainda há.
  size_t vacuo_str(String);
+
+/* == == == == == == == == == == == == == == == == == == == == == == == == 
+ *                      Funções Auxiliares para
+ *                         Strings Puras em C
+ * == == == == == == == == == == == == == == == == == == == == == == === */
+ char* maiuscula_ascii        (char* In);
+ char* minuscula_ascii        (char* In);
+ char* capitaliza_ascii       (char* In);
+ char* extrai_letras_ascii    (char* In);
+ char* extrai_digitos_ascii   (char* In);
+ char* alterna_case_ascii     (char* In);
+ /* Dado uma estringue(s) reparte ela em várias partes, isso à partir do
+  * padrão(p) dado. 
+  *
+  * Nota:a lista de retorno são cópias.*/
+ ListaStrings reparte_ascii   (char* s, char* p);
+
+ /* Pega um caractére ASCII qualquer, e forma uma estringue com ele repetido
+  * 'qtd' vezes. */
+ char* repete_caractere_ascii (char p, int qtd);
+ /* Troca um trecho(a) na estringue pela sub-estringue(b). */
+ char* substitui_ascii        (char* s, char* a, char* b);
+ /* Retorna uma string concatenando todas strings passadas.*/
+ char* concatena_strings      (int, ...);
 
 #endif

@@ -30,8 +30,12 @@
 #define VALORES_PADRONIZADOS 10llu
 #define VALORES_PADRONIZADOS_I 16llu
 #define VEICULOS 16llu
-#define LIVROS_DIDATICOS_GENEROS 12llu
-#define OBJETOS 15llu
+/* Computados de forma automática pelo compilador:
+ *    - LIVROS_DIDATICOS_GENEROS
+ *    - OBJETOS
+ */
+// Tamanho padrão do pointeiro de caractéres.
+#define StrSz sizeof(char*)
 
 
 // contei 9 frutas.
@@ -42,9 +46,9 @@ const char* frutas[] = {
 
 // eu contei 15 nomes.
 const char* nomes_de_meninas[] = {
-   "Júlia", "Amanda", "Sara", "Elisa", "Mariana",
-   "Gabriela", "Maria", "Joana", "Carol", "Maísa",
-   "Rosana", "Larissa", "Geovana", "Alice", "Marta"
+   "Júlia", "Amanda", "Sara", "Elisa", "Mariana", "Gabriela", "Maria", 
+   "Joana", "Carol", "Maísa", "Rosana", "Larissa", "Geovana", "Alice", 
+   "Marta"
 };
 
 // Eu contei 14 nomes.
@@ -132,6 +136,8 @@ const char* objetos[] = {
    "mola", "balde", "capacete", "moeda", "livro",
    "colher"
 };
+// Contando ...
+#define OBJETOS sizeof(objetos) / StrSz
 
 const char frase_i[] = "hoje será um bom dia!";
 const char frase_ii[] = "Todas generalizações são falsas, incluse esta. -- Mark Twain";
@@ -150,7 +156,20 @@ const char* frases_i[] = {
 // Contei doze.
 const char* livros_didaticos_generos[] = {
    "Matemática", "Português", "Inglês", "Geografia", "História", 
-   "Sociologia", "Filosofia", "Gramática", "Artes", "Física", 
-   "Química", "Biologia"
+   "Sociologia", "Filosofia", "Gramática", "Artes", "Física", "Química", 
+   "Biologia"
 };
+#define LIVROS_DIDATICOS_GENEROS \
+   sizeof(livros_didaticos_generos) / StrSz
+
+const char* fruits[] = {
+   "strawberry", "grape", "banana", "orange", "tomato", "blueberry",
+   "pear", "apple", "lemon", "mango", "cherry", "pineapple", "watermelon",
+   "papaya", "melon", "avocado", "grapefruit", "kiwi", "lime", "eggplant",
+   "plum", "pomegranate", "rambute", "apricot", "peach", "raspberry",
+   "blackberry"
+};
+// Contabilizando o total ...
+#define FRUITS sizeof(fruits) / StrSz
+
 #endif
