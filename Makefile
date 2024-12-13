@@ -45,6 +45,7 @@ clean:
 	rm -frv bin/
 	rmdir build/
 
+
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
@@ -271,7 +272,6 @@ COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
 EXE_STR = bin/tests/ut_estringue
 DEPS_STR = $(OBJS_TESTE) build/teste.o
 
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 estringue:
 	@gcc -O0 -g -Wall -I ./include $(COMPILAR_STR) \
 		-o $(EXE_STR) src/estringue.c $(DEPS_STR) \
@@ -291,6 +291,7 @@ legivel:
 		-L bin/static -lteste -ltempo -lterminal
 	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
 
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 progresso:
 	@clang -O0 -std=gnu2x -I include/ -Wall \
 		-D_UT_PROGRESSO \
@@ -298,16 +299,34 @@ progresso:
 		-L bin/static -lteste -llegivel -ltempo -lterminal
 	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
 	
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 conversao:
-	@clang -c -D__UT_CONVERSAO__ -I include/ \
-		-o build/conversao.o src/conversao.c
-	@clang -std=gnu18 -Wall -Wextra -I include/ \
-		-o bin/tests/ut_conversao build/conversao.o \
+	@clang -c -D__UT_CONVERSAO__ -D__debug__ -I include/ \
+		-o build/conversao-teste.o src/conversao.c
+	@clang -g -std=gnu18 -Wall -Wextra -I include/ \
+		-o bin/tests/ut_conversao build/conversao-teste.o \
 		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
 	@echo "Compilado os testes-unitários de 'conversao' em bin/tests."
 
 run-conversao:
 	./bin/tests/ut_conversao
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+
+combinatoria:
+	clang -Iinclude/ -O0 -Wall -D__unit_tests__ \
+		$(DEPS_RANDOM) -lm -o bin/tests/ut_combinatoria combinatoria.c
+
+run-combinatoria:
+	./bin/tests/ut_combinatoria
+
+# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+impressao:
+	clang -Iinclude/ -O0 -Wall -D__unit_tests__ \
+		-o bin/tests/ut_impressao src/impressao.c \
+		-Lbin/shared -llaref -lterminal -lteste -llegivel -ltempo -lm
+
+run-impressao:
+	./bin/tests/ut_impressao
 
 # === === ===  === === === === === === === === === === === === === === ===
 #
@@ -406,7 +425,7 @@ lista-posicional-ref:
 
 # --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 fila-circular-ref:
-	clang -O0 -I include/ -Wall -Werror -DUT_FILA_CIRCULAR \
+	clang -O0 -I include/ -Wall -Werror -DUT_FILA_CIRCULAR -D__debug__ \
 		-o bin/tests/ut_filacirular_ref \
 		src/estrutura-de-dados/filacircular_ref.c \
 		-Lbin/static -lteste -ltempo -llegivel -lterminal -lprogresso -lm
