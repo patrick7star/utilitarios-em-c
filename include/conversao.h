@@ -33,8 +33,8 @@
 
  /* Primeiro feito, feito para o inteiro básico, e principal tipo da 
   * linguagem C. */
- void int_to_bytes     (int      In, uint8_t* Out); 
- int from_bytes_to_int (uint8_t* In); 
+ void int_to_bytes      (int      In, uint8_t* Out); 
+ int  from_bytes_to_int (uint8_t* In); 
  /* Ciclo de serialização para outros tipos de dados primitivos que há 
   * na linguagem C. */
  void   bool_to_bytes        (bool     In, uint8_t* Out);
@@ -72,10 +72,10 @@
  int64_t  from_bytes_to_i64   (uint8_t* In); 
  size_t   from_bytes_to_sizet (uint8_t* In);
 
- /* Serialização e deserialização de uma 'narrow' string, uma string apenas
-  * com caractéres ASCII. Observe o retorno e a entrada de ambas funções.
-  * Sim, não é uma pura string de entrada ou saída, e sim uma tupla que 
-  * contém os bytes da string num campo, e o tanto de bytes no outro.
+ /* Serialização e deserialização de ambos tipos de string('narrow' e wide).
+  * Observe retorno de ambas funções de serialização. Sim, não é uma pura 
+  * array de bytes(unsigned char), e sim uma tupla que contém os bytes da 
+  * string(unsigned char) num campo, e o tanto de bytes no outro.
   *
   * Nota: não é possível apenas pegar tal tupla e colocar uma array de 
   *       caractéres com esta quantidade de caractéres, o retorno da função
@@ -83,8 +83,27 @@
   *       bytes, tem que se levar isso em consideração, qualquer coisa 
   *       simplesmente não funcionaria.
   */
- struct Bytes string_to_bytes      (char*         In);
- char*        from_bytes_to_string (struct Bytes* In);
+ struct Bytes  string_to_bytes               (char*         In);
+ struct Bytes  string_unicode_to_bytes       (wchar_t*      In);
+    char*      from_bytes_to_string          (struct Bytes* In);
+   wchar_t*    from_bytes_to_string_unicode  (struct Bytes* In);
+
+ /* Operações abaixo imprimem pequenas arrays -- na verdade até uma que é 
+  * relativamente grande; o outro método já compara arrays relativamente
+  * grandes, porém tem que ter o mesmo comprimento obviamente. Também tem
+  * a opção que quer tais impressões como hexadecimal ou não. A opção de
+  * concatenar arrays de bytes, ou seja, nada de struct, apenas algumas 
+  * arrays do tipo(unsigned char) -- claro que cada uma seguida com seu
+  * respectivo tamanho, onde o resultado é uma array com cada concatenada
+  * na ordem que foram posta como argumentos. A concatenação da tupla
+  * 'struct Bytes' também existe, neste caso, por o comprimento da array
+  * de bytes ser embutido na tupla, não é necessário fornecer o tamanho
+  * dela na frente dela ao lista-la no campo de argumentos.
+  */
+    void       print_array   (uint8_t* array, int t, bool hexa);
+    bool       arrays_iguais (uint8_t* a, uint8_t* b, int t); 
+   uint8_t*    concatena_ab  (int quantia, ...);
+ struct Bytes  concatena_sb  (int quantia, ...);
 
 
 #endif
