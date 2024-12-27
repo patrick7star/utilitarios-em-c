@@ -1,6 +1,6 @@
-
-
-/* Simples implementação genérica da array-list.
+/*       
+ *        Simples implementação genérica da 'Array List'.
+ *
  *   Se ficar muito boa se juntará as estruturas de dados tipo(iii) no
  * projeto utilitários, pois é uma array dinâmica que serve incrivelmente
  * para qualquer projeto que precisa armazenar um grande número de objetos,
@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
 /* Sem específicar a capacidade, será o valor abaixo que será 
  * automaticamente redimensionado para o arranjo de dados. */
@@ -321,14 +320,14 @@ char* to_string_al(ArrayLista L, ToString fn) {
    return resultado_fmt;
 }
 
-ArrayLista cria_de_al(uint8_t Q, ...) {
+ArrayLista cria_de_al(int Q, ...) {
 /* Função que aloca uma 'lista' da quantidade definida manualmente de 
  * pointeiros. Ela serve mais de auxiliar para o macro abaixo. */
    va_list dados_seq;
    ArrayLista lista = cria_com_capacidade_al(Q);
-   va_start(dados_seq, Q);
 
-   for (uint8_t i = 1; i <= Q; i++) { 
+   va_start(dados_seq, Q);
+   for (int i = 1; i <= Q; i++) { 
       generico_t datum = va_arg(dados_seq, generico_t);
       insere_al(lista, datum);
    }
@@ -337,13 +336,13 @@ ArrayLista cria_de_al(uint8_t Q, ...) {
    return lista;
 }
 
-void destroi_todas_al(uint8_t qtd, ...) {
+void destroi_todas_al(int qtd, ...) {
 /* Dada todas listas instânciadas, esta função desaloca todas, em sequência.
  * Se faltou com uma, o programa é interrompido. */
    va_list LISTAS;
-   va_start(LISTAS, qtd);
 
-   for (uint8_t i = 1; i <= qtd; i++) { 
+   va_start(LISTAS, qtd);
+   for (int i = 1; i <= qtd; i++) { 
       generico_t L = va_arg(LISTAS, ArrayLista);
 
       if (destroi_al(L)) {
@@ -364,7 +363,9 @@ void destroi_todas_al(uint8_t qtd, ...) {
  * justamente, para nota-se que aqui não é um código original. Busque o 
  * original para qualquer outro problema não sintático.
  * === === === === === === === === === === === === === === === === === ==*/
-struct saida_da_iteracao_da_al { generico_t item; };
+
+// Constante para comparações. 
+const IterOutputAL NULO_AL = { .item = NULL };
 
 struct iterador_da_lista_ligada_al {
    ArrayLista instancia;
@@ -372,7 +373,6 @@ struct iterador_da_lista_ligada_al {
    size_t inicial; 
    size_t contagem;
 };
-const IterOutputAL NULO_AL = { NULL };
 
 IterAL cria_iter_al(ArrayLista a) {
    IterAL iter; 
@@ -453,7 +453,7 @@ IterAL clona_iter_al(IteradorRefAL iter) {
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
  */
-#if defined(_UT_ARRAY_LISTA)
+#if defined(__unit_tests__)
 #include "teste.h"
 #include "dados_testes.h"
 #include <assert.h>
@@ -714,8 +714,9 @@ void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
 }
 
 int main(int total, char* argumentos[], char* variaveis[]) {
-   executa_testes (
-      8, demonstracao_com_inteiros, true,
+   executa_testes_a (
+     true, 8, 
+         demonstracao_com_inteiros, true,
          demonstracao_com_caracteres, true,
          demonstracao_com_strings, true,
          remocao_em_pontos_criticos, true,
