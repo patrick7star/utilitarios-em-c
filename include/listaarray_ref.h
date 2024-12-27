@@ -1,6 +1,8 @@
 
 #ifndef ARRAYLISTA_H
 #define ARRAYLISTA_H
+#include <stdbool.h>
+#include <stdarg.h>
 #include "definicoes.h"
 
  // todos os apelidos desta estrutura fornecidos:
@@ -39,8 +41,6 @@
   * nomeado 'item', que entrega a referência que a estrutura retém. */
  typedef struct saida_da_iteracao_da_al { generico_t item; } 
    IterOutputAL;
- // Constante que representa nenhum item iterado.
- // extern IterOutputAL NULO_AL = { .item = NULL };
 
  // Métodos de criação, mudança e atual estado:
  IterAL cria_iter_al (ArrayLista); 

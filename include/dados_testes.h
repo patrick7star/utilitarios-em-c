@@ -172,4 +172,28 @@ const char* fruits[] = {
 // Contabilizando o total ...
 #define FRUITS sizeof(fruits) / StrSz
 
+// Contabilização de todas listas com strings:
+#define FRASES_I sizeof(frases_i) / StrSz
+
+/*   Às vezes, como amostra, quero todas strings daqui numa única lista, 
+ * todas constantes definidas abaixo ajudam à fazer tal concatenação de 
+ * forma bem fácil e simples. 
+ *
+ * Obs.: a lista de todas listas é obrigada a seguir a ordem da lista
+ *       com seus respectivos comprimentos, e claro, não é aceitável
+ *       qualquer faltante.
+ */
+#define TODAS_LISTAS_COM_STRS ( \
+   VEICULOS + GIRLS_NAMES + BOYS_NAMES + NOMES_DE_MENINAS + \
+   NOMES_DE_MENINOS + OBJETOS + LEGUMES + FRUITS + FRASES_I \
+   + LIVROS_DIDATICOS_GENEROS \
+)
+const int TLCS_COMPRIMENTOS[] = {
+   VEICULOS, GIRLS_NAMES, BOYS_NAMES, NOMES_DE_MENINAS, NOMES_DE_MENINOS,
+   OBJETOS, LEGUMES, FRUITS, FRASES_I , LIVROS_DIDATICOS_GENEROS
+};
+const char** todas_listas_com_strs[] = {
+   veiculos, girls_names, boys_names, nomes_de_meninas, nomes_de_meninos,
+   objetos, legumes, fruits, frases_i, livros_didaticos_generos
+};
 #endif
