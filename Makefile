@@ -1,7 +1,17 @@
-
-
+#   Todas bibliotecas de módulos e submódulos, e testes unitários e 
+# integrais serão encontrados organizados abaixo. Você poderá compilar,
+# copia-los, exclui-los de forma coletiva ou indivídual.
+# --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
+# ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
 # 'ponto' não está terminado!
-.PHONY = estringue
+.PHONY = test-estringue test-conversao test-impressao 
+
+# Quase todos testes de módulo abaixo usam o 'módulo teste'. Aqui vai 
+# a ligação ao sua lib compartilhada, assim não é preciso escrever toda
+# vez isso no final de cada teste, apenas usar a variável.
+TESTADOR = -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
+HEADERS = ./include/
+DLL = bin/shared/
 
 # Cria estrutura onde artefatos compilados, de todos tipos, serão
 # depositados:
@@ -49,7 +59,7 @@ clean:
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.2.1
+VERSAO = v1.2.2
 OPCOES = --exclude=ut* -cvf
 NOME = utilitarios.$(VERSAO).tar 
 LOCAL = ../versions
@@ -69,381 +79,21 @@ lista-todos-testes:
 	@du -hs bin/tests/
 	@du -b bin/tests/*
 
-
-# === === ===  === === === === === === === === === === === === === === ===
+# === === ===  === === === === === === === === === === === === === === ====
 #
-#							Compilação de todos Objetos
-#							 ou bibliotecas Estáticas
+#							Compila/ou Executa Todos Grupos:
+#			   	Objetos, Testes Unitários, Bibliotecas e etc.
 #
-# === === ===  === === === === === === === === === === === === === === ===
-
+# === === ===  === === === === === === === === === === === === === === ====
 compila-objetos-principais: \
-	legivel.o \
-	terminal.o \
-	tempo.o \
-	teste.o \
-	aleatorio.o \
-	ponto.o \
-	progresso.o
+	obj-legivel \
+	obj-terminal \
+	obj-tempo \
+	obj-teste \
+	obj-aleatorio \
+	obj-ponto \
+	obj-progresso
 
-limpa-objetos-principais:
-	rm -v build/*
-
-legivel.o:
-	@gcc -O3 -Os -c src/legivel.c -o build/legivel.o
-	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
-
-terminal.o:
-	@gcc -O3 -Os -I include -c src/terminal.c -o build/terminal.o
-	@echo "Gerou o arquivo objeto 'terminal.o' em 'build'."
-
-tempo.o:
-	@gcc -O3 -Os -c -I include/ src/tempo.c -o build/tempo.o
-	@echo "Gerou o arquivo objeto 'tempo.o' em 'build'."
-
-teste.o:
-	@gcc -O3 -Os -I include/ -c src/teste.c -o build/teste.o
-	@echo "Gerou o arquivo objeto 'teste.o' em 'build'."
-
-ponto.o:
-	@clang -O3 -Os -I include/ -Wall -c -o build/ponto.o src/ponto.c
-	@echo "Gerou o arquivo objeto 'ponto.o' em 'build'."
-
-progresso.o:
-	@clang -O3 -Os -I include/ -Wall -c -o build/progresso.o src/progresso.c
-	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
-
-aleatorio.o:
-	@gcc -O3 -Os -c -I include/ -Wall -Werror -o build/aleatorio.o src/aleatorio.c
-	@echo "Gerou o arquivo objeto 'aleatorio.o' em 'build'."
-
-conversao.o:
-	@clang -O3 -Os -I include/ -c -o build/conversao.o src/conversao.c
-	@echo "Gerou o arquivo objeto 'conversao.o' em 'build'."
-
-# ~~~ ~~~ ~~~  ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~
-compila-objetos-colecoes: \
-	cria-raiz-de-artefatos \
-	hashtable-ref.o \
-	conjunto-ref.o \
-	pilha-ligada-ref.o \
-	lista-array-ref.o \
-	deque-ligada-ref.o \
-	fila-ligada-ref.o \
-	fila-array-ref.o
-
-hashtable-ref.o:
-	@clang -O3 -Oz -std=c2x -I include/ -Wall -c -o \
-		build/hashtable_ref.o \
-		src/estrutura-de-dados/hashtable_ref.c
-	@echo "Gerou o arquivo objeto 'hashtable_ref.o', em 'build'."
-
-conjunto-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		src/estrutura-de-dados/conjunto_ref.c \
-		-o build/conjunto_ref.o
-	@echo "Gerou o arquivo objeto 'conjunto_ref.o', em 'build'."
-
-pilha-ligada-ref.o:
-	@clang -O3 -Oz -std=c2x -I include/ -Wall -c -o \
-		build/pilhaligada_ref.o \
-		src/estrutura-de-dados/pilhaligada_ref.c
-	@echo "Gerou o arquivo objeto 'pilhaligada_ref.o', em 'build'."
-
-lista-array-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		src/estrutura-de-dados/listaarray_ref.c \
-		-o build/listaarray_ref.o
-	@echo "Gerou o arquivo objeto 'listaarray_ref.o', em 'build'."
-
-deque-ligada-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		-o build/dequeligada_ref.o \
-		src/estrutura-de-dados/dequeligada_ref.c
-	@echo "Gerou o arquivo objeto 'dequeligada_ref.o', em 'build'."
-
-fila-array-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		-o build/filaarray_ref.o \
-		src/estrutura-de-dados/filaarray_ref.c
-	@echo "Gerou o arquivo objeto 'filaarray_ref.o', em 'build'."
-
-fila-ligada-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		-o build/filaligada_ref.o \
-		src/estrutura-de-dados/filaligada_ref.c
-	@echo "Gerou o arquivo objeto 'filaligada_ref.o', em 'build'."
-
-fila-circular-ref.o:
-	@clang -O3 -Oz -I include/ -Wall -Werror -c \
-		-o build/filacircular_ref.o \
-		src/estrutura-de-dados/filacircular_ref.c 
-	@echo "Gerou o arquivo objeto 'filacircular_ref.o', em 'build'."
-
-# === === ===  === === === === === === === === === === === === === === ===
-#
-#						Compilação dos Testes Unitários dos
-#							Módulos Principais da Biblioteca
-#
-# === === ===  === === === === === === === === === === === === === === ===
-compila-testes-unitarios: \
-	cria-raiz-de-artefatos \
-	terminal \
-	ponto \
-	aleatorio \
-	tempo \
-	impressao \
-	legivel \
-	conversao
-
-roda-testes-unitarios:
-	@$(EXE_TESTE)
-	@$(EXE_TERM)
-	@$(EXE_PONTO)
-	@$(EXE_RANDOM)
-	@$(EXE_TEMPO)
-	@$(EXE_STR)
-
-FLAGS_TESTE = -Wno-unused-variable -Wno-unused-function
-COMPILA_TESTE = -D_UT_TESTE -D__debug__
-DEPS_TESTE = -Lbin/static/ -ltempo -lterminal -llegivel -lprogresso
-EXE_TESTE = bin/tests/ut_teste
-
-teste: $(OBJS_TESTE) src/teste.c
-	@gcc -I include/ -Wall $(COMPILA_TESTE) \
-		-o $(EXE_TESTE) src/teste.c src/teste/amostras.c $(DEPS_TESTE) -lm
-	@echo "Compilado os testes-unitários de 'teste.c' em bin/tests."
-
-teste-check:
-	@echo "checando a sintaxe do 'teste.c' ..."
-	gcc -I include/ $(COMPILA_TESTE) -Wall src/teste.c $(OBJS_TESTE) -lm
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-OBJ_TERM = build/terminal_teste.o
-EXE_TERM = ./bin/tests/ut_terminal
-
-terminal:
-	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
-	@clang -std=gnu18 -Wall -I ./include -c \
-		-D_UT_TERMINAL \
-		-Wno-main-return-type \
-		-o $(OBJ_TERM) src/terminal.c
-	@echo "Ligamento entre o artefato e o executável ..."
-	@clang -O0 -o $(EXE_TERM) $(OBJ_TERM)
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-EXE_PONTO = bin/tests/ut_ponto
-DEPS_PONTO = -L bin/shared -lteste -ltempo -llegivel -lterminal
-
-ponto:
-	@gcc -O0 -Wall -Iinclude/ -D_UT_PONTO -Wno-main \
-		-o $(EXE_PONTO) src/ponto.c $(DEPS_PONTO) -lm
-	@echo "Compilado os testes-unitários de 'ponto.c' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-EXE_RANDOM = bin/tests/ut_aleatorio
-SRC_RANDOM = src/aleatorio.c
-FLAGS_RANDOM = -I include/ -D_UT_ALEATORIO -Wall -Werror
-DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo
-
-aleatorio:
-	@gcc -Wall $(FLAGS_RANDOM) -o $(EXE_RANDOM) $(SRC_RANDOM) $(DEPS_RANDOM) -lm
-	@echo "Compilado os testes-unitários de 'aleatorio' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
-	-D_DEBUG_CRIA_TEMPORIZADOR \
-	-D_DEBUG_DESTROI_TEMPORIZADOR \
-	-D_DEBUG_DESTROI_CRONOMETRO \
-	-D_DEBUG_CRIA_CRONOMETRO 
-TEMPO_COMPILA = -D_UT_TEMPO -D_DEBUG_CRIA_CRONOMETRO \
-					 -D_DEBUG_DESTROI_CRONOMETRO
-TEMPO_FLAGS = -I include -std=gnu18 -lm -Wall
-TEMPO_DEPEDENCIAS = -L bin/static -llegivel
-EXE_TEMPO = bin/tests/ut_tempo
-
-tempo: 
-	@gcc $(TEMPO_FLAGS) $(TEMPO_COMPILA) -o $(EXE_TEMPO) \
-		src/tempo.c $(TEMPO_DEPEDENCIAS)
-	@echo "Compilado os testes-unitários de 'tempo' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
-EXE_STR = bin/tests/ut_estringue
-DEPS_STR = $(OBJS_TESTE) build/teste.o
-
-estringue:
-	@gcc -O0 -g -Wall -I ./include $(COMPILAR_STR) \
-		-o $(EXE_STR) src/estringue.c $(DEPS_STR) \
-		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
-	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-impressao:
-	@clang -I include/ -D_UT_IMPRESSAO -o bin/tests/ut_impressao src/impressao.c build/terminal.o build/listaarray_ref.o
-	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-legivel:
-	@clang -O0 -std=c2x -I include/ -Wall \
-		-D_UT_LEGIVEL \
-		-o bin/tests/ut_legivel src/legivel.c -lm \
-		-L bin/static -lteste -ltempo -lterminal
-	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-progresso:
-	@clang -O0 -std=gnu2x -I include/ -Wall \
-		-D_UT_PROGRESSO \
-		-o bin/tests/ut_progresso src/progresso.c -lm \
-		-L bin/static -lteste -llegivel -ltempo -lterminal
-	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
-	
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-conversao:
-	@clang -c -D__UT_CONVERSAO__ -D__debug__ -I include/ \
-		-o build/conversao-teste.o src/conversao.c
-	@clang -g -std=gnu18 -Wall -Wextra -I include/ \
-		-o bin/tests/ut_conversao build/conversao-teste.o \
-		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
-	@echo "Compilado os testes-unitários de 'conversao' em bin/tests."
-
-run-conversao:
-	./bin/tests/ut_conversao
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-combinatoria:
-	clang -Iinclude/ -O0 -Wall -D__unit_tests__ \
-		$(DEPS_RANDOM) -lm -o bin/tests/ut_combinatoria combinatoria.c
-
-run-combinatoria:
-	./bin/tests/ut_combinatoria
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-impressao:
-	clang -Iinclude/ -O0 -Wall -D__unit_tests__ \
-		-o bin/tests/ut_impressao src/impressao.c \
-		-Lbin/shared -llaref -lterminal -lteste -llegivel -ltempo -lm
-
-run-impressao:
-	./bin/tests/ut_impressao
-
-# === === ===  === === === === === === === === === === === === === === ===
-#
-# 					Compilação e Coleção de Estruturas de Dados
-# 					 			e seus Testes Unitários
-#
-# === === ===  === === === === === === === === === === === === === === ===
-compila-testes-unitarios-colecoes: \
-	cria-raiz-de-artefatos \
-	conjunto-ref \
-	hashtable-ref \
-	pilha-ligada-ref \
-	lista-posicional-ref \
-	lista-array-ref \
-	fila-ligada-ref
-
-roda-testes-unitarios-colecoes:
-	@$(EXE_PL)
-	@$(EXE_AL)
-	@$(EXE_SET_REF)
-	@$(EXE_HT_I)
-	@$(EXE_FA_I)
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-OBJS_SET_REF = -L bin/static -lteste -llegivel -ltempo -lterminal
-COMPILA_SET_REF = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__
-EXE_SET_REF = bin/tests/ut_conjunto_ref
-SRC_SET_REF = src/estrutura-de-dados/conjunto_ref.c
-DEPS_SET_REF_SHARED = -Lbin/shared -lteste -llegivel -ltempo -lterminal
-
-conjunto-ref:
-	@clang -O0 -std=gnu18 -Wall -I include/ $(COMPILA_SET_REF) \
-		-Wno-gnu-folding-constant \
-		-o bin/tests/ut_conjunto_ref $(SRC_SET_REF) \
-		$(OBJS_SET_REF) -lm \
-		-L bin/shared -lteste -llegivel -ltempo -lterminal
-	@echo "Teste 'ut_conjunto_ref' compilado."
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-EXE_PL = bin/tests/ut_pilha_ligada
-MOSTRA_PL = -D_UT_PILHA_LIGADA -D_DESTROI_PL -D__debug__
-DEPS_PL = build/progresso.o -L bin/static -lteste -ltempo -llegivel -lterminal
-
-pilha-ligada-ref:
-	clang $(MOSTRA_PL) -I include/ -O0 -Wall -Wall \
-		-o $(EXE_PL) src/estrutura-de-dados/pilhaligada_ref.c -lm $(DEPS_PL)
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-COMPILA_HT_I = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
-				-D_DESTRUICAO_HT -D_CONTIDO_HT \
-				-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT 
-EXE_HT_I = bin/tests/ut_hashtable_ref
-OBJS_HT_I = $(OBJS_TESTE) build/teste.o
-SRC_HT_I = src/estrutura-de-dados/hashtable_ref.c
-
-hashtable-ref: teste.o tempo.o legivel.o terminal.o
-	gcc -I include/ $(COMPILA_HT_I) -c $(SRC_HT_I) -o build/hashtable-ref.o
-	gcc -o $(EXE_HT_I) build/hashtable-ref.o $(OBJS_HT_I) -lm -Wall -std=c18
-
-hashtable-ref-cheque: teste.o tempo.o legivel.o terminal.o
-	gcc -fanalyzer -Wall -std=c18 build/hashtable-ref.o $(OBJS_HT_I) -lm
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-SRC_FA_REF = src/estrutura-de-dados/filaarray_ref.c
-EXE_FA_REF = bin/tests/ut_fila_array_ref
-COMPILA_FA_REF = -D_UT_FILA_ARRAY \
-					-DALOCACAO_E_DEALOCACAO \
-					-D_REDIMENSIONAMENTO
-DEPS_FA_REF = -L bin/shared -lteste -llegivel -lterminal -ltempo -laleatorio
-
-fila-array-ref: aleatorio.o
-	@echo "Compilando teste-unitário '$(EXE_FA_REF)'..."
-	@gcc -I include/ -Wall $(COMPILA_FA_REF) \
-		-o $(EXE_FA_REF) $(SRC_FA_REF) $(DEPS_FA_REF) -lm
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-COMPILA_LA_REF = -D_ALOCACAO_E_DESALOCACAO -D_UT_ARRAY_LISTA -D_TO_STRING
-SRC_LA_REF = src/estrutura-de-dados/listaarray_ref.c
-DEPS_LA_REF = build/terminal.o build/tempo.o -L bin/static -lteste -llegivel -lm -ltempo
-EXE_LA_REF = bin/tests/ut_lista_array_ref
-
-lista-array-ref: libteste
-	gcc -I include/ -Wall $(COMPILA_LA_REF) \
-		-o $(EXE_LA_REF) $(SRC_LA_REF) $(DEPS_LA_REF)
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-SRC_LP_REF = src/estrutura-de-dados/listaposicional_ref.c
-EXE_LP_REF = bin/tests/ut_listaposicional
-DEPS_LP_REF = -L bin/static -lteste -ltempo -llegivel -lm -lterminal
-
-lista-posicional-ref:
-	clang -I include -D_UT_LISTA_POSICIONAL -Wall -O0 \
-		-Wno-incompatible-pointer-types-discards-qualifiers \
-		-Wno-incompatible-pointer-types \
-		-o $(EXE_LP_REF) $(SRC_LP_REF) $(DEPS_LP_REF)
-
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-fila-circular-ref:
-	clang -O0 -I include/ -Wall -Werror -DUT_FILA_CIRCULAR -D__debug__ \
-		-o bin/tests/ut_filacirular_ref \
-		src/estrutura-de-dados/filacircular_ref.c \
-		-Lbin/static -lteste -ltempo -llegivel -lterminal -lprogresso -lm
-	
-# --- --- ---  --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-fila-ligada-ref:
-	clang -Wall -Wextra -Iinclude/ -D__UT_FILA_LIGADA_REF__ \
-		-Wno-unused-parameter \
-		-o bin/tests/ut_fila_ligada_ref \
-		src/estrutura-de-dados/filaligada_ref.c
-
-# === === ===  === === === === === === === === === === === === === === ===
-#
-# 					 Compilação de Bibliotecas Estáticas
-# 				tanto do Pacote Principal como Coleçoes e
-# 						demais Estruturas de Dados
-#
-# === === ===  === === === === === === === === === === === === === === ===
 compila-bibliotecas: \
 	cria-raiz-de-artefatos \
 	lib-progresso \
@@ -455,54 +105,108 @@ compila-bibliotecas: \
 	lib-ponto \
 	lib-conversao
 
+compila-testes-unitarios: \
+	cria-raiz-de-artefatos \
+	test-terminal \
+	test-ponto \
+	test-aleatorio \
+	test-tempo \
+	test-impressao \
+	test-legivel \
+	test-conversao \
+	test-estringue
+
+roda-testes-unitarios: \
+	run-teste \
+	run-terminal \
+	run-ponto \
+	run-tempo \
+	run-estringue
+	
 compila-bibliotecas-colecoes: \
 	cria-raiz-de-artefatos \
 	lib-hashtable-ref \
 	lib-pilha-ligada-ref \
-	lib-fila-circular-ref
+	lib-fila-circular-ref \
+	lib-lista-array-ref
 
-EXE_LIBPROGRESSO_I = ./bin/shared/libprogresso.so
-EXE_LIBPROGRESSO_II = ./bin/static/libprogresso.a
-SRC_LIBPROGR = src/progresso.c
-OBJ_LIBPROGR = build/progresso.o
+compila-objetos-colecoes: \
+	cria-raiz-de-artefatos \
+	obj-hashtable-ref \
+	obj-conjunto-ref \
+	obj-pilha-ligada-ref \
+	obj-lista-array-ref \
+	obj-deque-ligada-ref \
+	obj-fila-ligada-ref \
+	obj-fila-array-ref
 
-lib-progresso: progresso.o
-	@clang -O3 -Oz -I include -o $(EXE_LIBPROGRESSO_I) -fPIC -shared $(SRC_LIBPROGR) -lc
-	@echo "compilação de uma biblioteca compartilhada."
-	@ar crs $(EXE_LIBPROGRESSO_II) $(OBJ_LIBPROGR)
-	@echo "compilação de uma biblioteca estática."
+compila-testes-unitarios-colecoes: \
+	cria-raiz-de-artefatos \
+	test-conjunto-ref \
+	test-hashtable-ref \
+	test-pilha-ligada-ref \
+	test-lista-posicional-ref \
+	test-lista-array-ref \
+	test-fila-ligada-ref
 
-EXE_LEGIVEL_I = bin/shared/liblegivel.so
-EXE_LEGIVEL_II = bin/static/liblegivel.a
-OBJ_LEGIVEL = build/legivel.o
+roda-testes-unitarios-colecoes:
+	@$(EXE_PL)
+	@$(EXE_AL)
+	@$(EXE_SET_REF)
+	@$(EXE_HT_I)
+	@$(EXE_FA_I)
 
-lib-legivel: legivel.o
-	@gcc -o $(EXE_LEGIVEL_I) -fPIC -shared $(OBJ_LEGIVEL) -lc
-	@echo "compilação de uma biblioteca compartilhada."
-	@ar crs $(EXE_LEGIVEL_II) $(OBJ_LEGIVEL)
-	@echo "compilação de uma biblioteca estática."
+limpa-objetos-principais:
+	rm -v build/*
 
-EXE_TST_I = bin/shared/libteste.so
-EXE_TST_II = bin/static/libteste.a
-SRC_TST = src/teste.c
-OBJS_LIB_TST = build/tempo.o build/legivel.o build/terminal.o
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Teste
+# === === ===  === === === === === === === === === === === === === === ====
+COMPILA_TST = -D_UT_TESTE -D__debug__
+DEPS_TST 	= build/tempo.o build/legivel.o build/terminal.o
+EXE_TST 		= bin/tests/ut_teste
+EXE_TST_I 	= bin/shared/libteste.so
+EXE_TST_II 	= bin/static/libteste.a
 
-lib-teste: teste.o
+obj-teste:
+	gcc -Wall -O3 -Os -I include/ -c -o build/teste.o src/teste.c
+	@echo "Gerou o arquivo objeto 'teste.o' em 'build'."
+
+lib-teste: obj-teste
+	gcc -Iinclude/ -o $(EXE_TST_I) -shared -fPIC src/teste.c $(DEPS_TST)
+	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
 	@ar crs $(EXE_TST_II) build/teste.o
-	@echo "compilação de uma biblioteca estática."
-	@gcc -O3 -Os -Wall -I include/ -fPIC -shared \
-		-o $(EXE_TST_I) $(SRC_TST) $(OBJS_LIB_TST)
-	@echo "compilação de uma biblioteca compartilhada."
+	@echo "Compilação da biblioteca estática 'libteste.a'."
 
-EXE_TIME_I = bin/shared/libtempo.so
-SRC_TIME = build/tempo.o build/legivel.o
-EXE_TIME_II = bin/static/libtempo.a
+test-teste:
+	gcc -Isrc/teste -Iinclude -Wall -Werror \
+		-c -o build/amostras.o src/teste/amostras.c
+	gcc -Wall -Werror -Iinclude $(COMPILA_TST) \
+		-c -o build/test-teste.o src/teste.c
+	gcc -O0 -Iinclude/ $(COMPILA_TST) \
+		-o $(EXE_TST) build/test-teste.o \
+		$(DEPS_TST) build/progresso.o build/amostras.o -lm
+	@echo "Compilado os testes-unitários de 'teste.c' em bin/tests."
 
-lib-tempo: legivel.o tempo.o
-	@gcc -I include/ -fPIC -shared -o $(EXE_TIME_I) $(SRC_TIME) -Wall
-	@echo "compilação de uma biblioteca compartilhada."
-	@ar crs $(EXE_TIME_II) build/tempo.o
-	@echo "compilação de uma biblioteca estática."
+check-teste:
+	@echo "checando a sintaxe do 'teste.c' ..."
+	gcc -I include/ $(COMPILA_TESTE) -Wall src/teste.c $(OBJS_TESTE) -lm
+
+run-teste:
+	./$(EXE_TST)
+
+clean-teste:
+	rm -v $(EXE_TST) $(EXE_TST_I) $(EXE_TST_II)
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Terminal
+# === === ===  === === === === === === === === === === === === === === ====
+OBJ_TERM = build/terminal_teste.o
+EXE_TERM = ./bin/tests/ut_terminal
+
+obj-terminal:
+	@gcc -O3 -Os -I include -c src/terminal.c -o build/terminal.o
+	@echo "Gerou o arquivo objeto 'terminal.o' em 'build'."
 
 lib-terminal:
 	@clang -I include/ -shared -fPIC -Wall \
@@ -511,55 +215,559 @@ lib-terminal:
 	@ar crs bin/static/libterminal.a build/terminal.o
 	@echo "compilação de uma biblioteca estática."
 
-lib-ponto: ponto.o
+test-terminal:
+	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
+	@clang -std=gnu18 -Wall -I ./include -c \
+		-D_UT_TERMINAL \
+		-Wno-main-return-type \
+		-o $(OBJ_TERM) src/terminal.c
+	@echo "Ligamento entre o artefato e o executável ..."
+	@clang -O0 -o $(EXE_TERM) $(OBJ_TERM)
+
+run-terminal:
+	./$(EXE_TERM)
+
+clean-terminal:
+	@rm -vf $(EXE_TERM)
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Ponto
+# === === ===  === === === === === === === === === === === === === === ====
+EXE_PONTO = bin/tests/ut_ponto
+DEPS_PONTO = -L bin/shared -lteste -ltempo -llegivel -lterminal
+
+obj-ponto:
+	@clang -O3 -Os -I include/ -Wall -c -o build/ponto.o src/ponto.c
+	@echo "Gerou o arquivo objeto 'ponto.o' em 'build'."
+
+lib-ponto:
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
 		-o bin/shared/libponto.so build/ponto.o
 	@echo "biblioteca compartilhada 'libponto.so' compilada."
 	@ar crs bin/static/libponto.a build/ponto.o
 	@echo "biblioteca estática 'libponto.a' compilada."
 
-lib-aleatorio: aleatorio.o
+test-ponto:
+	@gcc -O0 -Wall -Iinclude/ -D_UT_PONTO -Wno-main \
+		-o $(EXE_PONTO) src/ponto.c $(DEPS_PONTO) -lm
+	@echo "Compilado os testes-unitários de 'ponto.c' em bin/tests."
+
+run-ponto:
+	./$(EXE_PONTO)
+
+clean-ponto:
+	@rm -vf $(EXE_PONTO)
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Aleatório
+# === === ===  === === === === === === === === === === === === === === ====
+EXE_RANDOM = bin/tests/ut_aleatorio
+SRC_RANDOM = src/aleatorio.c
+FLAGS_RANDOM = -I include/ -D_UT_ALEATORIO -Wall -Werror
+DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo
+
+obj-aleatorio:
+	@gcc -O3 -Os -c -I include/ -Wall -Werror -o build/aleatorio.o src/aleatorio.c
+	@echo "Gerou o arquivo objeto 'aleatorio.o' em 'build'."
+
+test-aleatorio:
+	@gcc -Wall $(FLAGS_RANDOM) -o $(EXE_RANDOM) $(SRC_RANDOM) $(DEPS_RANDOM) -lm
+	@echo "Compilado os testes-unitários de 'aleatorio' em bin/tests."
+
+lib-aleatorio:
 	@gcc -std=gnu2x -I include/ -shared -fPIC -Wall \
 		-o bin/shared/libaleatorio.so build/aleatorio.o
 	@echo "Biblioteca compartilhada 'libaleatorio.so' compilada."
 	@ar crs bin/static/libaleatorio.a build/aleatorio.o
 	@echo "Biblioteca estática 'libaleatorio.a' compilada."
 
-lib-conversao: conversao.o
+run-aleatorio:
+	./$(EXE_RANDOM)
+
+clean-aleatorio:
+	@rm -vf $(EXE_RANDOM)
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Tempo
+# === === ===  === === === === === === === === === === === === === === ====
+TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
+					 -D_DEBUG_CRIA_TEMPORIZADOR \
+					 -D_DEBUG_DESTROI_TEMPORIZADOR \
+					 -D_DEBUG_DESTROI_CRONOMETRO \
+					 -D_DEBUG_CRIA_CRONOMETRO 
+TEMPO_FLAGS  = -I include -std=gnu18 -lm -Wall
+
+SRC_TIME 	 = build/tempo.o build/legivel.o
+EXE_TIME 	 = bin/tests/ut_tempo
+EXE_TIME_I 	 = bin/shared/libtempo.so
+EXE_TIME_II  = bin/static/libtempo.a
+DEPS_TIME 	 = -Lbin/shared -llegivel
+COMPILA_TIME = -D_UT_TEMPO -D_DEBUG_CRIA_CRONOMETRO \
+					-D_DEBUG_DESTROI_CRONOMETRO
+
+obj-tempo:
+	@gcc -O3 -Os -Wall -Werror -c -I include/ src/tempo.c -o build/tempo.o
+	@echo "Gerou o arquivo objeto 'tempo.o' em 'build'."
+
+test-tempo: 
+	@gcc $(COMPILA_TIME) -Wall -Werror -Iinclude -c -o build/tempo-teste.o src/tempo.c
+	@gcc -O0 -o bin/tests/ut_tempo build/tempo-teste.o $(DEPS_TIME)
+	@echo "Compilado os testes-unitários de 'tempo' em bin/tests."
+
+lib-tempo:
+	@gcc -I include/ -fPIC -shared -o $(EXE_TIME_I) $(SRC_TIME) -Wall
+	@echo "compilação de uma biblioteca compartilhada."
+	@ar crs $(EXE_TIME_II) build/tempo.o
+	@echo "compilação de uma biblioteca estática."
+
+run-tempo:
+	./$(EXE_TIME)
+
+clean-tempo:
+	@rm -vf $(EXE_TIME_II) $(EXE_TIME)
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Modulo Estringue
+# === === ===  === === === === === === === === === === === === === === ====
+COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
+EXE_STR 		 = bin/tests/ut_estringue
+EXE_STR_I 	 = bin/shared/libestringue.so
+BUILD_STR 	 = build/estringue.o
+BUILD_STR_I  = build/estringue-teste.o
+DEPS_STR 	 = $(OBJS_TESTE) build/teste.o
+SRC_STR 	 	 = src/estringue.c
+
+obj-estringue:
+	@gcc -Os -Wall -Werror -Iinclude -c -o $(BUILD_STR) $(SRC_STR)
+	@echo "Gerou o arquivo objeto 'estringue.o' em 'build'."
+
+lib-estringue:
+	@gcc -Iinclude -shared -fPIC -o $(EXE_STR_I) $(BUILD_STR) \
+		-Lbin/static -llaref
+	@echo "Biblioteca compartilhada 'libestringue.so' compilada."
+	@ar crs bin/static/libestringue.a build/estringue.o
+	@echo "Biblioteca estática 'libestringue.a' compilada."
+
+test-estringue:
+	@gcc -Iinclude $(COMPILAR_STR) -c -o $(BUILD_STR_I) $(SRC_STR)
+	@gcc -O0 -g -Wall -I ./include \
+		-o $(EXE_STR) $(BUILD_STR_I) $(DEPS_STR) $(TESTADOR)
+	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
+
+run-estringue:
+	./$(EXE_STR)
+
+clean-estringue:
+	@rm -vf $(BUILD_STR_I) $(BUILD_STR)  $(EXE_STR) $(EXE_STR_I) \
+		bin/static/libestringue.a 
+
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Modulo Legível
+# === === ===  === === === === === === === === === === === === === === ====
+EXE_LEGIVEL		= bin/tests/ut_legivel
+EXE_LEGIVEL_I  = bin/shared/liblegivel.so
+EXE_LEGIVEL_II = bin/static/liblegivel.a
+DEPS_LEGIVEL 	= -Lbin/shared -lteste -ltempo -lterminal -lm
+
+obj-legivel:
+	@gcc -O3 -Os -c src/legivel.c -o build/legivel.o
+	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
+
+test-legivel:
+	@gcc -o -Wall -Werror -c -o build/legivel-teste.o src/legivel.c
+	@clang -O0 -std=c2x -I include/ -D_UT_LEGIVEL \
+		-o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
+	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
+
+lib-legivel:
+	@gcc -o $(EXE_LEGIVEL_I) -fPIC -shared -lc build/legivel.o 
+	@echo "Compilação de uma biblioteca compartilhada 'liblegivel.so'."
+	@ar crs $(EXE_LEGIVEL_II) build/legivel.o
+	@echo "Compilação de uma biblioteca estática 'libprogresso.a'."
+
+run-legivel:
+	./$(EXE_LEGIVEL)
+
+clean-legivel:
+	@rm -vf $(EXE_LEGIVEL) $(EXE_LEGIVEL_I)  $(EXE_LEGIVEL_II) \
+		build/legivel.o build/legivel-teste.o
+
+# === === ===  === === === === === === === === === === === === === === ===
+# 									Modulo Progresso
+# === === ===  === === === === === === === === === === === === === === ===
+EXE_PROG    = bin/tests/ut_progresso
+LIB_SO_PROG = ./bin/shared/libprogresso.so
+LIB_A_PROG  = ./bin/static/libprogresso.a
+SRC_PROG = src/progresso.c
+
+all-progresso: obj-progresso lib-progresso test-progresso
+
+obj-progresso:
+	@clang -O3 -Os -I include/ -Wall -c -o build/progresso.o $(SRC_PROG)
+	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
+
+lib-progresso: obj-progresso
+	@clang -I include -o $(LIB_SO_PROG) -fPIC -shared build/progresso.o -lc
+	@echo "Compilação de uma biblioteca compartilhada 'libprogresso.so' em 'bin/shared'."
+	@ar crs $(LIB_A_PROG) build/progresso.o
+	@echo "Compilação de uma biblioteca estática 'libprogresso.a' em 'bin/static'."
+
+test-progresso:
+	@clang -O0 -std=gnu2x -I include/ -Wall -D_UT_PROGRESSO \
+		-c -o build/progresso-teste.o $(SRC_PROG)
+	@clang -O0 -std=gnu2x -I include/ -Wall -D_UT_PROGRESSO \
+		-o $(EXE_PROG) build/progresso-teste.o -lm $(TESTADOR)
+	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
+
+run-progresso:
+	./bin/tests/ut_progresso
+
+clean-progresso:
+	@rm -vf build/progresso.o build/progresso-teste.o \
+		bin/tests/ut_progresso bin/shared/libprogresso.so \
+		bin/static/libprogresso.a
+	
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Modulo Conversão
+# === === ===  === === === === === === === === === === === === === === ====
+obj-conversao:
+	@clang -O3 -Os -I include/ -c -o build/conversao.o src/conversao.c
+	@echo "Gerou o arquivo objeto 'conversao.o' em 'build'."
+
+lib-conversao:
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wextra -Wall \
 		-o bin/shared/libconversao.so build/conversao.o
 	@echo "Biblioteca compartilhada 'libconversao.so' compilada."
 	@ar crs bin/static/libconversao.a build/conversao.o
 	@echo "Biblioteca estática 'libconversao.a' compilada."
 
+test-conversao:
+	@clang -c -D__UT_CONVERSAO__ -D__debug__ -I include/ \
+		-o build/conversao-teste.o src/conversao.c
+	@clang -g -std=gnu18 -Wall -Wextra -I include/ \
+		-o bin/tests/ut_conversao build/conversao-teste.o \
+		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
+	@echo "Compilado os testes-unitários de 'conversao' em bin/tests."
 
-lib-hashtable-ref: hashtable-ref.o
+run-conversao:
+	./bin/tests/ut_conversao
+
+clean-conversao:
+	@rm -vf build/conversao.o build/conversao-teste.o \
+		bin/tests/ut_conversao bin/shared/libconversao.o \
+		bin/static/libconversao.a
+
+# === === ===  === === === === === === === === === === === === === === ===
+# 									Modulo Impressão
+# === === ===  === === === === === === === === === === === === === === ===
+all-impressao: obj-impressao lib-impressao test-impressao
+
+obj-impressao:
+	@clang -O3 -Iinclude/ -std=gnu2x -Wall -Werror \
+		-c -o build/impressao.o src/impressao.c
+	@echo "Gerou o arquivo objeto 'impressao.o' em 'build'."
+
+lib-impressao: obj-impressao
+	@clang -Iinclude/ -shared -fPIC -o bin/shared/libimpressao.so build/impressao.o -Lbin/static -llaref
+	@echo "Biblioteca compartilhada 'libimpressao.so' compilada."
+	@ar crs bin/static/libimpressao.a build/impressao.o
+	@echo "Biblioteca estática 'libimpressao.a' compilada."
+
+test-impressao:
+	@clang -Iinclude/ -O0 -Wall -Werror -D__unit_tests__ -D__debug__ \
+		-c -o build/impressao-teste.o src/impressao.c 
+	@clang -o bin/tests/ut_impressao build/impressao-teste.o \
+		-Lbin/shared -llaref -lterminal -lteste -llegivel -lterminal \
+		-ltempo -lm
+	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
+
+run-impressao:
+	./bin/tests/ut_impressao
+
+clean-impressao:
+	@rm -v -f bin/tests/ut_impressao build/impressao-teste.o \
+		build/impressao.o bin/shared/libimpressao.so bin/static/libimpressao.a
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Modulo Combinatória
+# === === ===  === === === === === === === === === === === === === === ====
+test-combinatoria:
+	clang -Iinclude/ -c -Wall -D__unit_tests__ -D__debug__ \
+		-o build/combinatoria-teste.o src/combinatoria.c
+	clang -Iinclude/ -gdbx -O0 -Wall -D__unit_tests__ \
+		 -o bin/tests/ut_combinatoria build/combinatoria-teste.o \
+		 $(DEPS_RANDOM) -lm -limpressao
+
+run-combinatoria:
+	./bin/tests/ut_combinatoria
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo HashTable Referência
+# === === ===  === === === === === === === === === === === === === === ====
+EXE_HT_REF 	 = bin/tests/ut_hashtable_ref
+SRC_HT_REF	 = src/estrutura-de-dados/hashtable_ref.c
+BUILD_HT_REF = build/hashtable-ref-teste.o
+COMPILA_HT_REF = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
+					-D_DESTRUICAO_HT -D_CONTIDO_HT \
+					-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT 
+FLAGS_HT_REF = -Wno-unused-variable -Wno-main
+
+all-hashtable-ref: obj-hashtable-ref lib-hashtable-ref test-hashtable-ref
+
+obj-hashtable-ref:
+	@clang -O3 -Oz -std=c2x -I include/ -Wall \
+		-c -o build/hashtable-ref.o $(SRC_HT_REF)
+	@echo "Gerou o arquivo objeto 'hashtable-ref.o', em 'build'."
+
+lib-hashtable-ref: 
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libhtref.so build/hashtable_ref.o
-	@echo "biblioteca compartilhada 'libhtref.so' compilada."
-	@ar crs bin/static/libhtref.a build/hashtable_ref.o
-	@echo "biblioteca estática 'libhtref.a' compilada."
+		-o bin/shared/libhtref.so build/hashtable-ref.o
+	@echo "Biblioteca compartilhada 'libhtref.so' compilada."
+	@ar crs bin/static/libhtref.a build/hashtable-ref.o
+	@echo "Biblioteca estática 'libhtref.a' compilada."
 
-lib-pilha-ligada-ref: pilha-ligada-ref.o
+test-hashtable-ref:
+	@gcc -I include/ $(COMPILA_HT_REF) $(FLAGS_HT_REF) -std=c18 -Wall \
+		-c -o $(BUILD_HT_REF) $(SRC_HT_REF) 
+	@gcc -o $(EXE_HT_REF) $(BUILD_HT_REF) $(TESTADOR)
+	@echo "Teste 'ut_hashtable_ref' compilado."
+
+check-hashtable-ref:
+	gcc -fanalyzer -Wall -std=c18 $(BUILD_HT_REF) $(TESTADOR)
+
+clean-hashtable-ref:
+	@rm -f -v $(EXE_HT_REF) $(BUILD_HT_REF) build/hashtable-ref.o \
+		bin/static/libhtref.a bin/shared/libhtref.so
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Conjunto Referência
+# === === ===  === === === === === === === === === === === === === === ====
+COMPILA_SET_REF 	  = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__
+EXE_SET_REF 		  = bin/tests/ut_conjunto_ref
+LIB_SO_SET_REF      = bin/shared/libconjref.so
+LIB_A_SET_REF 		  = bin/static/libconjref.a
+SRC_SET_REF 		  = src/estrutura-de-dados/conjunto_ref.c
+
+# Compila tudo acima, mas não rota o testes, ou exclui o que foi compilado.
+all-conjunto-ref: obj-conjunto-ref lib-conjunto-ref test-conjunto-ref
+
+obj-conjunto-ref:
+	@clang -std=gnu2x -O3 -Oz -I include/ -Wall -c \
+		-o build/conjunto-ref.o $(SRC_SET_REF) 
+	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
+
+test-conjunto-ref:
+	@clang -O0 -std=gnu18 -Wall -I include/ $(COMPILA_SET_REF) \
+		-Wno-gnu-folding-constant -o $(EXE_SET_REF) $(SRC_SET_REF) \
+		$(OBJS_SET_REF) -lm $(TESTADOR)
+	@echo "Teste 'ut_conjunto_ref' compilado."
+
+lib-conjunto-ref: 
+	@clang -I include/ -shared -fPIC -Wall \
+		-o bin/shared/libconjref.so build/conjunto-ref.o
+	@echo "Biblioteca compartilhada 'libconjref.so' compilada."
+	@ar crs bin/static/libconjref.a build/conjunto-ref.o
+	@echo "Biblioteca estática 'libconjref.a' compilada."
+
+run-conjunto-ref:
+	./$(EXE_SET_REF)
+
+clean-conjunto-ref:
+	@rm -fv $(EXE_SET_REF) build/conjunto-ref.o $(LIB_A_SET_REF) \
+		$(LIB_SO_SET_REF) 
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Lista-Array Referência
+# === === ===  === === === === === === === === === === === === === === ====
+COMPILA_LA_REF = -D_ALOCACAO_E_DESALOCACAO -D__unit_tests__ -D_TO_STRING
+SRC_LA_REF = src/estrutura-de-dados/listaarray_ref.c
+BUILD_LA_REF = build/lista-array-ref-teste.o
+DEPS_LA_REF = -Lbin/shared -lteste -llegivel -lm -ltempo
+EXE_LA_REF = bin/tests/ut_lista_array_ref
+
+all-lista-array-ref: obj-lista-array-ref lib-lista-array-ref \
+	test-lista-array-ref
+
+obj-lista-array-ref:
+	@clang -O3 -Oz -I include/ -Wall -c \
+		src/estrutura-de-dados/listaarray_ref.c \
+		-o build/lista-array-ref.o
+	@echo "Gerou o arquivo objeto 'lista-array-ref.o', em 'build'."
+
+lib-lista-array-ref: 
+	@clang -O3 -Os -std=gnu2x -I include/ -shared -fPIC \
+		-o bin/shared/liblaref.so build/lista-array-ref.o
+	@echo "Biblioteca compartilhada 'liblaref.so' compilada."
+	@ar crs bin/static/liblaref.a build/lista-array-ref.o
+	@echo "Biblioteca estática 'liblaref.a' compilada."
+
+test-lista-array-ref:
+	@gcc -c -Iinclude -Wall -Werror $(COMPILA_LA_REF) \
+		-o $(BUILD_LA_REF) $(SRC_LA_REF)
+	@gcc -O0 -I include/ -Wall $(COMPILA_LA_REF) \
+		-o $(EXE_LA_REF) $(BUILD_LA_REF) $(DEPS_LA_REF)
+	@echo "Teste 'ut_lista_array_ref' compilado."
+
+clean-lista-array-ref:
+	@rm -fv $(EXE_LA_REF) $(BUILD_LA_REF) build/lista-array-ref.o \
+		bin/static/liblaref.a bin/shared/liblaref.so
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Pilha-Ligada Referência
+# === === ===  === === === === === === === === === === === === === === ====
+EXE_PL 	 	 = bin/tests/ut_pilha_ligada
+MOSTRA_PL 	 = -D_UT_PILHA_LIGADA -D_DESTROI_PL -D__debug__
+DEPS_PL 	 	 = $(TESTADOR) -lprogresso
+BUILD_PL_REF = build/pilha-ligada-ref-teste.o
+SRC_PL_REF 	 = src/estrutura-de-dados/pilhaligada_ref.c
+
+all-pilha-ligada-ref: obj-pilha-ligada-ref lib-pilha-ligada-ref test-pilha-ligada-ref
+
+obj-pilha-ligada-ref:
+	@clang -O3 -Oz -std=c2x -I include/ -Wall \
+		-c -o build/pilha-ligada-ref.o $(SRC_PL_REF)
+	@echo "Gerou o arquivo objeto 'pilhaligada_ref.o', em 'build'."
+
+lib-pilha-ligada-ref:
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libplref.so build/pilhaligada_ref.o 
-	@echo "biblioteca compartilhada 'libplref.so' compilada."
-	@ar crs bin/static/libplref.a build/pilhaligada_ref.o
-	@echo "biblioteca estática 'libplref.a' compilada."
+		-o bin/shared/libplref.so build/pilha-ligada-ref.o 
+	@echo "Biblioteca compartilhada 'libplref.so' compilada."
+	@ar crs bin/static/libplref.a build/pilha-ligada-ref.o
+	@echo "Biblioteca estática 'libplref.a' compilada."
 
-lib-lista-array-ref: lista-array-ref.o
-	@clang -O3 -Os -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/liblaref.so src/estrutura-de-dados/listaarray_ref.c
-	@echo "biblioteca compartilhada 'liblaref.so' compilada."
-	@ar crs bin/static/liblaref.a build/listaarray_ref.o
-	@echo "biblioteca estática 'liblaref.a' compilada."
+test-pilha-ligada-ref:
+	@clang $(MOSTRA_PL) -Iinclude -Wall -c -o $(BUILD_PL_REF) $(SRC_PL_REF)
+	@clang -Iinclude/ -O0 -o $(EXE_PL) $(BUILD_PL_REF) -lm $(DEPS_PL)
+	@echo "Teste 'ut_pilha_ligada_ref' compilado."
 
-lib-fila-circular-ref: fila-circular-ref.o
+clean-pilha-ligada-ref:
+	@rm -v -f $(EXE_PL) $(BUILD_PL_REF) bin/shared/libplref.so \
+		build/pilha-ligada-ref.o bin/static/libplref.a 
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Fila-Array Referência
+# === === ===  === === === === === === === === === === === === === === ====
+SRC_FA_REF 		= src/estrutura-de-dados/filaarray_ref.c
+EXE_FA_REF 		= bin/tests/ut_fila_array_ref
+BUILD_FA_REF	= build/fila-array-ref.o
+COMPILA_FA_REF = -D_UT_FILA_ARRAY -DALOCACAO_E_DEALOCACAO \
+					  -D_REDIMENSIONAMENTO
+DEPS_FA_REF 	= $(TESTADOR) -laleatorio
+
+all-fila-array-ref: obj-fila-array-ref lib-fila-array-ref \
+	test-fila-array-ref
+
+obj-fila-array-ref:
+	@clang -O3 -Oz -I include/ -Wall -c -o build/fila-array-ref.o \
+		src/estrutura-de-dados/filaarray_ref.c
+	@echo "Gerou o arquivo objeto 'fila-array-ref.o', em 'build'."
+
+lib-fila-array-ref:
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libfcref.so build/filacircular_ref.o
-	@echo "biblioteca compartilhada 'libflref.so' compilada."
-	@ar crs bin/static/libfcref.a build/filacircular_ref.o
-	@echo "biblioteca estática 'libflref.a' compilada."
+		-o bin/shared/libfaref.so build/fila-array-ref.o 
+	@echo "Biblioteca compartilhada 'libfaref.so' compilada."
+	@ar crs bin/static/libfaref.a build/fila-array-ref.o
+	@echo "Biblioteca estática 'libfaref.a' compilada."
+
+test-fila-array-ref:
+	@gcc -O0 -Iinclude -Wall -Werror $(COMPILA_FA_REF) \
+		-c -o $(BUILD_FA_REF) $(SRC_FA_REF)
+	@gcc -Iinclude -o $(EXE_FA_REF) $(BUILD_FA_REF) $(DEPS_FA_REF)
+	@echo "Teste 'ut_fila_array_ref' compilado com sucesso."
+
+clean-fila-array-ref:
+	@rm -v -f $(EXE_FA_REF) $(BUILD_FA_REF) bin/shared/libfaref.so \
+		build/fila-array-ref.o bin/static/libfaref.a 
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Lista-Posicional Referência(dev)
+# === === ===  === === === === === === === === === === === === === === ====
+SRC_LP_REF = src/estrutura-de-dados/listaposicional_ref.c
+EXE_LP_REF = bin/tests/ut_lista_posicional
+BUILD_LP_REF = build/lista-posicional-ref.o
+DEPS_LP_REF = -L bin/static -lteste -ltempo -llegivel -lm -lterminal
+
+all-lista-posicional-ref: obj-lista-posicional-ref \
+	lib-lista-posicional-ref test-lista-posicional-ref
+
+test-lista-posicional-ref:
+	clang -Iinclude -D_UT_LISTA_POSICIONAL -Wall -Werror -O0 \
+		-c -o $(BUILD_LP_REF) $(SRC_LP_REF)
+	clang -Iinclude -o $(EXE_LP_REF) $(BUILD_LP_REF) $(DEPS_LP_REF)
+
+obj-lista-posicional-ref:
+	@clang -O3 -Oz -I include/ -Wall -c -o build/lista-posicional-ref.o \
+		src/estrutura-de-dados/listaposicional_ref.c
+	@echo "Gerou o arquivo objeto 'lista-posicional-ref.o', em 'build'."
+
+lib-lista-posicional-ref:
+	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
+		-o bin/shared/liblpref.so build/lista-posicional-ref.o 
+	@echo "Biblioteca compartilhada 'liblpref.so' compilada."
+	@ar crs bin/static/liblpref.a build/lista-posicional-ref.o
+	@echo "Biblioteca estática 'liblpref.a' compilada."
+
+clean-lista-posicional-ref:
+	@rm -v -f $(EXE_LP_REF) $(BUILD_LP_REF) bin/shared/liblpref.so \
+		build/lista-posicional-ref.o bin/static/liblpref.a 
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Fila-Circular Referência
+# === === ===  === === === === === === === === === === === === === === ====
+SRC_FC_REF = src/estrutura-de-dados/filacircular_ref.c 
+BUILD_FC_REF = build/fila-circular-ref.o
+BUILD_FC_REF_I = build/fila-circular-ref-teste.o
+EXE_FC_REF = bin/tests/ut_filacirular_ref 
+
+all-fila-circular-ref: obj-fila-circular-ref lib-fila-circular-ref \
+	test-fila-circular-ref
+
+obj-fila-circular-ref:
+	@clang -O3 -Oz -I include/ -Wall -Werror \
+		-c -o $(BUILD_FC_REF) $(SRC_FC_REF)
+	@echo "Gerou o arquivo objeto 'fila-circular-ref.o', em 'build'."
+
+test-fila-circular-ref:
+	clang -O0 -I include/ -Wall -Werror -DUT_FILA_CIRCULAR -D__debug__ \
+		-o $(EXE_FC_REF) $(SRC_FC_REF) $(TESTADOR) -lprogresso
+	@echo "Teste 'ut_fila_array_ref' compilado com sucesso."
+	
+lib-fila-circular-ref:
+	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
+		-o bin/shared/libfcref.so $(BUILD_FC_REF) 
+	@echo "Biblioteca compartilhada 'libfcref.so' compilada."
+	@ar crs bin/static/libfcref.a $(BUILD_FC_REF)
+	@echo "Biblioteca estática 'libfcref.a' compilada."
+
+clean-fila-circular-ref:
+	@rm -v -f $(EXE_FC_REF) $(BUILD_FC_REF) bin/shared/libfcref.so \
+		$(BUILD_FC_REF_I) bin/static/libfcref.a 
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Fila-Ligada Referência
+# === === ===  === === === === === === === === === === === === === === ====
+obj-fila-ligada-ref:
+	@clang -O3 -Oz -I include/ -Wall -c \
+		-o build/filaligada_ref.o \
+		src/estrutura-de-dados/filaligada_ref.c
+	@echo "Gerou o arquivo objeto 'filaligada_ref.o', em 'build'."
+
+test-fila-ligada-ref:
+	clang -Wall -Wextra -Iinclude/ -D__UT_FILA_LIGADA_REF__ \
+		-Wno-unused-parameter \
+		-o bin/tests/ut_fila_ligada_ref \
+		src/estrutura-de-dados/filaligada_ref.c
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Deque-Ligada Referência
+# === === ===  === === === === === === === === === === === === === === ====
+obj-deque-ligada-ref:
+	@clang -O3 -Oz -I include/ -Wall -c \
+		-o build/dequeligada_ref.o \
+		src/estrutura-de-dados/dequeligada_ref.c
+	@echo "Gerou o arquivo objeto 'dequeligada_ref.o', em 'build'."
+
 
 # === === ===  === === === === === === === === === === === === === === ===
 #
