@@ -328,61 +328,6 @@ void anexa_str(String s, char* a) {
    free(conversao);
 }
 
-static size_t* busca_todas_ocorrencias_do_caractere(String s, 
-  wchar_t _char, int64_t N, bool comeca_na_esquerda)
-{
-/*   Varre a array interna da string em busca de todas possíveis ocorrências
- * do caractére unicode dado. Pode-se configurar a partida da busca, assim
- * como a quantidade de buscas, sim, por incoerência com o nome. 
- *   O retorno é uma array, onde o primeiro item é o total de índices, e os
- * demais são eles em sí. */
-   size_t* indices = NULL, total = 0, Q = s->quantia; 
-   wchar_t* array = s->caracteres;
-
-   /* Contando o número de ocorrências, pelo acaso da simetria do item
-    * analisado, tal contagem serve tanto para a versão regular(esquerda-
-    * à-direita), como o inverso. */
-   for (size_t k = 1; k <= Q; k++) {
-      if (array[k - 1] == _char) 
-         { total++; }
-
-      /* Se foi marcado como 'nem todas ocorrências', quebra em específico
-       * ponto da contagem. */
-      if (N != TODOS && total == N) { break; }
-   }
-
-   #ifdef _UT_STRING
-   printf("Total de índices encontrados: %lu\n", total);
-   #endif
-
-   if (comeca_na_esquerda) {
-      indices = malloc((total + 1) * sizeof(size_t));
-      indices[0] = total;
-      size_t p = 0, k = 1;
-
-      // Agora sim, uma busca para alocação da posição com o caractére.
-      while (total > 0) {
-         if (array[p] == _char) { 
-            total--;
-            indices[k++] = p;
-         }
-         p++;
-      }
-   } else {
-      indices = malloc((total + 1) * sizeof(size_t));
-      indices[0] = total;
-      size_t p = Q - 1, k = 1;
-
-      while (total > 0) {
-         if (array[p] == _char) { 
-            total--;
-            indices[k++] = p;
-         }
-         p--;
-      }
-   }
-   return indices;
-}
 
 
 // Funções de strings retiradas do módulo testes:
@@ -612,7 +557,7 @@ char* repete_caractere_ascii(char p, int qtd)
 {
 /* Cria uma string baseada no caractére dado, para que seja preenchida por
  * ele 'qtd' de vezes demandada. */
-   char* fmt = malloc(qtd * sizeof(char));
+   char* fmt = malloc((qtd + 1) * sizeof(char));
 
    for (int i = 0; i < qtd; i++) fmt[i] = p;
    fmt[qtd] = '\0';
@@ -897,6 +842,62 @@ void visualiza_int_array(size_t* A) {
    }
    putchar(']'); 
    putchar('\n');
+}
+
+static size_t* busca_todas_ocorrencias_do_caractere(String s, 
+  wchar_t _char, int64_t N, bool comeca_na_esquerda)
+{
+/*   Varre a array interna da string em busca de todas possíveis ocorrências
+ * do caractére unicode dado. Pode-se configurar a partida da busca, assim
+ * como a quantidade de buscas, sim, por incoerência com o nome. 
+ *   O retorno é uma array, onde o primeiro item é o total de índices, e os
+ * demais são eles em sí. */
+   size_t* indices = NULL, total = 0, Q = s->quantia; 
+   wchar_t* array = s->caracteres;
+
+   /* Contando o número de ocorrências, pelo acaso da simetria do item
+    * analisado, tal contagem serve tanto para a versão regular(esquerda-
+    * à-direita), como o inverso. */
+   for (size_t k = 1; k <= Q; k++) {
+      if (array[k - 1] == _char) 
+         { total++; }
+
+      /* Se foi marcado como 'nem todas ocorrências', quebra em específico
+       * ponto da contagem. */
+      if (N != TODOS && total == N) { break; }
+   }
+
+   #ifdef _UT_STRING
+   printf("Total de índices encontrados: %lu\n", total);
+   #endif
+
+   if (comeca_na_esquerda) {
+      indices = malloc((total + 1) * sizeof(size_t));
+      indices[0] = total;
+      size_t p = 0, k = 1;
+
+      // Agora sim, uma busca para alocação da posição com o caractére.
+      while (total > 0) {
+         if (array[p] == _char) { 
+            total--;
+            indices[k++] = p;
+         }
+         p++;
+      }
+   } else {
+      indices = malloc((total + 1) * sizeof(size_t));
+      indices[0] = total;
+      size_t p = Q - 1, k = 1;
+
+      while (total > 0) {
+         if (array[p] == _char) { 
+            total--;
+            indices[k++] = p;
+         }
+         p--;
+      }
+   }
+   return indices;
 }
 
 void motor_de_busca_de_ocorrencias(void) {

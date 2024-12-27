@@ -7,13 +7,14 @@ também aceita a impressão de outras juntas, formando assim uma bonita
 tabela.
 */
 
+#include "impressao.h"
 // Biblioteca padrão do C:
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <assert.h>
 // Biblioteca deste próprio repositório:
-#include "listaarray_ref.h"
 #include "terminal.h"
 
 static size_t maior_string(vetor_t* L, ToString F) {
@@ -86,13 +87,226 @@ void listar(vetor_t* lista, ToString f) {
 }
 
 /* === === === === === === === === === === === === === === === === === ===+
+ * ......................Impressão de Arrays..............................&
+ * ......................  de Vários Tipos Primitivos.....................&
+ * === === === === === === === === === === === === === === === === === ===*/
+const int LIMITE = 13000;
+
+void imprime_array_int(int* array, int length)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+      printf("%d, ", array[p]);
+   puts("\b\b]");
+}
+
+void imprime_array_bool(bool* array, int length)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+   {
+      if (array[p])
+         printf("true, ");
+      else
+         printf("false, ");
+   }
+   puts("\b\b]");
+}
+
+void imprime_array_char(char* array, int length)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+   {
+      printf("'%c', ", array[p]);
+   }
+   puts("\b\b]");
+}
+
+void imprime_array_str(char* array[], int total)
+{
+   assert(total >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(total <= LIMITE);
+
+   if (total == 0)
+      { puts("[]"); return; }
+   
+   /* Calculando o comprimento da tela, e quantas strings cabem nela. */
+   struct TerminalSize dim = obtem_dimensao();
+   int L = dim.colunas, x = 0, PAD = 1;
+   char fmt[L];
+
+   putchar('[');
+   for (int p = 0; p < total; p++)
+   {
+      sprintf(fmt, "\"%s\", ", array[p]);
+      x += strlen(fmt) + PAD;
+
+      if (x >= L) {
+         printf("\n%s", fmt);
+         x = 0;
+      } else
+         printf("%s", fmt);
+   }
+   puts("\b\b]");
+}
+
+void imprime_array_float(float* array, int length)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+      printf("%0.2f, ", array[p]);
+   puts("\b\b]");
+}
+
+void imprime_array_double(double* array, int length)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   for (int p = 0; p < length; p++)
+      printf("%0.4lf, ", array[p]);
+   puts("\b\b]");
+}
+
+// ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+//                      Tipos de Inteiros Específicos:
+//                   8-bits, 16-bits, 32-bits, 64-bits
+// ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+enum InteiroPositivo {i8, u8, i16, u16, i32, u32, i64, u64};
+
+static void imprime_array_tipos_de_int(void* array, int length, 
+  enum InteiroPositivo tipo_de_int)
+{
+   assert(length >= 0 && array != NULL); 
+   /* Números grandes de mais são totalmente desnecessário para o que isso
+    * foi feito. */
+   assert(length <= LIMITE);
+
+   uint8_t* ptr_u8; int8_t* ptr_i8;
+   uint16_t* ptr_u16; int16_t* ptr_i16;
+   uint32_t* ptr_u32; int32_t* ptr_i32;
+   uint64_t* ptr_u64; int64_t* ptr_i64;
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+   {
+      switch(tipo_de_int)
+      {
+         case u8:
+            ptr_u8 = (uint8_t*)array;
+            printf("%u, ", ptr_u8[p]);
+            break;
+         case u16:
+            ptr_u16 = (uint16_t*)array;
+            printf("%u, ", ptr_u16[p]);
+            break;
+         case u32:
+            ptr_u32 = (uint32_t*)array;
+            printf("%u, ", ptr_u32[p]);
+            break;
+         case u64:
+            ptr_u64 = (uint64_t*)array;
+            printf("%lu, ", ptr_u64[p]);
+            break;
+         case i8:
+            ptr_i8 = (int8_t*)array;
+            printf("%d, ", ptr_i8[p]);
+            break;
+         case i16:
+            ptr_i16 = (int16_t*)array;
+            printf("%d, ", ptr_i16[p]);
+            break;
+         case i32:
+            ptr_i32 = (int32_t*)array;
+            printf("%d, ", ptr_i32[p]);
+            break;
+         case i64:
+            ptr_i64 = (int64_t*)array;
+            printf("%ld, ", ptr_i64[p]);
+            break;
+         default:
+            perror("Tipo não compátivel!");
+            abort();
+      }
+   }
+
+   if (length == 0)
+      puts("]");
+   else
+      puts("\b\b]");
+}
+
+void imprime_array_i8(int8_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, i8); }
+   
+void imprime_array_u8(uint8_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, u8); }
+
+void imprime_array_i16(int16_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, i16); }
+
+void imprime_array_u16(uint16_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, u16); }
+
+void imprime_array_u32(uint32_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, u32); }
+
+void imprime_array_i64(int64_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, i64); }
+
+void imprime_array_u64(uint64_t* array, int length)
+   { imprime_array_tipos_de_int(array, length, u64); }
+
+
+/* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
  * ........................Testes Unitários...............................&
  * .......................................................................&
  * === === === === === === === === === === === === === === === === === ===*/
-#ifdef _UT_IMPRESSAO
-#include <assert.h>
+#ifdef __unit_tests__
 #include "dados_testes.h"
+#include "teste.h"
+#include <limits.h>
 
 char* constchar_to_str(generico_t dt) {
    char* pointer = (char*)dt;
@@ -125,9 +339,83 @@ void checando_um_caractere_multibyte(void) {
    }
 }
 
-int main(void) {
-   // executando testes ...
-   primeiro_exemplo_da_funcao_de_listagem();
-   // checando_um_caractere_multibyte();
+void impressao_de_varios_tipos_de_array(void)
+{
+   int N;
+
+   imprime_array_str((char**)veiculos, VEICULOS);
+   imprime_array_str((char**)objetos, OBJETOS);
+
+   imprime_array_char((char*)sexo, SEXO);
+   N = sizeof(valores_padronizados_iv) / sizeof(int);
+   imprime_array_int((int*)valores_padronizados_iv, N);
+
+   puts("\nVerificando a versão genérica ...");
+   bool resposta[] = { true, false };
+   imprime_array(resposta, 2);
+   imprime_array((char**)legumes, LEGUMES);
+}
+
+void impressao_de_array_gigante_de_strings(void)
+{
+   int N = TODAS_LISTAS_COM_STRS;
+   char*** inputs = (char***)todas_listas_com_strs, *lista[N];
+   int* L = (int*)TLCS_COMPRIMENTOS;
+   int T = sizeof(TLCS_COMPRIMENTOS) / sizeof(int);
+
+   printf("\nN: %llu\n", TODAS_LISTAS_COM_STRS);
+   for (int i = 0, q = 0; i < T; i++)
+   {
+      int t = L[i];
+
+      for (int k = 0; k < t; k++, q++) {
+         printf("i: %2d | k: %2d | t: %2d | q: %2d\n", i, k, L[i], q);
+         lista[q] = (char*)inputs[i][k];
+      }
+   }
+   
+   printf("Tamanho da lista: %d\n", T);
+   imprime_array_str(lista, N);
+}
+
+void impressao_de_outros_tipos_de_inteiros(void)
+{
+   int8_t in_a[] = {-2, -1, 0, 1, 2, 3};
+   uint8_t in_b[] = {53, 63, 73, 83, 93};
+   int16_t in_c[] = {SHRT_MIN, -1000, 10000, -20000, 30000, SHRT_MAX};
+   uint16_t in_d[] = {0, USHRT_MAX};
+   int32_t in_e[] = {INT_MIN, INT_MAX};
+   uint32_t in_f[] = {0, UINT_MAX};
+   int64_t in_g[] = {LLONG_MIN, LLONG_MAX};
+   uint64_t in_h[] = {0, ULLONG_MAX};
+
+   puts("Inteiro byte com sinal(i8):");
+   imprime_array(in_a, 6);
+   puts("Inteiro de byte sem sinal(u8):");
+   imprime_array(in_b, 5);
+   puts("Inteiro curto sem sinal(i16):");
+   imprime_array(in_c, 6);
+   puts("Inteiro curto com sinal(u16):");
+   imprime_array(in_d, 2);
+   puts("Inteiro com sinal(i32):");
+   imprime_array(in_e, 2);
+   puts("Inteiro sem sinal(u32):");
+   imprime_array(in_f, 2);
+   puts("Inteiro longo com sinal(i64):");
+   imprime_array(in_g, 2);
+   puts("Inteiro longo sem sinal(u64):");
+   imprime_array(in_h, 2);
+}
+
+int main(void) 
+{
+   executa_testes_a(
+     true, 5,
+         primeiro_exemplo_da_funcao_de_listagem, true,
+         checando_um_caractere_multibyte, false,
+         impressao_de_varios_tipos_de_array, true,
+         impressao_de_array_gigante_de_strings, true,
+         impressao_de_outros_tipos_de_inteiros, true
+   );
 }
 #endif

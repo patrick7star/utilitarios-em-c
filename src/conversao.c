@@ -12,11 +12,32 @@
 #include <wchar.h>
 #include <stdarg.h>
 
-void print_array(uint8_t* array, int t)
+void print_array(uint8_t* array, int t, bool hexadecimal)
 {
-   putchar('[');
+   const int MAX = 10000;
+
+   if (t == 0)
+      { puts("[]"); return; }
+   else if (t > MAX)
+   /* Imprime mais que este excedente é loucura para uma ferramenta de 
+    * debugging. */
+      { perror("excedeu capacidade de impressão."); abort(); }
+
+   /* Amostra o tamanho prá quando fica díficil contabilizar o total a 
+    * primeira vista. */
+   if (t >= 7)
+      printf("(%d)::[", t);
+   else
+      putchar('[');
+
    for (int i = 1; i <= t; i++)
-      printf("%d, ", array[i - 1]);
+   {
+      if (hexadecimal)
+         // printf("0x%X, ", array[i - 1]);
+         printf("%X, ", array[i - 1]);
+      else
+         printf("%d, ", array[i - 1]);
+   }
    printf("\b\b]\n");
 }
 
@@ -25,8 +46,8 @@ bool arrays_iguais(uint8_t* a, uint8_t* b, int t) {
  * ache algum valor que não bate, então desconfirma hipotese inicial, caso 
  * contrário confirma. */
    #ifdef __debug__
-   print_array(a, t);
-   print_array(b, t);
+   print_array(a, t, false);
+   print_array(b, t, false);
    #endif 
 
    for (int i = 1; i <= t; i++)
@@ -331,6 +352,7 @@ char* from_bytes_to_string(struct Bytes* input)
 
 struct Bytes string_unicode_to_bytes(wchar_t* input)
 {
+// O mesmo que acima, porém para 'wide strings'/ou string Unicodes. 
    // Quantidade de bytes do inteiro de máquina, e do caractére Unicode.
    const size_t SzWchar = sizeof(wchar_t);
    const size_t SzInt = sizeof(size_t);
@@ -366,6 +388,7 @@ struct Bytes string_unicode_to_bytes(wchar_t* input)
 
 wchar_t* from_bytes_to_string_unicode(struct Bytes* input)
 {
+// Deserialização de bytes específicos para strings Unicodes.
    uint8_t* ptr = input->bytes;
    wchar_t* string, *ptrSU;
    /* Quantidade de caractéres da estringue, e o tamanho, em bytes, de um 
@@ -394,14 +417,14 @@ wchar_t* from_bytes_to_string_unicode(struct Bytes* input)
    return string;
 }
 
-struct Bytes concatena_sequencias_de_bytes(int quantia, ...)
+struct Bytes concatena_sb(int quantia, ...)
 {
 /*   Pega sequência N de bytes, não importa quantos, e quais valores tais
  * representam, e concatenam na ordem que foram postas seus parâmetros.
  * Os argumentos são pares na seguinte forma: sequência de bytes o tamanho
  * de tal. */
    va_list args;
-   struct Bytes sequencias[UINT8_MAX];
+   struct Bytes seq[quantia];
    struct Bytes resultado;
 
    if (quantia >= UINT8_MAX)
@@ -411,36 +434,88 @@ struct Bytes concatena_sequencias_de_bytes(int quantia, ...)
 
    // Colhendo os argumentos na ordem que foram filtrados, e armazenando-os.
    va_start(args, quantia);
+   resultado.total = 0;
 
-   for (int i = 1; i <= quantia; i++) {
-      uint8_t* pointer = va_arg(args, uint8_t*);
-      size_t tamanho = va_arg(args, size_t);
-      size_t p = i - 1;
-
-      sequencias[p].bytes = pointer;
-      sequencias[p].total = tamanho;
-      resultado.total += tamanho;
+   for (int i = 1; i <= quantia; i++) 
+   {
+      // uint8_t* pointer = va_arg(args, uint8_t*);
+      seq[i - 1] = *(va_arg(args, struct Bytes*));
+      // Contabilizando o total apenas somando a quantia de cada.
+      resultado.total += seq[i - 1].total;
    }
    va_end(args);
 
    // Aloca total de bytes a concatenar...
    resultado.bytes = malloc(resultado.total);
-   uint8_t* pointer_dst = resultado.bytes;
+   uint8_t* dst = resultado.bytes, *src;
 
-   for (int j = 1; j <= quantia; j++) {
-      int p = j - 1;
-      size_t Q = sequencias[p].total;
-      uint8_t* pointer_src = sequencias[p].bytes;
-
+   for (int j = 0; j < quantia; j++) 
+   {
+      src = seq[j].bytes;
       /* Copia neste ponto do concatenador acumulador a certa quantia de 
        * bytes da sequência iterada. */
-      memcpy(pointer_dst, pointer_src, Q);
-      // Move-se para o próximo ponto de alocação...
-      pointer_dst += Q;
+      memcpy(dst, src, seq[j].total);
+
+      /* Move para a próxima parte do array onde será copiado à partir de 
+       * lá. */
+      if (j < (quantia - 1))
+         dst += seq[j].total;
    }
    return resultado;
 }
 
+uint8_t* concatena_ab(int quantia, ...)
+{
+/* O mesmo que acima, entretanto, com 'raw arrays'(aquelas que são arrays
+ * de bytes, não uma tupla com array e tamanho). Por causa de arrays com
+ * vários tamanhos será necessária: a quantidade delas, seguida com cada 
+ * par, que é a array de bytes, e um inteiro positivo de máquina informando
+ * o comprimento dela. O resultado final será uma array com a cópia de todas
+ * passados como argumento, sendo o seu comprimento a soma de todas elas,
+ * ou seja, fica ao seu cargo, já que é o chamador que informa os tamanhos
+ * obviamente. */
+   assert (quantia > 0);
+
+   const int sz = sizeof(uint8_t);
+   va_list argumentos;
+   uint8_t* result, *src, *dest;
+   bool acionado = false;
+   uint8_t* arrays[quantia]; 
+   size_t sizes[quantia], S = 0;
+
+   va_start(argumentos, quantia);
+   /* Inserindo as arrays e seus respectivos tamanhos nas respectivas 
+    * filas para cada um. Também computa o tamanho total a ser alocado
+    * para a array de bytes resultante.
+    */
+   for (int q = 0; q < quantia; q++)
+   {
+      arrays[q] = va_arg(argumentos, uint8_t*);
+      sizes[q] = (size_t)va_arg(argumentos, int);
+      S += sizes[q];
+   }
+   va_end(argumentos);
+
+   result = malloc (S * sz);
+   assert(result != NULL);
+
+   /* O esquema é o seguinte remove o primeiro item "inserido"(FIFO), assim
+    * como seu respectivo tamanho, computa o começo onde copiar na array
+    * resultante para em seguida copiar a array "inserida" à partir dalí. 
+    * Incrementa no "cursor" o tanto copiado, assim o próximo pointeiro
+    * apontando a posição na "array resultante" seja facilmente posicionada.
+    * O loop será feito a quantia de vezes passada como argumento -- é o
+    * primeiro argumento, pelo chamador. */
+   for (int q = 0, size = 0, n = 0; q < quantia; q++)
+   {
+      src = arrays[q];
+      dest = result + size;
+      n = sizes[q];
+      memcpy(dest, src, n);
+      size += n;
+   }
+   return result;
+}
 
 
 #if defined(__UT_CONVERSAO__) && defined(__linux__)
@@ -501,7 +576,7 @@ void alguns_testes(void) {
    #endif
    uint8_t bytes_tt[8];
    sizet_to_bytes(timestamp, bytes_tt);
-   print_array(bytes_tt, sizeof(time_t));
+   print_array(bytes_tt, sizeof(time_t), false);
    time_t reconvertido_tt = from_bytes_to_sizet(bytes_tt);
    #ifdef _WIN64
    printf("reconvertendo novamente ==> %lld\n", reconvertido_tt);
@@ -515,7 +590,7 @@ void experimento_os_macros(void) {
    int16_t n = -5320;
    uint8_t bytes_n[2];
    to_bytes(n, bytes_n);
-   print_array(bytes_n, 2);
+   print_array(bytes_n, 2, false);
    printf("reconvertido:%d\n", from_bytes_to_i16(bytes_n));
 }
 
@@ -525,7 +600,7 @@ void converte_byte(void) {
 
    printf("x: %d\n", x);
    i8_to_bytes(x, buffer);
-   print_array(buffer, 1);
+   print_array(buffer, 1, false);
    int8_t y = from_bytes_to_i8(buffer);
    printf("y: %d\n", y);
    assert (x == y);
@@ -543,7 +618,7 @@ void serializa_e_deserializa_string_ascii(void)
       "Tentando verificar conteudo(%lu):\n %s\n", 
       result.total, result.bytes
    );
-   print_array(result.bytes, result.total);
+   print_array(result.bytes, result.total, false);
 
    char* S = from_bytes_to_string(&result);
    printf("Pós reconversão:\n\"%s\"\n", S);
@@ -562,7 +637,7 @@ void serializa_e_deserializa_string_unicode(void)
    };
 
    struct Bytes result = string_unicode_to_bytes(s);
-   print_array(result.bytes, result.total);
+   print_array(result.bytes, result.total, false);
 
    wchar_t* S = from_bytes_to_string_unicode(&result);
    printf("Pós reconversão:\n\"%ls\"\n", S);
@@ -579,6 +654,29 @@ void serializa_e_deserializa_string_unicode(void)
    free_bytes(&result);
 
    printf("\nConteúdo:\t####\n\n%ls\n####\n", T);
+
+   const wchar_t* inputs[] = {
+      L"Maçã    ... \U0001f34f",
+      L"Banana  ... \U0001f34c",
+      L"Car     ... \U0001f697",
+      L"Porta   ... \U0001f6aa",
+      L"Toilet  ... \U0001f6bd",
+      L"Relógio ... \U0001f553"
+   };
+   const int N = sizeof(inputs) / sizeof(wchar_t*);
+   struct Bytes array;
+
+   puts("\nTodos valores serializados e em seguidas deserilizados:");
+   for (int p = 0; p < N; p++)
+   {
+      wchar_t* in = (wchar_t*)inputs[p];
+      array = string_unicode_to_bytes(in);
+      wchar_t* out = from_bytes_to_string_unicode(&array);
+
+      printf("\t- %ls\n", out);
+      free(out);
+      free_bytes(&array);
+   }
 }
 
 // Computa o decorrer em segundos desta estrutura, dado o começo e o fim.
@@ -647,7 +745,7 @@ void serializacao_de_decimais_64_bits(void) {
       double A = samples[i];
       printf("Antes da conversão: %lf\n", A);
       double_to_bytes(A, buffer);
-      print_array(buffer, sz);
+      print_array(buffer, sz, false);
       double a = from_bytes_to_double(buffer);
       printf("Reconvertido: %lf\n\n", a);
    }
@@ -667,26 +765,133 @@ void serializacao_de_decimais_32_bits(void) {
       double A = samples[i];
       printf("Antes da conversão: %f\n", A);
       double_to_bytes(A, buffer);
-      print_array(buffer, sz);
+      print_array(buffer, sz, true);
       double a = from_bytes_to_double(buffer);
       printf("Reconvertido: %f\n\n", a);
    }
+}
+
+bool checa_se_A_esta_em_B(struct Bytes* a, struct Bytes* b)
+{
+/*   Checa se a subarray está na array maior, verificando todos vagões 
+ * possíveis que ela permite. */
+   const int tb = b->total;
+   const int ta = a->total;
+   assert(ta <= tb); 
+   const int fim = tb - ta;
+   
+   for (int i = 0; i <= fim; i++)
+   {
+      #ifdef __debug__
+      printf("i: %d | fim: %d\n", i, tb);
+      #endif
+
+      if (arrays_iguais(a->bytes, (b->bytes + i), ta))
+      // Se algo encontrado, logo acusa.
+         return true;
+   }
+   #ifdef __debug__
+   printf("Nada foi encontrado!\n");
+   #endif
+   // Se nada encontrada, é porque não há o trecho.
+   return false;
+}
+
+void concatenacao_de_bytes_structs(void)
+{
+   struct Bytes* a, *b, *c;
+   struct Bytes output, inputs[] = {
+      string_to_bytes("cachorro"),   
+      string_to_bytes("garrafa"),
+      string_to_bytes("maçã")
+   };
+
+   for (int i = 0; i < 3; i++)
+      print_array(inputs[i].bytes, inputs[i].total, true);
+
+   a = &inputs[0];
+   b = &inputs[1];
+   c = &inputs[2];
+   output = concatena_sb(3, a, b, c);
+   print_array(output.bytes, output.total, true);
+
+   assert(output.total == (a->total + b->total + c->total));
+   assert(checa_se_A_esta_em_B(a, &output));
+   assert(checa_se_A_esta_em_B(b, &output));
+   assert(checa_se_A_esta_em_B(c, &output));
+}
+
+void concatenacao_de_arrays_de_bytes(void)
+{
+   /* Definição apenas neste escopo. */
+   struct Pair { uint8_t* array; int length; };
+
+   const struct Pair inputs[] = {
+      {(uint8_t[]){0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, 6},
+      {(uint8_t[]){0xB, 0xE, 0xE, 0xF}, 4},
+      {(uint8_t[]){0xc, 0x0, 0xf, 0xf, 0xe, 0xe}, 6},
+      {(uint8_t[]){0xB, 0xA, 0xB, 0xE}, 4},
+      {(uint8_t[]){0xb, 0xe, 0xe}, 3},
+      {(uint8_t[]){0xd, 0xe, 0xa, 0xd}, 4},
+      {(uint8_t[]){0xc, 0xa, 0xf, 0xe}, 4},
+      {(uint8_t[]){0xd, 0xa, 0xd, 0x0}, 4},
+      {(uint8_t[]){0xf, 0xe, 0xe, 0xd}, 4}
+   };
+   const int N = sizeof(inputs) / sizeof(struct Pair);
+   int S = 0;
+
+   puts("Impressão da amostra:");
+   for (int i = 0; i < N; i++)
+   {
+      int n = inputs[i].length;
+      uint8_t* array = inputs[i].array;
+
+      print_array(array, n, true);
+      S += n;
+   }
+   
+   printf("\nComprimento final tem que ser %d\n", S);
+
+   uint8_t* output_a = concatena_ab(
+      3, inputs[0].array, inputs[0].length,
+         inputs[1].array, inputs[1].length,
+         inputs[2].array, inputs[2].length
+   );
+   print_array(output_a, 16, true);
+
+   uint8_t* output_b = concatena_ab(
+      N, inputs[0].array, inputs[0].length,
+         inputs[1].array, inputs[1].length,
+         inputs[2].array, inputs[2].length,
+         inputs[3].array, inputs[3].length,
+         inputs[4].array, inputs[4].length,
+         inputs[5].array, inputs[5].length,
+         inputs[6].array, inputs[6].length,
+         inputs[7].array, inputs[7].length,
+         inputs[8].array, inputs[8].length
+   );
+   print_array(output_b, S, true);
+
+   free(output_a);
+   free(output_b);
 }
 
 int main(void) {
    setlocale(LC_CTYPE, "");
 
    executa_testes_a(
-      true, 9,
+      true, 11,
       verificacao_da_atual_maquina, true,
       alguns_testes, false,
       experimento_os_macros, true,
       converte_byte, false,
-      serializa_e_deserializa_string_ascii, false,
-      serializa_e_deserializa_string_unicode, false,
-      tempo_de_conversao, false,
-      serializacao_de_decimais_64_bits, true,
-      serializacao_de_decimais_32_bits, true
+      serializa_e_deserializa_string_ascii, true,
+      serializa_e_deserializa_string_unicode, true,
+      tempo_de_conversao, true,
+      serializacao_de_decimais_64_bits, false,
+      serializacao_de_decimais_32_bits, false,
+      concatenacao_de_bytes_structs, true,
+      concatenacao_de_arrays_de_bytes, true
    );
 }
 #endif
