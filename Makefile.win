@@ -44,27 +44,30 @@ clean-teste:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Terminal
 # === === ===  === === === === === === === === === === === === === === ====
-OBJ_TERM = build/terminal-teste.obj
-EXE_TERM = ./bin/tests/ut_terminal
+OBJ_TST_TERM = build/terminal-teste.obj
+OBJ_TERM 	 = build/terminal.obj
+EXE_TERM 	 = ./bin/tests/ut_terminal
+EXE_DLL_TERM = bin/shared/libterminal.dll
+EXE_ST_TERM  = bin/static/libterminal.a
 
 obj-terminal:
-	@$(CC) -O3 -Os -I include -c src/terminal.c -o build/terminal.obj
+	@$(CC) -O3 -Os -I include -c src/terminal.c -o $(OBJ_TERM)
 	@echo "Gerou o arquivo objeto 'terminal.obj' em 'build'."
 
 lib-terminal:
 	@$(CC) -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libterminal.dll build/terminal.obj
-	@echo "biblioteca compartilhada 'libterminal.so'compilada."
-	@ar crs bin/static/libterminal.a build/terminal.obj
-	@echo "compilação de uma biblioteca estática."
+		-o $(EXE_DLL_TERM) $(OBJ_TERM)
+	@echo "Biblioteca compartilhada 'libterminal.dll' compilada."
+	@$(AR) crs $(EXE_ST_TERM) $(OBJ_TERM)
+	@echo "Biblioteca estática 'libterminal.a' compilada."
 
 test-terminal:
 	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
 	@$(CC) -std=gnu18 -Wall -I ./include -c \
 		-D_UT_TERMINAL -Wno-main-return-type \
-		-o $(OBJ_TERM) src/terminal.c
+		-o $(OBJ_TST_TERM) src/terminal.c
 	@echo "Ligamento entre o artefato e o executável ..."
-	@$(CC) -O0 -o $(EXE_TERM) $(OBJ_TERM)
+	@$(CC) -O0 -o $(EXE_TERM) $(OBJ_TST_TERM)
 
 run-terminal:
 	./$(EXE_TERM)
