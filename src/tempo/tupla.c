@@ -1,5 +1,4 @@
 
-
 /* Tupla feita especialmente para compactar vários argumentos num só,
  * que será passado para uma thread, já que ela só aceita um único.
  * Nele contendo informações que serão alteradas dentro da thread de 
@@ -7,6 +6,10 @@
  * mas copiadas, novamente de acordo com a lógica interna que rege 
  * a thread.
  */
+
+#ifndef __TUPLA_C__
+#define __TUPLA_C__
+
 typedef struct tupla_para_thread {
    uint8_t* porcentagem;
 
@@ -15,4 +18,6 @@ typedef struct tupla_para_thread {
    uint16_t unidades;
 
    TEMPO_TIPO grandeza;
-} TuplaThread;
+} TuplaThread, TT;
+
+#endif

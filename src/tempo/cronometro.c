@@ -92,7 +92,11 @@ void visualiza_marcos(Cronometro c) {
 
       // só funciona para contagem na faixa de segundos e uma hora.
       if (t > 0 && t < 3600.0) {
+			#ifdef _WIN32
+         int ordem = total - c->qtd + 1;
+			#else 
          int ordem = abs(total - c->qtd) + 1;
+			#endif
          int min = (int)t / 60;
          int seg = (int)t % 60;
          printf("%3dº. [%02d:%02d]\n", ordem, min, seg);
@@ -124,7 +128,7 @@ char* cronometro_to_str(Cronometro c) {
 
    sprintf(
       resultado_fmt, 
-      "Cronômetro(%u) [%s | %3ld]", 
+      "Cronômetro(%u) [%s | %3zu]", 
       instancias_do_cronometro,
       tempo_legivel(t), c->qtd
    );
@@ -140,7 +144,7 @@ void destroi_cronometro(Cronometro c) {
       time_t fim = time(NULL);
       double diferenca = difftime(fim, c->inicio);
       printf(
-         "\ntempo decorrido: %s\nregistros feitos: %lu\n",
+         "\ntempo decorrido: %s\nregistros feitos: %zu\n",
          tempo_legivel(diferenca), c->qtd
       );
    #endif
