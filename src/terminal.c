@@ -12,7 +12,6 @@
 #include "terminal.h"
 
 
-
 int find(char* string, char pattern) 
 {
 /* Acha a posição da primeira ocorrência do caractére na string. Se não
@@ -26,13 +25,13 @@ int find(char* string, char pattern)
    return -1;
 }
 
-#ifdef __linux__          
-void destroi_dimensao(Dimensao d) 
-   { if (d != NULL) free(d); }
-
 static Dimensao cria_tupla() 
    { return (uint8_t*)calloc(2, sizeof(uint8_t)); }
 
+void destroi_dimensao(Dimensao d) 
+   { if (d != NULL) free(d); }
+
+#ifdef __linux__          
 // tupla com as dimensões do terminal.
 Dimensao dimensao_terminal(void) {
    // buffer para pegar resultado.
@@ -103,12 +102,53 @@ struct TerminalSize obtem_dimensao(void) {
 
    return result;   
 }
+
+/* === === === === === === === === === === === === === === === === === === 
+ *						Porte de tal features para o Windows
+ *
+ * Porte simples -- mas prático -- de todas funções acimas para o sistema
+ * do Windows. Eles apenas fazem simples chamadas a informação que o 
+ * Windows já tem, nada de um monte de gambiarra como é feito no Linux, pois
+ * não é preciso.
+ *
+ * Sobre a segunda função, a que é legada, apenas chama a primeira, então 
+ * reajusta nos devidos campos. Como disse, recorrer a tal tipo de gambiarra
+ * é bastante desnecessário aqui. 
+ * === === === === === === === === === === === === === === === === === == */
+#elif defined(_WIN32)
+#include <windows.h>
+
+struct TerminalSize obtem_dimensao(void) 
+{
+	CONSOLE_SCREEN_BUFFER_INFO informacao;
+	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	GetConsoleScreenBufferInfo(console, &informacao);	
+
+	return (struct TerminalSize) {
+		.linhas  = informacao.dwSize.Y,
+		.colunas = informacao.dwSize.X
+	};
+}
+
+Dimensao dimensao_terminal(void) {
+	struct TerminalSize first_out = obtem_dimensao();
+	Dimensao second_out = cria_tupla();
+
+	second_out[0] = first_out.linhas;
+	second_out[1] = first_out.colunas;
+
+	return second_out;
+}
 #endif
 
-#ifdef _UT_TERMINAL
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Testes Unitários
  * === === === === === === === === === === === === === === === === === ===*/
+#ifdef _UT_TERMINAL
+#ifdef _WIN32
+#include <locale.h>
+#endif
 void o_teste_apenas_chama_e_mostra_os_resultados(void) {
    puts("\nComputando dimensão mínima:");
    Dimensao A = dimensao_terminal();
@@ -126,6 +166,11 @@ void obtem_dimensao_por_novo_metodo() {
 }
 
 void main(void) {
+	#ifdef _WIN32
+	const char* locale = "en_US.UTF-8";
+	setlocale(LC_CTYPE, locale);
+	#endif
+
    o_teste_apenas_chama_e_mostra_os_resultados();
    obtem_dimensao_por_novo_metodo();
 }
