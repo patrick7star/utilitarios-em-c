@@ -13,23 +13,22 @@ OBJ_I_TST	= build/teste.obj
 
 obj-teste:
 	$(CC) -Wall -O3 -Os -I include/ -c -o $(OBJ_I_TST) src/teste.c
-	@echo "Gerou o arquivo objeto 'teste.o' em 'build'."
+	@echo "Objeto '$(OBJ_I_TST)' de 'teste.c' gerado."
 
 lib-teste: obj-teste
-	$(CC) -Iinclude/ -o $(EXE_TST_I) -shared -fPIC src/teste.c $(DEPS_TST)
-	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
+	$(CC) -Iinclude/ -o $(EXE_TST_I) -shared $(OBJ_I_TST) $(DEPS_TST)
+	@echo "Biblioteca compartilhada 'libteste.dll'."
 	@$(AR) crs $(EXE_TST_II) build/teste.obj
-	@echo "Compilação da biblioteca estática 'libteste.a'."
+	@echo "Biblioteca estática 'libteste.a' compilada."
 
 test-teste:
 	$(CC) -Isrc/teste -Iinclude -Wall -Werror \
 		-c -o build/amostras.obj src/teste/amostras.c
 	$(CC) -Wall -Werror -Iinclude $(COMPILA_TST) \
 		-c -o $(OBJ_II_TST) src/teste.c
-	$(CC) -O0 -Iinclude/ $(COMPILA_TST) \
-		-o $(EXE_TST) build/test-teste.o \
-		$(DEPS_TST) build/progresso.o build/amostras.obj -lm
-	@echo "Compilado os testes-unitários de 'teste.c' em bin/tests."
+	$(CC) -O0 -Iinclude/ $(COMPILA_TST) -o $(EXE_TST) $(OBJ_II_TST) \
+		$(DEPS_TST) build/progresso.o build/amostras.obj
+	@echo "Teste 'ut_teste' de 'teste.c' compilado"
 
 check-teste:
 	@echo "checando a sintaxe do 'teste.c' ..."
@@ -52,7 +51,7 @@ EXE_ST_TERM  = bin/static/libterminal.a
 
 obj-terminal:
 	@$(CC) -O3 -Os -I include -c src/terminal.c -o $(OBJ_TERM)
-	@echo "Gerou o arquivo objeto 'terminal.obj' em 'build'."
+	@echo "Objeto 'terminal.obj' gerado."
 
 lib-terminal:
 	@$(CC) -I include/ -shared -fPIC -Wall \
@@ -62,12 +61,11 @@ lib-terminal:
 	@echo "Biblioteca estática 'libterminal.a' compilada."
 
 test-terminal:
-	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
 	@$(CC) -std=gnu18 -Wall -I ./include -c \
 		-D_UT_TERMINAL -Wno-main-return-type \
 		-o $(OBJ_TST_TERM) src/terminal.c
-	@echo "Ligamento entre o artefato e o executável ..."
 	@$(CC) -O0 -o $(EXE_TERM) $(OBJ_TST_TERM)
+	@echo "Teste 'ut_terminal' compilado."
 
 run-terminal:
 	./$(EXE_TERM)
@@ -197,10 +195,10 @@ lib-progresso: obj-progresso
 	@echo "Compilação de uma biblioteca estática 'libprogresso.a' em 'bin/static'."
 
 test-progresso:
-	@$(CC) -O0 -std=gnu2x -I include/ -Wall -D_UT_PROGRESSO \
+	@$(CC) -O0 -std=c18 -I include/ -Wall -D_UT_PROGRESSO \
 		-c -o build/progresso-teste.o $(SRC_PROG)
-	@$(CC) -O0 -std=gnu2x -I include/ -Wall -D_UT_PROGRESSO \
-		-o $(EXE_PROG) build/progresso-teste.o -lm $(TESTADOR)
+	@$(CC) -O0 -std=c18 -I include/ -Wall -D_UT_PROGRESSO \
+		-o $(EXE_PROG) build/progresso-teste.o $(TESTADOR)
 	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
 
 run-progresso:
