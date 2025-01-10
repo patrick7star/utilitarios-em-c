@@ -8,7 +8,11 @@
 #include <ctype.h>
 #include <assert.h>
 #include <limits.h>
-#include <tgmath.h>
+//#include <tgmath.h>
+#include <math.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #define bool_to_str(logico) logico ? "true": "false"
 /* === === === === === === === === === === === === === === === === === ===+
@@ -71,7 +75,8 @@ int capitaliza_palavras(void) {
       size_t size = strlen(fruta) + 1;
       char copia[size];
 
-      strcpy(copia, fruta);
+      // strcpy(copia, fruta);
+		strcpy_s(copia, size, fruta);
       copia[0] = (char)toupper(copia[0]);
       printf("\t%s ===> %s\n", fruta, copia);
    } 
@@ -86,7 +91,8 @@ int string_alternada(void) {
       size_t size = strlen(nome) + 1;
       char copia[size];
 
-      strcpy(copia, nome);
+      // strcpy(copia, nome);
+      strcpy_s(copia, size, nome);
 
       for (size_t i = 0; i < strlen(copia); i++) {
          if (i % 2 == 0) 
@@ -101,6 +107,7 @@ int string_alternada(void) {
 
 // [falha]
 int carregando_ate_cem(void) {
+	#ifdef __linux__
    PG bar = cria_bp(Simples, 100, 50);
    size_t contagem = 1;
    // 70 milisegundos ...
@@ -115,17 +122,44 @@ int carregando_ate_cem(void) {
          return EXIT_FAILURE;
    } while (contagem <= 100);
 
+	#elif defined(_WIN32)
+   PG bar = cria_bp(Simples, 100, 50);
+   size_t contagem = 1;
+   // 70 milisegundos ...
+	DWORD pausa = 70;
+
+   do {
+      visualiza_bp(&bar);
+      atualiza_bp(&bar, contagem++);
+      // nanosleep(&pausa, NULL);
+		Sleep(pausa);
+
+      if (contagem == 70)
+         return EXIT_FAILURE;
+   } while (contagem <= 100);
+	#endif
+
    return EXIT_SUCCESS;
 }
 
 // [falha]
 int simples_mensagem_do_fortune(void) {
+	#ifdef _WIN32
+   FILE* stream = _popen("fortune", "r");
+   char buffer[5000];
+
+   fread(buffer, sizeof(char), 5000, stream);
+   _pclose(stream);
+   puts(buffer);
+
+	#elif defined(__linux__)
    FILE* stream = popen("fortune", "r");
    char buffer[5000];
 
    fread(buffer, sizeof(char), 5000, stream);
    pclose(stream);
    puts(buffer);
+	#endif
 
    return EXIT_FAILURE;
 }

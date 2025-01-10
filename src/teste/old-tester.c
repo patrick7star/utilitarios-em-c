@@ -1,6 +1,11 @@
 #include <stddef.h>
+#ifdef __linux__
 #include <sys/time.h>
 #include <unistd.h>
+#elif defined(_WIN64)
+#include <libloaderapi.h>
+#include <sysinfoapi.h>
+#endif
 
 /* === === === === === === === === === === === === === === === === === ===+
  *                      Dados Globais Referentes as
@@ -26,7 +31,6 @@ static void nome_do_teste(char *nome)
    int C = strlen(nome);
    // Dimensao dim = dimensao_terminal();
    struct TerminalSize dim = obtem_dimensao(); 
-   // int largura = dim[1] - 3;
    int largura = dim.colunas - 3;
    char barra[largura];
 
@@ -45,8 +49,6 @@ static void nome_do_teste(char *nome)
    }
 
    printf("\n\n%s\n\n", barra);
-   // A dimensão criada também não é mais necessária.
-   // destroi_dimensao(dim);
 }
 
 static void executa_teste(char* nome, void (*funcao)()) {
@@ -98,7 +100,7 @@ void executa_tst(char* descricacao, Fn call, bool acionado)
       puts("DESATIVADO TEMPORIAMENTE!");
 }
 
-void executa_testes(const uint8_t total, ...) {
+void executa_testes(int total, ...) {
    Cronometro medicao = cria_cronometro();
    va_list args;
    size_t habilitados = 0;
@@ -133,7 +135,7 @@ void executa_testes(const uint8_t total, ...) {
          tempo_legivel(tempo_total)
       );
    #endif
-   printf ("há %lu testes desativados.\n", total - habilitados);
+   printf ("há %zu testes desativados.\n", total - habilitados);
 }
 
 static void imprime_separador(int n) 
@@ -148,6 +150,7 @@ static void imprime_separador(int n)
    putchar('\n');
 }
 
+#ifdef __linux__
 static void nome_do_executavel(char* output, const int N)
 {
 /* Pega o nome do arquivo que está o teste, então processa ele, tirando 
@@ -155,7 +158,12 @@ static void nome_do_executavel(char* output, const int N)
    char caminho[N];
 
    memset(caminho, '\0', N);
+	#ifdef __linux__
    assert(readlink("/proc/self/exe", caminho, N) != 1);
+	#elif defined(_WIN64)
+	LPSTR ptr = caminho;
+	assert(GetModuleFileNameA(NULL, ptr, N) != 0);	
+	#endif
 
    char* base_caminho = strrchr(caminho, '/') + 1;
    /* Comprimento da string do sufixo, e também da base do arquivo.*/
@@ -196,7 +204,9 @@ static void executa_teste_a(char* nome, Fn rotina)
    // Executa função passada.
    rotina();
 }
+#endif
 
+#ifdef __linux__
 static double difftimeval(struct timeval start, struct timeval end)
 {
 /* Computa um double, representando segundos inteiros e frações deles(até
@@ -208,6 +218,21 @@ static double difftimeval(struct timeval start, struct timeval end)
 
    return a + b / 1000000.0;
 }
+#elif defined(_WIN64)
+static double diffsystemtime(SYSTEMTIME start, SYSTEMTIME end)
+{
+	double a = (
+		(double)start.wHour * 3600.0 + (double)start.wMinute * 60.0 
+		+ (double)start.wSecond + start.wMilliseconds / 1000.0
+	);
+	double b = (
+		(double)end.wHour * 3600.0 + (double)end.wMinute * 60.0 
+		+ (double)end.wSecond + end.wMilliseconds / 1000.0
+	);
+
+	return b - a;
+}
+#endif
 
 void executa_testes_a(bool execucao_do_suite, int total, ...) 
 {
@@ -215,9 +240,12 @@ void executa_testes_a(bool execucao_do_suite, int total, ...)
  * todo o "suíte" de teste, indepedente de alguns foram configurados para 
  * executar, ou não. */
    int habilitados = 0, quantidade=total;
+	#ifdef __linux__
    struct timeval inicio, final;
+	#elif defined(_WIN64)
+	SYSTEMTIME inicio, final;
+	#endif
    struct TesteConfig testes[quantidade];
-   char* descricao = SEM_MENSAGEM;
 
    va_list args;
    // como também conta o valor lógico se é para executa-lá no momento.
@@ -235,19 +263,32 @@ void executa_testes_a(bool execucao_do_suite, int total, ...)
    }
    va_end(args);
 
+	double decorrido = 0.0;
    /* Executando os testes, pelo menos o que estão configurados para tal. */
    // Começando a medição das execuções...
+	#ifdef __linux__
    gettimeofday(&inicio, NULL);
    for (int t = 0; t < quantidade; t++) 
    {
 
       if (testes[t].ativado && execucao_do_suite)
-         executa_teste_a(descricao, testes[t].rotina); 
+         executa_teste_a(SEM_MENSAGEM, testes[t].rotina); 
    }
    // Depois de todas medições, o 'marco' final para medir o decorrido.
    gettimeofday(&final, NULL);
+   decorrido = difftimeval(inicio, final);
 
-   double decorrido = difftimeval(inicio, final);
+	#elif defined(_WIN64)
+   GetSystemTime(&inicio);
+   for (int t = 0; t < quantidade; t++) 
+   {
+      if (testes[t].ativado && execucao_do_suite)
+         executa_teste_a(SEM_MENSAGEM, testes[t].rotina); 
+   }
+	GetSystemTime(&final);
+	decorrido = diffsystemtime(inicio, final);
+	#endif
+
    int desabilitados = quantidade - habilitados;
    const char* suite_msg;
 
