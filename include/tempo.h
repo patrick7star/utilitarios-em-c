@@ -1,10 +1,9 @@
 
+#ifndef __TEMPO_H__
+#define __TEMPO_H__
 #include <stdbool.h>
-#include <threads.h>
 #include <stdint.h>
 
-#ifndef TEMPO_H
-#define TEMPO_H
  typedef enum tipo_de_tempo { 
    // Tempo normal:
    Hora, Minuto, Segundo, 

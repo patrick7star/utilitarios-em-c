@@ -34,7 +34,7 @@
  *   Cada nova geração ganha uma letra mais avançada no alfabeto, isso até
  * este tipo de teste for realmente substituído por algo mais avançado. */
 void executa_tst(char*, Fn, bool); 
-void executa_testes(uint8_t total, ...);
+void executa_testes(int total, ...);
 void executa_testes_a(bool ativado, int total, ...);
 
 /* Converte um valor lógico para uma string, em português, dizendo o que 
