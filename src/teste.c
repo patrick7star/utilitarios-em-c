@@ -9,14 +9,14 @@
 #include <assert.h>
 #ifdef __linux__
 #include <tgmath.h>
+
 #elif defined(_WIN32)
 #include <math.h>
+#include <locale.h>
 #endif
-// para não compilar no Windows, assim mantém compatibilidade
-#ifndef _WIN64
+
 #include "tempo.h"
 #include "legivel.h"
-#endif
 #include "terminal.h"
 /* incluindo aqui por quê? Primeiro, tem macros importantes definidos lá,
  * que é preciso também usar aqui; segundo, o 'header guards' garantem que 
@@ -153,7 +153,7 @@ void verificando_obtendo_de_potencias_de_dois() {
    // complementando máscaras...
    for (size_t p = 1; p <= qtd; p++) {
       size_t n = (size_t)pow(2, p - 1);
-      printf("%2luº ---> %9lu -->%31s\n", p, n, binario_str(n));
+      printf("%2zuº ---> %9zu -->%31s\n", p, n, binario_str(n));
    }
 }
 
@@ -175,7 +175,7 @@ void converte_strings_de_valores_logicos() {
       char* e = matches[p].entrada;
       bool s = matches[p].saida;
       printf(
-         "%luº)\t%-13s==>%13s\n", 
+         "%zuº)\t%-13s==>%13s\n", 
          (p + 1), e, bool_to_str(s)
       );
       assert (str_to_bool(e) == s);
@@ -202,19 +202,20 @@ void testes_tal_declaracao_de_loop(void) {
 }
 
 int main(int qtd, char* argumentos[], char* env_vars[]) {
+	setlocale(LC_CTYPE, "en_US.UTF-8");
+
    executa_testes_a(
       true, 7, teste_conversao_binaria_antiga_implementacao, true,
          amostra_da_nova_implementacao_de_binario, true,
-         extracao_de_bits_implementacao_geral, false,
+         extracao_de_bits_implementacao_geral, true,
          // iteração para gerar máscaras funciona!
-         verificando_obtendo_de_potencias_de_dois, false,
-         stringficacao_de_valores_primitivos, false,
-         converte_strings_de_valores_logicos, false,
+         verificando_obtendo_de_potencias_de_dois, true,
+         stringficacao_de_valores_primitivos, true,
+         converte_strings_de_valores_logicos, true,
          // consome bastante tempo...
          testes_tal_declaracao_de_loop, false
    );
 
-   #ifdef __linux__
    // Teste da função interna sem nada com atual módulo:
    executa_testes(
       4, percorrendo_string, true,
@@ -222,7 +223,6 @@ int main(int qtd, char* argumentos[], char* env_vars[]) {
          primeira_versao_alternativa_de_executa_testes, true,
          teste_interruptor_renomeado, true
    );
-   #endif
 
    return EXIT_SUCCESS;
 }
