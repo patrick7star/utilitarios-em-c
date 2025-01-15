@@ -1,33 +1,46 @@
 AR = llvm-ar
 CC	= clang
+HEADER = include/windows
+TESTADOR = -Lbin/static -ltempo -legivel -lterminal -lteste
+TESTADOR_I = build/tempo.obj build/teste.obj build/legivel.obj build/terminal.obj
+
+CriaTodoDiretorioNecessario:
+	@mkdir -p --verbose bin/tests
+	@mkdir -p --verbose bin/shared
+	@mkdir -p --verbose bin/static
+	@mkdir -p --verbose build
+
+CompilaTodasModulosPrincipais: CriaTodoDiretorioNecessario all-tempo all-legivel all-terminal all-teste  all-progresso 
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Teste
 # === === ===  === === === === === === === === === === === === === === ====
 COMPILA_TST = -D_UT_TESTE -D__debug__
-DEPS_TST 	= build/tempo.obj build/legivel.obj build/terminal.obj
-EXE_TST 		= bin/tests/ut_teste
-EXE_TST_I 	= bin/shared/libteste.dll
-EXE_TST_II 	= bin/static/libteste.a
+DEPS_TST 	= build/tempo.obj build/legivel.obj build/terminal.obj \
+				  build/progresso.obj build/amostras.obj
+EXE_TST 		= bin/tests/ut_teste.exe
+LIB_DYN_TST	= bin/shared/libteste.dll
+LIB_STC_TST = bin/static/libteste.a
 OBJ_II_TST 	= build/test-teste.obj
 OBJ_I_TST	= build/teste.obj
 
+all-teste: obj-teste lib-teste test-teste
+
 obj-teste:
-	$(CC) -Wall -O3 -Os -I include/ -c -o $(OBJ_I_TST) src/teste.c
+	@$(CC) -Wall -O3 -Os -I include/ -c -o $(OBJ_I_TST) src/teste.c
 	@echo "Objeto '$(OBJ_I_TST)' de 'teste.c' gerado."
 
-lib-teste: obj-teste
-	$(CC) -Iinclude/ -o $(EXE_TST_I) -shared $(OBJ_I_TST) $(DEPS_TST)
+lib-teste:
+	@$(CC) -Iinclude/ -o $(LIB_DYN_TST) -fPIC -shared $(OBJ_I_TST) $(DEPS_TST)
 	@echo "Biblioteca compartilhada 'libteste.dll'."
-	@$(AR) crs $(EXE_TST_II) build/teste.obj
+	@$(AR) crs $(LIB_STC_TST) $(OBJ_I_TST)
 	@echo "Biblioteca estática 'libteste.a' compilada."
 
 test-teste:
-	$(CC) -Isrc/teste -Iinclude -Wall -Werror \
+	@$(CC) -Isrc/teste -Iinclude -Wall -Werror \
 		-c -o build/amostras.obj src/teste/amostras.c
-	$(CC) -Wall -Werror -Iinclude $(COMPILA_TST) \
+	@$(CC) -O0 -Wall -Werror -Iinclude $(COMPILA_TST) \
 		-c -o $(OBJ_II_TST) src/teste.c
-	$(CC) -O0 -Iinclude/ $(COMPILA_TST) -o $(EXE_TST) $(OBJ_II_TST) \
-		$(DEPS_TST) build/progresso.o build/amostras.obj
+	@$(CC) -Iinclude/ -o $(EXE_TST) $(OBJ_II_TST) $(DEPS_TST)
 	@echo "Teste 'ut_teste' de 'teste.c' compilado"
 
 check-teste:
@@ -45,9 +58,11 @@ clean-teste:
 # === === ===  === === === === === === === === === === === === === === ====
 OBJ_TST_TERM = build/terminal-teste.obj
 OBJ_TERM 	 = build/terminal.obj
-EXE_TERM 	 = ./bin/tests/ut_terminal
+EXE_TERM 	 = ./bin/tests/ut_terminal.exe
 EXE_DLL_TERM = bin/shared/libterminal.dll
 EXE_ST_TERM  = bin/static/libterminal.a
+
+all-terminal: obj-terminal lib-terminal test-terminal
 
 obj-terminal:
 	@$(CC) -O3 -Os -I include -c src/terminal.c -o $(OBJ_TERM)
@@ -61,10 +76,10 @@ lib-terminal:
 	@echo "Biblioteca estática 'libterminal.a' compilada."
 
 test-terminal:
-	@$(CC) -std=gnu18 -Wall -I ./include -c \
+	@$(CC) -O0 -std=c18 -Wall -I ./include -c \
 		-D_UT_TERMINAL -Wno-main-return-type \
 		-o $(OBJ_TST_TERM) src/terminal.c
-	@$(CC) -O0 -o $(EXE_TERM) $(OBJ_TST_TERM)
+	@$(CC) -o $(EXE_TERM) $(OBJ_TST_TERM)
 	@echo "Teste 'ut_terminal' compilado."
 
 run-terminal:
@@ -76,22 +91,24 @@ clean-terminal:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Ponto
 # === === ===  === === === === === === === === === === === === === === ====
-EXE_PONTO = bin/tests/ut_ponto
+EXE_PONTO = bin/tests/ut_ponto.exe
 DEPS_PONTO = -L bin/shared -lteste -ltempo -llegivel -lterminal
 
+all-ponto: obj-ponto lib-ponto test-ponto
+
 obj-ponto:
-	@$(CC) -O3 -Os -I include/ -Wall -c -o build/ponto.o src/ponto.c
-	@echo "Gerou o arquivo objeto 'ponto.o' em 'build'."
+	@$(CC) -O3 -Os -I$(HEADER) -Wall -c -o build/ponto.obj src/ponto.c
+	@echo "Gerou o arquivo objeto 'ponto.obj' em 'build'."
 
 lib-ponto:
-	@$(CC) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libponto.so build/ponto.o
-	@echo "biblioteca compartilhada 'libponto.so' compilada."
-	@ar crs bin/static/libponto.a build/ponto.o
-	@echo "biblioteca estática 'libponto.a' compilada."
+	@$(CC) -std=c2x -I$(HEADER) -shared -fPIC -Wall \
+		-o bin/shared/libponto.dll build/ponto.obj
+	@echo "biblioteca compartilhada 'libponto.dll' compilada."
+	@$(AR) crs bin/static/ponto.lib build/ponto.obj
+	@echo "biblioteca estática 'ponto.lib' compilada."
 
 test-ponto:
-	@gcc -O0 -Wall -Iinclude/ -D_UT_PONTO -Wno-main \
+	@$(CC) -O0 -Wall -I$(HEADER) -D_UT_PONTO -Wno-main \
 		-o $(EXE_PONTO) src/ponto.c $(DEPS_PONTO) -lm
 	@echo "Compilado os testes-unitários de 'ponto.c' em bin/tests."
 
@@ -110,7 +127,7 @@ VERBOSE_TIME = -D_DEBUG_ALTERA_STATUS \
 					 -D_DEBUG_DESTROI_CRONOMETRO \
 					 -D_DEBUG_CRIA_CRONOMETRO 
 FLAGS_TIME   = -Iinclude/ -std=c18 -lm -Wall
-EXE_TIME 	 = bin/tests/ut_tempo
+EXE_TIME 	 = bin/tests/ut_tempo.exe
 EXE_I_TIME 	 = bin/shared/libtempo.dll
 EXE_II_TIME  = bin/static/libtempo.a
 DEPS_TIME 	 = -L./bin/shared -llegivel 
@@ -120,16 +137,18 @@ OBJ_II_TIME	 = build/tempo-teste.obj
 OBJ_I_TIME	 = build/tempo.obj
 SRC_TIME		 = $(OBJ_I_TIME) build/legivel.obj
 
+all-tempo: obj-tempo lib-tempo test-tempo
+
 obj-tempo:
 	@$(CC) -I include/ -O3 -Os -Wall -Werror \
 		-c -o $(OBJ_I_TIME) src/tempo.c 
-	@echo "Gerou o arquivo objeto 'tempo.o' em 'build'."
+	@echo "Objeto do módulo 'tempo' gerado."
 
 test-tempo: 
 	@$(CC) $(COMPILA_TIME) -Wall -Werror -Iinclude \
 		-c -o $(OBJ_II_TIME) src/tempo.c
 	@$(CC) -O0 -o $(EXE_TIME) $(OBJ_II_TIME) build/legivel.obj
-	@echo "Compilado os testes-unitários de 'tempo' em bin/tests."
+	@echo "Testes do módulo 'tempo' compilado."
 
 lib-tempo:
 	@$(CC) -Wall -I include/ -fPIC -shared -o $(EXE_I_TIME) $(SRC_TIME) 
@@ -146,19 +165,21 @@ clean-tempo:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Modulo Legível
 # === === ===  === === === === === === === === === === === === === === ====
-EXE_LEGIVEL		= bin/tests/ut_legivel
+EXE_LEGIVEL		= bin/tests/ut_legivel.exe
 EXE_LEGIVEL_I  = bin/shared/liblegivel.dll
 EXE_LEGIVEL_II = bin/static/liblegivel.a
 DEPS_LEGIVEL 	= -Lbin/shared -lteste -ltempo -lterminal -lm
+
+all-legivel: obj-legivel lib-legivel test-legivel
 
 obj-legivel:
 	@$(CC) -Iinclude -O3 -Os -c src/legivel.c -o build/legivel.obj
 	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
 
 test-legivel:
-	@$(CC) -o -Wall -Werror -c -o build/legivel-teste.obj src/legivel.c
-	@$(CC) -O0 -std=c2x -I include/ -D_UT_LEGIVEL \
-		-o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
+	@$(CC) -O0 -std=c2x -Iinclude -o -Wall -Werror -D_UT_LEGIVEL \
+		-c -o build/legivel-teste.obj src/legivel.c
+	@$(CC) -I include/ -o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
 	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
 
 lib-legivel:
@@ -175,37 +196,55 @@ clean-legivel:
 		build/legivel.o build/legivel-teste.o
 
 # === === ===  === === === === === === === === === === === === === === ===
-# 									Modulo Progresso
+# 									Módulo Progresso
 # === === ===  === === === === === === === === === === === === === === ===
-EXE_PROG    = bin/tests/ut_progresso
-LIB_SO_PROG = ./bin/shared/libprogresso.so
-LIB_A_PROG  = ./bin/static/libprogresso.a
-SRC_PROG = src/progresso.c
+EXE_PROG     = bin/tests/ut_progresso.exe
+LIB_SO_PROG  = ./bin/shared/libprogresso.dll
+LIB_A_PROG   = ./bin/static/libprogresso.a
+SRC_PROG 	 = src/progresso.c
+OBJ_PROG 	 = build/progresso.obj
+OBJ_I_PROG 	 = build/progresso-teste.obj
 
 all-progresso: obj-progresso lib-progresso test-progresso
 
 obj-progresso:
-	@$(CC) -O3 -Os -I include/ -Wall -c -o build/progresso.o $(SRC_PROG)
+	@$(CC) -O3 -Os -I include/ -Wall -c -o $(OBJ_PROG) $(SRC_PROG)
 	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
 
 lib-progresso: obj-progresso
-	@$(CC) -I include -o $(LIB_SO_PROG) -fPIC -shared build/progresso.o -lc
-	@echo "Compilação de uma biblioteca compartilhada 'libprogresso.so' em 'bin/shared'."
-	@ar crs $(LIB_A_PROG) build/progresso.o
-	@echo "Compilação de uma biblioteca estática 'libprogresso.a' em 'bin/static'."
+	@$(CC) -I include -o $(LIB_SO_PROG) -fPIC -shared $(OBJ_PROG) 
+	@echo "Biblioteca compartilhada 'libprogresso.dll' compilada."
+	@$(AR) crs $(LIB_A_PROG) $(OBJ_PROG)
+	@echo "Biblioteca estática 'libprogresso.a' compilada."
 
 test-progresso:
-	@$(CC) -O0 -std=c18 -I include/ -Wall -D_UT_PROGRESSO \
-		-c -o build/progresso-teste.o $(SRC_PROG)
-	@$(CC) -O0 -std=c18 -I include/ -Wall -D_UT_PROGRESSO \
-		-o $(EXE_PROG) build/progresso-teste.o $(TESTADOR)
-	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
+	$(CC) -O0 -std=c18 -I include/ -Wall -D_UT_PROGRESSO \
+		-c -o $(OBJ_I_PROG) $(SRC_PROG)
+	$(CC) -Iinclude/ -o $(EXE_PROG) $(OBJ_I_PROG) $(TESTADOR_I)
+	@echo "Testes 'ut_progresso' compilado com sucesso."
 
 run-progresso:
-	./bin/tests/ut_progresso
+	@bin/tests/ut_progresso.exe
 
 clean-progresso:
 	@rm -vf build/progresso.o build/progresso-teste.o \
 		bin/tests/ut_progresso bin/shared/libprogresso.so \
 		bin/static/libprogresso.a
 	
+# === === ===  === === === === === === === === === === === === === === ===
+# 									Modulo Menu
+# === === ===  === === === === === === === === === === === === === === ===
+test-menu:
+	$(CC) -Iinclude/ -Wall -D__unit_tests__ -c -o build/menu-teste.obj src/menu.c
+	@echo "Objeto do teste de 'menu' foi compilado."
+	$(CC) -Iinclude/ -o bin/tests/ut_menu.exe build/menu-teste.obj $(TESTADOR) 
+	@echo "Testes de 'menu' foram compilado."
+
+run-menu:
+	bin/tests/ut_menu
+
+# === === ===  === === === === === === === === === === === === === === ===
+# 									Testes Integrais
+# === === ===  === === === === === === === === === === === === === === ===
+ImportandoStaticLib:
+	clang -Wall -O0 -Iinclude -o bin/tests/it_importando_static_lib.exe testes/importando_static_lib.c -Lbin/static -lponto
