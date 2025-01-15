@@ -68,24 +68,12 @@ void debug_aqui(void) {
  * str_to_bool) também é listada, pois alguns testes fazem uso delas.
  *
  *    Funções:
- *          - string_esta_minuscula
- *          - string_minuscula
- *          - str_to_bool
+ *          - string_esta_minuscula						[privada]
+ *          - string_minuscula							[privada]
+ *          - str_to_bool									[publica]
  */
 #include "teste/booleano.c"
 
-/* Cuida da estração de bits de quqlquer tipo de dado primitivo dado. Ainda
- * não está terminado, e não tem qualquer protótipo para qualquer mínimo
- * uso ainda. 
- *    
- *    Funções na ordem encontrada:
- *       - algarismo
- *       - binario_str
- *       - binario_complemento_de_dois_oito_bits
- *       - inverte_array
- *       - binario_complemento_de_dois
- */
-#include "teste/bits.c"
 
 /* Nova feature de testes, sendo está pega o nome do teste, e também
  * permite a paralelização, se assim for desejado.
