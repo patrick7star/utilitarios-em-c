@@ -3,7 +3,7 @@ O mesmo que o Python e Rust, porém em C. Algumas irão variar, haverá features
 para construir qualquer outra coisa. Este tem uma diretório só para estrutura de dados, que são irrelevantes nas outras linguagens.
 
 > Algumas *funções* e *estrutura* importantes:
->> `Temporizador`, `Cronometro`, `Progresso`, `tamanho_legivel`, `executa_funcoes`
+>> `Temporizador`, `Cronometro`, `Progresso`, `tamanho_legivel`, `executa_testes*`, `fatorial`, `gera_combinacoes`, `imprime_array`, `Ponto`, `maquina_big_endia`, `i16_to_bytes`,  `PilhaLigada`, `FilaLigada`, `FilaArray`, `Conjunto`, `HashTable`
 
 #### amostras diversas do que ela pode fazer:
 ```C
