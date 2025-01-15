@@ -30,19 +30,8 @@ static char* string_minuscula(char* original) {
 bool str_to_bool(char* s) {
    char* nova_str;
 
-   #ifdef _DEBUG_STR_TO_BOOL
-   bool resultado = string_esta_minuscula(s);
-   printf(
-      "string minúscula? %s\n\n",
-      bool_to_str(resultado)
-   );
-   #endif
-
    if (!string_esta_minuscula(s)) {
       nova_str = string_minuscula(s);
-      #ifdef _DEBUG_STR_TO_BOOL
-      printf("antiga: %s\t>>\tnova: %s\n", s, nova_str);
-      #endif
    } else 
       nova_str = s;
 
@@ -65,3 +54,8 @@ bool str_to_bool(char* s) {
    else
       { perror("a string não é válida!"); abort(); }
 }
+
+/* Nota: o inverso desta função, 'booleano para string', é definida, via 
+ *			macro, no cabeçalho da função. 
+ */
+
