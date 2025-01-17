@@ -5,7 +5,8 @@
 #include <stdbool.h>
 #include <time.h>
 #include <iso646.h>
-#ifdef _POSIX_SOURCE
+#include <assert.h>
+#ifdef __linux__
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -62,7 +63,6 @@ extern size_t inteiro_positivo(size_t a, size_t b) {
    else if (a == b)
       return b;
 
-   //return ((rand() % SIZE_MAX) % (b - a + 1)) + a;
    return (n % (b - a + 1)) + a;
 }
 
@@ -92,7 +92,7 @@ char ascii_char_aleatorio(void)
 /* Selecionando só caractéres válidos. Portanto, aqueles acima de 32. */
    { return inteiro_positivo(33, 126); }
 
-#ifdef _POSIX_SOURCE
+#ifdef __linux__
 char* palavra_aleatoria(void) {
    /*   O algoritmo para ser eficiente fará da seguinte forma, ao invés de 
     * carregar todas palavras na memória, contabilizará o tamanho do 
@@ -178,6 +178,69 @@ char* palavra_aleatoria(void) {
 }
 #endif
 
+/* === === === === === === === === === === === === === === === === === ===
+ *                Embalharamento dos Elementos de uma Array 
+ * === === === === === === === === === === === === === === === === === ==*/
+static bool ja_foi_escolhida(int* S, int t, int X)
+{
+   for (int k = 0; k < t; k++) {
+      if (S[k] == X)
+         return true;
+   }
+   return false;
+}
+
+static int sorteia_numero_distinto(int* seq, int* t, int a, int b)
+{
+   assert(a < b); assert(*t >= 0);
+
+   int X = inteiro_positivo(a, b);
+
+   // Sorteia até achar algo que difere da sequência de selecionados.
+   while (ja_foi_escolhida(seq, *t, X))
+      X = inteiro_positivo(a, b);
+
+   // Faz a inserção, contabiliza-a, então retorna número selecionado.
+   seq[*t] = X;
+   *t += 1;
+   return X;
+}
+
+static void alterna(generico_t seq, int sz, int a, int b)
+{
+/* Alterna os valores das posições 'a' e 'b', numa array genérica de 
+ * tipo 'sz'(seu tanto em bytes). */
+   assert(a != b);
+
+   uint8_t* sequencia = (uint8_t*)seq;
+   // Indexando posições a serem trocadas ...
+   uint8_t* ptr_a = sequencia + a * sz;
+   uint8_t* ptr_b = sequencia + b * sz;
+   uint8_t buffer[sz];
+
+   memmove(buffer, ptr_a, sz);
+   memmove(ptr_a, ptr_b,  sz);
+   memmove(ptr_b, buffer, sz);
+}
+
+void embaralha_array(generico_t seq, int n, int sz)
+{
+/* Pega uma array genérica(de qualquer tipo, seja ele primitivo ou não), 
+ * e embaralha seus itens. */
+   assert(n >= 4); assert(sz > 0);
+
+   // Posições que já foram selecionadas:
+   int selecoes[n], p, k, i = 0;
+
+   do {
+      p = sorteia_numero_distinto(selecoes, &i, 0, (n - 1));
+      k = sorteia_numero_distinto(selecoes, &i, 0, (n - 1));
+
+      alterna(seq, sz, p, k);
+
+   } while (i < (n - 1));
+}
+
 #ifdef _UT_ALEATORIO
 /* === === === === === === === === === === === === === === === === === ==
  *                            Testes Unitários
@@ -188,14 +251,14 @@ char* palavra_aleatoria(void) {
  * mais limpo. 
  * === === === === === === === === === === === === === === === === === ==*/
 #include "legivel.h"
-// Apenas para sistemas POSIX.
-#ifdef _POSIX_SOURCE
+#ifdef __linux__
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <tgmath.h>
 #include "teste.h"
 #include "tempo.h"
+#include "impressao.h"
 #endif
 
 void tempo_do_primeiro_inteiro_positivo_sorteado(void) {
@@ -321,7 +384,109 @@ void obtendo_tempo_de_sorteio_da_palavra(void)
 
    marca(contagem);
    printf("decorrido: %s\n",cronometro_to_str(contagem));
+}
 
+void verifica_pertenciamento_na_array_int(void)
+{
+   struct par { int value; bool result; };
+
+   int seq[] = {5, 7, 3, 2, 1, -3, -7, 8};
+   const int sz = sizeof(int);
+   int n = sizeof(seq) / sz;
+   struct par io[] = {
+      {.value=9, .result=false},
+      {.value=4, .result=false},
+      {.value=3, .result=true},
+      {.value=-3, .result=true},
+      {.value=6, .result=false},
+      {.value=-7, .result=true},
+      {.value=0, .result=false},
+      {.value=1, .result=true},
+      {.value=2, .result=true},
+      {.value=5, .result=true},
+      {.value=8, .result=true},
+      {.value=10, .result=false},
+      {.value=-11, .result=false},
+      {.value=7, .result=true}
+   };
+   int m = sizeof(io) / sizeof(struct par);
+
+   imprime_array(seq, n);
+   puts("\nO que pertence ou não a array:");
+
+   for (int k = 0; k < m; k++)
+   {
+      int value = io[k].value;
+      bool in = io[k].result;
+      const char* result_str = bool_to_str(in);
+      bool out = ja_foi_escolhida(seq, n, value);
+
+      assert(out == in);
+      printf("\t\b\b\b>> %4d? %s\n", value, result_str);
+   }
+}
+
+void cuspidor_de_numeros_distintos(void)
+{
+   const int N = 20;
+   int buffer[N];
+   int n = 0, X;
+
+   puts("Todas seleções aqui são distintas entre sí:");
+
+   do {
+      X = sorteia_numero_distinto(buffer, &n, 0, N - 1);
+      printf("\t\b\b\b>> %2d\n", X);
+
+   } while (n < 20);
+}
+
+void embalharamento_de_arrays_genericas(void)
+{
+   int16_t seq_a[] = {-1, 2, -3, 4, -5, -6, 7, 8};
+   const int sz_a = sizeof(int16_t);
+   const int na = sizeof(seq_a) / sz_a; 
+
+   imprime_array(seq_a, na);
+   embaralha_array(seq_a, na, sz_a);
+   imprime_array(seq_a, na);
+
+   int64_t seq_b[] = {1, 10, 100, 1000};
+   const int sz_b = sizeof(int64_t);
+   const int nb = sizeof(seq_b) / sz_b; 
+
+   imprime_array(seq_b, nb);
+   embaralha_array(seq_b, nb, sz_b);
+   imprime_array(seq_b, nb);
+
+   char seq_c[] = {'a', 'B', 'c', 'D', 'e'};
+   const int sz_c = sizeof(char);
+   const int nc = sizeof(seq_c) / sz_c; 
+
+   imprime_array(seq_c, nc);
+   embaralha_array(seq_c, nc, sz_c);
+   imprime_array(seq_c, nc);
+
+   float seq_d[] = {0.12345, 98.76, 3.1415, 1.41, 0.01};
+   const int sz_d = sizeof(float);
+   const int nd = sizeof(seq_d) / sz_d; 
+
+   imprime_array(seq_d, nd);
+   embaralha_array(seq_d, nd, sz_d);
+   imprime_array(seq_d, nd);
+}
+
+void embaralhamento_repetido_milhares_de_vezes(void)
+{
+   char seq[] = {'a', 'B', 'c', 'D', 'e'};
+   const int sz = sizeof(char);
+   const int n = sizeof(seq) / sz; 
+   const int L = 12000;
+
+   imprime_array(seq, n);
+   for (int k = 0; k <= L; k++)
+      embaralha_array(seq, n, sz);
+   imprime_array(seq, n);
 }
 
 int main(int qtd, char* args[], char* vars[]) 
@@ -332,7 +497,8 @@ int main(int qtd, char* args[], char* vars[])
    #elif __linux__
    puts ("Testes apenas para Linux:");
    executa_testes_a(
-      true, 8, tempo_do_primeiro_inteiro_positivo_sorteado, false,
+      false, 8, 
+         tempo_do_primeiro_inteiro_positivo_sorteado, false,
          sorteio_de_caracteres_ascii, true,
          sorteio_de_letras_do_alfabeto, true,
          amostra_pequena_inteiros_positivos, true,
@@ -340,6 +506,15 @@ int main(int qtd, char* args[], char* vars[])
          distribuicao_de_valores_logicos, true,
          sorteio_de_palavra, false,
          obtendo_tempo_de_sorteio_da_palavra, false
+   );
+
+   executa_testes_a(
+   // Testes de todos componentes do embaralhamento de array.
+      true, 4,
+         verifica_pertenciamento_na_array_int, true,
+         cuspidor_de_numeros_distintos, true,
+         embalharamento_de_arrays_genericas, true,
+         embaralhamento_repetido_milhares_de_vezes, true
    );
    #endif
 
