@@ -12,6 +12,7 @@ tabela.
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wchar.h>
 #include <string.h>
 #include <assert.h>
 // Biblioteca deste próprio repositório:
@@ -177,6 +178,70 @@ void imprime_array_str(char* array[], int total)
    puts("\b\b]");
 }
 
+void imprime_array_str_unicode(wchar_t* array[], int total)
+{
+/* Uma cópia, com alguns retoque é claro, da função que realização a 
+ * impressão de 'narrow' strings. */
+   assert(total >= 0 && array != NULL); 
+   assert(total <= LIMITE);
+
+   if (total == 0)
+      { wprintf(L"[]\n"); return; }
+   
+   struct TerminalSize dim = obtem_dimensao();
+   int L = dim.colunas, x = 0, PAD = 1;
+   wchar_t fmt[L];
+
+   putchar('[');
+   for (int p = 0; p < total; p++)
+   {
+      swprintf(fmt, L, L"\" %ls \"", array[p]);
+      x += wcslen(fmt) + PAD;
+
+      if (x >= L) {
+         printf("\n%ls, ", fmt);
+         x = 0;
+      } else
+         printf("%ls, ", fmt);
+   }
+   puts("\b\b]");
+   // wprintf(L"\b\b]\n");
+}
+
+static bool e_caractere_ascii(wchar_t caractere)
+{
+   wchar_t* ptr = &caractere;
+   uint8_t* bytes = (uint8_t*)ptr;
+
+   if (bytes[0] > 0 && bytes[1] == 0 && bytes[2] == 0 && bytes[3] == 0)
+      return true;
+   else
+      return false;
+}
+void imprime_array_char_unicode(wchar_t* array, int length)
+{
+/* Mesmo que a função 'imprime_array_char', porém para caractéres Unicodes.
+ * Entretanto, aqui, símbolos mais gráficos não são colocados entre aspas
+ * simples. */
+   assert(length >= 0 && array != NULL); 
+   assert(length <= LIMITE);
+
+   if (length == 0)
+      { puts("[]"); return; }
+
+   putchar('[');
+   for (int p = 0; p < length; p++)
+   {
+      wchar_t caractere = array[p];
+
+      if (e_caractere_ascii(caractere))
+         printf("'%lc', ", array[p]);
+      else
+         printf("%lc , ", array[p]);
+   }
+   puts("\b\b]");
+}
+
 void imprime_array_float(float* array, int length)
 {
    assert(length >= 0 && array != NULL); 
@@ -307,6 +372,7 @@ void imprime_array_u64(uint64_t* array, int length)
 #include "dados_testes.h"
 #include "teste.h"
 #include <limits.h>
+#include <locale.h>
 
 char* constchar_to_str(generico_t dt) {
    char* pointer = (char*)dt;
@@ -407,15 +473,44 @@ void impressao_de_outros_tipos_de_inteiros(void)
    imprime_array(in_h, 2);
 }
 
+void impressao_de_strings_e_caracteres_unicode(void)
+{
+   wchar_t* input[] = {
+      L"Minha linda casa ... \U0001f3e0",
+      L"Me and him, we \u2665, but we broke up ... \U0001f494",
+      L"Irei de \U0001f686 ou de \U0001f697 ?!",
+      L"Eu adotei um lindo \U0001f415 para meu lar."
+   };
+
+   puts("Impressão pra verificar se está funcionando:");
+   for (int p = 0; p < 4; p++)
+      printf("\t\b\b\b- %ls\n", input[p]);
+
+   imprime_array_str_unicode(input, 4);
+
+   wchar_t input_a[] = {
+      L'\U0001f414', L'}', L'\U0001f4d2', L'\U0001f3dd', L'\U0001f4b0',
+      L'\U0001f4df', L'a', L'\U0001f4bf', L'\U0001f489', L'\U0001f419',
+      L'é', L'+'
+   };
+   const int n = sizeof(input_a) / sizeof(wchar_t);
+
+   puts("\nImpressão de caractéres Unicode:");
+   imprime_array_char_unicode(input_a, n);
+}
+
 int main(void) 
 {
+   setlocale(LC_CTYPE, "en_US.UTF-8");
+
    executa_testes_a(
-     true, 5,
+     true, 6,
          primeiro_exemplo_da_funcao_de_listagem, true,
          checando_um_caractere_multibyte, false,
          impressao_de_varios_tipos_de_array, true,
          impressao_de_array_gigante_de_strings, true,
-         impressao_de_outros_tipos_de_inteiros, true
+         impressao_de_outros_tipos_de_inteiros, true,
+         impressao_de_strings_e_caracteres_unicode, true
    );
 }
 #endif
