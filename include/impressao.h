@@ -12,10 +12,14 @@
   * comprimento. */
  void imprime_array_int    (int* array, int length);
  void imprime_array_bool   (bool* array, int length);
- void imprime_array_char   (char* array, int length);
- void imprime_array_str    (char* array[], int total);
  void imprime_array_float  (float* array, int length);
  void imprime_array_double (double* array, int length);
+
+ // Apenas referentes a strings de qualquer tipo:
+ void imprime_array_char         (char*    array,   int length);
+ void imprime_array_str          (char*    array[], int total);
+ void imprime_array_char_unicode (wchar_t* array,   int length);
+ void imprime_array_str_unicode  (wchar_t* array[], int total);
 
  /* Todas variações de inteiros que existem: */
  void imprime_array_i8  (int8_t*    array, int length);
