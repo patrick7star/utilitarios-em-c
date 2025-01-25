@@ -263,8 +263,8 @@ clean-ponto:
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_RANDOM = bin/tests/ut_aleatorio
 SRC_RANDOM = src/aleatorio.c
-FLAGS_RANDOM = -I include/ -D_UT_ALEATORIO -Wall -Werror
-DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo
+FLAGS_RANDOM = -I include/ -D__debug__ -D_UT_ALEATORIO -Wall -Werror
+DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo -limpressao
 
 obj-aleatorio:
 	@gcc -O3 -Os -c -I include/ -Wall -Werror -o build/aleatorio.o src/aleatorio.c
@@ -375,8 +375,9 @@ obj-legivel:
 	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
 
 test-legivel:
-	@gcc -o -Wall -Werror -c -o build/legivel-teste.o src/legivel.c
-	@clang -O0 -std=c2x -I include/ -D_UT_LEGIVEL \
+	@gcc -I$(HEADERS) -o -Wall -Werror -c -o \
+		build/legivel-teste.o src/legivel.c
+	@gcc -O0 -std=c2x -I$(HEADERS) -D_UT_LEGIVEL \
 		-o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
 	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
 
@@ -502,6 +503,15 @@ test-combinatoria:
 run-combinatoria:
 	./bin/tests/ut_combinatoria
 
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Fio
+# === === ===  === === === === === === === === === === === === === === ====
+test-fio:
+	gcc -I$(HEADERS) -D__unit_tests__ -Wall -Werror -O0 -c -o build/fio-teste.o src/fio.c
+	gcc -I$(HEADERS) -o bin/tests/ut_fio build/fio-teste.o -L$(DLL) -llegivel
+
+run-fio:
+	@bin/tests/ut_fio
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo HashTable Referência
 # === === ===  === === === === === === === === === === === === === === ====
