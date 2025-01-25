@@ -1,43 +1,73 @@
-/* Grandezas mais legíveis:
- * Faz conversões de grandezas referentes a dados utilizados em computação,
- * ou outros campos. 
- */
-
-// Declaração das funções abaixo:
-#include "legivel.h"
+// Cabeçalho com definições da funções:
+#include <legivel.h>
+// Biblioteca padrão do C:
 #include <stdio.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <iso646.h>
+
+// Pesos que ajudam na conversão:
+const size_t MILHAR     = 1e3;
+const size_t MILHAO     = 1e6;
+const size_t BILHAO     = 1e9;
+const size_t TRILHAO    = 1e12;
+const size_t QUADRILHAO = 1e15;
+const size_t QUINTILHAO = 1e18;
+// para comparação ...
+const double MINUTO = 60.0;
+const double HORA = 60 * MINUTO; 
+const double DIA = 24 * HORA;
+const double MES = 30 * DIA;
+const double ANO = 365 * DIA;
+const double DECADA = 10 * ANO;
+const double SECULO = 100 * ANO;
+const double MILENIO = 1000 * ANO;
+// const double MILISEG = powf(10, -3);
+const double MILISEG = 1e-3;
+// const double MICROSEG = powf(10, -6);
+const double MICROSEG = 1e-6;
+// const double NANOSEG = powf(10, -9);
+const double NANOSEG = 1e-9;
 
 
-char* tempo_legivel(double segundos) {
+static char* nova_str(int n)
+   { return (char*)malloc(n * sizeof(char)); }
+
+static char* tempo_legivel_double(double segundos) 
+{
    // variável com uma letra para agilizar codificação.
    double s = segundos;
-   const int N = 30, sz = sizeof(char);
-   char* resultado = malloc(N * sz);
-
-   // para comparação ...
-   const double MINUTO = 60.0;
-   const double HORA = 60 * MINUTO; 
-   const double DIA = 24 * HORA;
-   const double MES = 30 * DIA;
-   const double MILISEG = powf(10, -3);
-   const double MICROSEG = powf(10, -6);
-   const double NANOSEG = powf(10, -9);
+   // char* resultado = calloc(30, sizeof(char));
+   char* resultado = nova_str(30);
+   // Proposições avaliadas abaixo:
+   bool na_faixa_dos_meses = (s >= MES && s < ANO);
+   bool na_faixa_dos_anos = (s >= ANO && s < DECADA);
+   bool na_faixa_das_decadas = (s >= DECADA && s < SECULO);
+   bool na_faixa_dos_seculos = (s >= SECULO && s < MILENIO);
 
    if (s >= 1.0) {
       if (s < MINUTO)
          sprintf(resultado, "%0.1lf seg", s);
+
       else if (s >= MINUTO && s < HORA)
          sprintf(resultado, "%0.1lf min", s / MINUTO);
+
       else if (s >= HORA && s < DIA)
          sprintf(resultado, "%0.1lfh", s / HORA);
+
       else if (s >= DIA && s < MES)
          sprintf(resultado, "%0.1lf dias", s / DIA);
+
+      else if (na_faixa_dos_meses)
+         sprintf(resultado, "%0.1lf meses", s / MES);
+      else if (na_faixa_dos_anos)
+         sprintf(resultado, "%0.1lf anos", s / ANO);
+      else if (na_faixa_das_decadas)
+         sprintf(resultado, "%0.1lf déc", s / DECADA);
+      else if (na_faixa_dos_seculos)
+         sprintf(resultado, "%0.1lf séc", s / SECULO);
       else
-         perror("não implementado para tal grandeza");
+         sprintf(resultado, "%0.1lf milênios", s / MILENIO);
    } else {
       if (s >= MILISEG)
          sprintf(resultado, "%0.0lf ms", s * 1000.0);
@@ -47,16 +77,13 @@ char* tempo_legivel(double segundos) {
          sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
       else {
 			// qualquer quantia abaixo disso, será considerado zero!
-         #ifdef __linux__
 			strcpy (resultado, "0seg");
-         #elif defined(_WIN32)
-         strcpy_s (resultado, N, "0seg");
-         #endif
 		}
    }
    return resultado;
 }
 
+// #include "legivel/calculo_potencia.c"
 static uint64_t potencia(uint64_t b, uint8_t e) {
 /* Calcula uma pontência, porém retorna ela como um grande inteiro --
  * o maior tipo que existe, já que na falta de um deste na biblioteca
@@ -105,7 +132,66 @@ char* tamanho_legivel(size_t bytes) {
    return (char*)resultado_str;
 }
 
-char* valor_legivel(size_t unidades) {
+/* === === === === === === === === === === === === === === === === === ==
+ *                Legibilidade do Valor Absoluto
+ * === === === === === === === === === === === === === === === === === ==*/
+static char* valor_legivel_isize(int64_t unidades) 
+{
+   char* formatacao = malloc(15);
+   // Apenas a magnitude do valor.
+   int64_t m = unidades > 0 ? unidades: (-1) * unidades;
+   char* peso;
+   double potencia;
+
+   // Proposições trabalhadas:
+   bool faixa_dos_milhares    = (m >= MILHAR) and (m < MILHAO);
+   bool faixa_dos_milhoes     = (m >= MILHAO) and (m < BILHAO);
+   bool faixa_dos_bilhoes     = (m >= BILHAO) and (m < TRILHAO);
+   bool faixa_dos_trilhoes    = (m >= TRILHAO) and (m < QUADRILHAO);
+   bool faixa_dos_quadrilhoes = (m >= QUADRILHAO) and (m < QUINTILHAO);
+   bool faixa_dos_quitilhoes  = (m >= QUINTILHAO);
+
+   if (faixa_dos_milhares) {
+      peso = "mil";
+      potencia = MILHAR;
+
+   } else if (faixa_dos_milhoes) {
+      peso = "mi";
+      potencia = MILHAO;
+
+   } else if (faixa_dos_bilhoes) {
+      peso = "bi";
+      potencia = BILHAO;
+
+   } else if (faixa_dos_trilhoes) {
+      potencia = TRILHAO;
+      peso = "tri";
+
+   } else if (faixa_dos_quadrilhoes) {
+      potencia = QUADRILHAO;
+      peso = "qd";
+
+   } else if (faixa_dos_quitilhoes) {
+      potencia = QUINTILHAO;
+      peso = "qn";
+
+   } else 
+      { peso = ""; potencia = 1; }
+
+   double decimal = (double)unidades /(double)potencia;
+   double inteiro = truncf(decimal);
+   double fracao = fabs(inteiro - decimal);
+
+   if (fracao < 0.09)
+   // Não mostra a parte fracionaria do número se for insignificante.
+      sprintf(formatacao, "%0.0lf%s", decimal, peso); 
+   else
+      sprintf(formatacao, "%0.1lf%s", decimal, peso);
+
+   return formatacao;
+}
+
+static char* valor_legivel_usize(size_t unidades) {
    char* peso;
    double potencia;
    char* resultado_str = malloc(15);
@@ -123,6 +209,12 @@ char* valor_legivel(size_t unidades) {
    } else if (u >= pow(10, 12) && u < pow(10, 15)) {
       potencia = pow(10, 12);
       peso = "tri";
+   } else if (u >= pow(10, 15) && u < pow(10, 18)) {
+      potencia = pow(10, 15);
+      peso = "qd";
+   } else if (u >= pow(10, 18) && u < pow(10, 21)) {
+      potencia = pow(10, 18);
+      peso = "qn";
    } else 
       { peso = ""; potencia = 1; }
 
@@ -135,6 +227,31 @@ char* valor_legivel(size_t unidades) {
    return resultado_str;
 }
 
+static char* valor_legivel_f32 (float decimal) 
+   { return valor_legivel_isize((int64_t)decimal); }
+
+static char* valor_legivel_f64 (double decimal)
+   { return valor_legivel_isize((int64_t)decimal); }
+
+/* === === === === === === === === === === === === === === === === === ==
+ *                   Legibilidade do Tempo
+ * === === === === === === === === === === === === === === === === === ==*/
+
+static char* tempo_legivel_usize(size_t seg) 
+   { return tempo_legivel_double((double)seg); }
+
+static double timespec_to_seg(struct timespec a)
+   { return (double)a.tv_sec + (double)a.tv_nsec / 1.0e9; }
+
+static char* tempo_legivel_timespec(struct timespec t)
+   { return tempo_legivel_double(timespec_to_seg(t)); }
+
+static double timeval_to_seg(struct timeval e)
+   { return (double)e.tv_sec + (double)e.tv_usec / 1.0e6; }
+
+static char* tempo_legivel_timeval(struct timeval t)
+   { return tempo_legivel_double(timeval_to_seg(t)); }
+
 /* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
  * ........................Testes Unitários...............................&
@@ -144,6 +261,8 @@ char* valor_legivel(size_t unidades) {
 // Biblioteca padrão em C(libs muito utilizadas.):
 #include <stdbool.h>
 #include <assert.h>
+#include <limits.h>
+#include <float.h>
 // Seus módulos:
 #include "teste.h"
 
@@ -184,15 +303,87 @@ void o_grosso_de_grande_valores(void) {
          entradas[p], 
          valor_legivel(entradas[p])
       );
+
+   float inputs_a[] = {3000531.14159, 12345.6789, 1.71001e4, 3.14159e9};
+   const int na = sizeof(inputs_a) / sizeof(float);
+   
+   puts("\nAgora valores decimais(float/double):");
+   for (int k = 0; k < na; k++)
+      printf("%21f ===> %s\n", inputs_a[k], valor_legivel(inputs_a[k]));
+}
+
+void valor_legivel_de_todos_limites(void)
+{
+   char* formatacoes[] = {
+      // Inteiros positivos sem sinal:
+      valor_legivel(UCHAR_MAX),
+      valor_legivel(USHRT_MAX),
+      valor_legivel(UINT_MAX),
+      valor_legivel(ULONG_MAX),
+      valor_legivel(SIZE_MAX),
+      // Constantes referentes a inteiros com sinal.
+      valor_legivel (CHAR_MAX),
+      valor_legivel (SHRT_MAX),
+      valor_legivel (INT_MAX),
+      valor_legivel (LONG_MAX),
+      valor_legivel (CHAR_MIN),
+      valor_legivel (SHRT_MIN),
+      valor_legivel (INT_MIN),
+      valor_legivel (LONG_MIN),
+      valor_legivel (DBL_MAX),
+      valor_legivel (DBL_MIN),
+      valor_legivel (FLT_MAX),
+      valor_legivel (FLT_MIN)
+   };
+   const int n = sizeof(formatacoes) / sizeof(char*);
+
+   puts("Inteiros sem sinal: ");
+   printf("%21u   8-bits  ==> %s\n", UCHAR_MAX, formatacoes[0]); 
+   printf("%21u  16-bits  ==> %s\n", USHRT_MAX, formatacoes[1]); 
+   printf("%21u  32-bits  ==> %s\n", UINT_MAX, formatacoes[2]); 
+   printf("%21lu  64-bits  ==> %s\n", ULONG_MAX, formatacoes[3]); 
+   printf("%21zu  (size_t) ==> %s\n", SIZE_MAX, formatacoes[4]); 
+   puts("\nInteiros com sinal: ");
+   printf("%21d   8-bits ==> %s\n", CHAR_MAX, formatacoes[5]); 
+   printf("%21d   8-bits ==> %s\n", CHAR_MIN, formatacoes[9]); 
+   printf("%21d  16-bits ==> %s\n", SHRT_MAX, formatacoes[6]); 
+   printf("%21d  16-bits ==> %s\n", SHRT_MIN, formatacoes[10]); 
+   printf("%21d  32-bits ==> %s\n", INT_MAX, formatacoes[7]); 
+   printf("%21d  32-bits ==> %s\n", INT_MIN, formatacoes[11]); 
+   printf("%21ld  64-bits ==> %s\n",LONG_MAX, formatacoes[8]); 
+   printf("%21ld  64-bits ==> %s\n",LONG_MIN, formatacoes[12]); 
+   puts("\nAmbos tipos decimais: ");
+   printf("%21lf  64-bits ==> %s\n",DBL_MAX, formatacoes[13]); 
+   printf("%21.6lf  64-bits ==> %s\n",DBL_MIN, formatacoes[14]); 
+   printf("%21.6lf  32-bits ==> %s\n",FLT_MAX, formatacoes[15]); 
+   printf("%21.6lf  32-bits ==> %s\n",FLT_MIN, formatacoes[16]); 
+
+   for (int i = 0; i < n; i++)
+      free(formatacoes[i]);
+}
+
+void tipos_de_tempo_diferentes_a_converter(void) {
+   struct timeval a; 
+   struct timespec b = {5, 803000115};
+   char* str_a, *str_b;
+
+   gettimeofday(&a, NULL);
+   str_a = tempo_legivel(a);
+   str_b = tempo_legivel(b);
+   printf("struct timeval ===> %s\nstruct timespec ==> %s\n", str_a, str_b);
+   free(str_b); 
+   free(str_a); 
 }
 
 int main(void) {
    executa_testes_a(
-      true, 3, legibilidade_do_tempo, true,
+      true, 5, 
+         legibilidade_do_tempo, true,
          legibilidade_de_tamanhos, true,
-		   o_grosso_de_grande_valores, true
+		   o_grosso_de_grande_valores, true,
+         valor_legivel_de_todos_limites, true,
+         tipos_de_tempo_diferentes_a_converter, true
 	);
-
    return EXIT_SUCCESS;
 }
 #endif
