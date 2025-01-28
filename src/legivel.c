@@ -1,5 +1,5 @@
 // Cabeçalho com definições da funções:
-#include <legivel.h>
+#include "legivel.h"
 // Biblioteca padrão do C:
 #include <stdio.h>
 #include <math.h>
@@ -14,26 +14,24 @@ const size_t TRILHAO    = 1e12;
 const size_t QUADRILHAO = 1e15;
 const size_t QUINTILHAO = 1e18;
 // para comparação ...
-const double MINUTO = 60.0;
-const double HORA = 60 * MINUTO; 
-const double DIA = 24 * HORA;
-const double MES = 30 * DIA;
-const double ANO = 365 * DIA;
-const double DECADA = 10 * ANO;
-const double SECULO = 100 * ANO;
-const double MILENIO = 1000 * ANO;
-// const double MILISEG = powf(10, -3);
-const double MILISEG = 1e-3;
-// const double MICROSEG = powf(10, -6);
-const double MICROSEG = 1e-6;
-// const double NANOSEG = powf(10, -9);
-const double NANOSEG = 1e-9;
+const double NANOSEG    = 1e-9;
+const double MICROSEG   = 1e-6;
+const double MILISEG    = 1e-3;
+const double MINUTO     = 60.0;
+const double HORA       = 60 * MINUTO; 
+const double DIA        = 24 * HORA;
+const double MES        = 30 * DIA;
+const double ANO        = 365 * DIA;
+const double DECADA     = 10 * ANO;
+const double SECULO     = 100 * ANO;
+const double MILENIO    = 1000 * ANO;
 
 
+// Aloca string do tamanho que você desejar.
 static char* nova_str(int n)
    { return (char*)malloc(n * sizeof(char)); }
 
-static char* tempo_legivel_double(double segundos) 
+char* tempo_legivel_double(double segundos) 
 {
    // variável com uma letra para agilizar codificação.
    double s = segundos;
@@ -83,32 +81,17 @@ static char* tempo_legivel_double(double segundos)
    return resultado;
 }
 
-// #include "legivel/calculo_potencia.c"
-static uint64_t potencia(uint64_t b, uint8_t e) {
-/* Calcula uma pontência, porém retorna ela como um grande inteiro --
- * o maior tipo que existe, já que na falta de um deste na biblioteca
- * padrão do C, é preciso criar um. Não computa para expoentes negativos,
- * por motivos óbvio do tipo de retorno.
- */
-   uint64_t produto = 1;
-
-   for (uint8_t k = 1; k <= e; k++)   
-      produto *= b;
-
-   return produto;
-}
-
 char* tamanho_legivel(size_t bytes) { 
-   // múltiplos de tamanho(equivalente em bytes).
-   uint64_t KILO = potencia(2, 10);  
-   uint64_t MEGA = potencia(2, 20); 
-   uint64_t GIGA = potencia(2, 30);
-   uint64_t TERA = potencia(2, 40);
-   uint64_t PETA = potencia(2, 50);
-
-   char* resultado_str = calloc(30, sizeof(char));
+   // char* resultado_str = calloc(30, sizeof(char));
+   char* resultado_str = nova_str(30);
    char peso_str[5];
    float valor;
+   // Múltiplos de tamanho(equivalente em bytes).
+   const size_t KILO = pow(2, 10); 
+   const size_t MEGA = pow(2, 20);
+   const size_t GIGA = pow(2, 30);
+   const size_t TERA = pow(2, 40);
+   const size_t PETA = pow(2, 50);
 
    if (bytes >= KILO && bytes < MEGA) {
       memcpy(&peso_str, "KiB", 3);
@@ -135,7 +118,7 @@ char* tamanho_legivel(size_t bytes) {
 /* === === === === === === === === === === === === === === === === === ==
  *                Legibilidade do Valor Absoluto
  * === === === === === === === === === === === === === === === === === ==*/
-static char* valor_legivel_isize(int64_t unidades) 
+char* valor_legivel_isize(int64_t unidades) 
 {
    char* formatacao = malloc(15);
    // Apenas a magnitude do valor.
@@ -191,7 +174,7 @@ static char* valor_legivel_isize(int64_t unidades)
    return formatacao;
 }
 
-static char* valor_legivel_usize(size_t unidades) {
+char* valor_legivel_usize(size_t unidades) {
    char* peso;
    double potencia;
    char* resultado_str = malloc(15);
@@ -227,36 +210,35 @@ static char* valor_legivel_usize(size_t unidades) {
    return resultado_str;
 }
 
-static char* valor_legivel_f32 (float decimal) 
+char* valor_legivel_f32 (float decimal) 
    { return valor_legivel_isize((int64_t)decimal); }
 
-static char* valor_legivel_f64 (double decimal)
+char* valor_legivel_f64 (double decimal)
    { return valor_legivel_isize((int64_t)decimal); }
 
 /* === === === === === === === === === === === === === === === === === ==
  *                   Legibilidade do Tempo
  * === === === === === === === === === === === === === === === === === ==*/
-
-static char* tempo_legivel_usize(size_t seg) 
+char* tempo_legivel_usize(size_t seg) 
    { return tempo_legivel_double((double)seg); }
 
-static double timespec_to_seg(struct timespec a)
+double timespec_to_seg(struct timespec a)
    { return (double)a.tv_sec + (double)a.tv_nsec / 1.0e9; }
 
-static char* tempo_legivel_timespec(struct timespec t)
+char* tempo_legivel_timespec(struct timespec t)
    { return tempo_legivel_double(timespec_to_seg(t)); }
 
-static double timeval_to_seg(struct timeval e)
+double timeval_to_seg(struct timeval e)
    { return (double)e.tv_sec + (double)e.tv_usec / 1.0e6; }
 
-static char* tempo_legivel_timeval(struct timeval t)
+char* tempo_legivel_timeval(struct timeval t)
    { return tempo_legivel_double(timeval_to_seg(t)); }
 
 /* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
  * ........................Testes Unitários...............................&
  * .......................................................................&
- * === === === === === === === === === === === === === === === === === ===*/
+ * === === === === === === === === === === === === === === === === === = */
 #ifdef _UT_LEGIVEL
 // Biblioteca padrão em C(libs muito utilizadas.):
 #include <stdbool.h>

@@ -1,6 +1,3 @@
-/* Implementação da famosa barra de progresso em C. Não será a implementação
- * completa. */
-
 // Declaração das funções e tipos de dados abaixo:
 #include "progresso.h"
 // Biblioteca padrão do C:
@@ -13,7 +10,7 @@
 #include <time.h>
 
 // Atributos do objeto.
-#ifdef _WIN32
+#ifdef _WIN64
 const char BARRA = '*';
 #elif defined(__linux__)
 const char BARRA = 'o';
@@ -21,9 +18,9 @@ const char BARRA = 'o';
 const char VACUO = '.';
 const size_t COMPRIMENTO = 45;
 
-/* == == == == == == == == == == == == == == == == == == == == == == == ==
+/* == == == == == == == == == == == == == == == == == == == == == == == == == 
  *                          Progresso Simples 
- * == == == == == == == == == == == == == == == == == == == == == == == =*/
+ * == == == == == == == == == == == == == == == == == == == == == == == == */
 #ifdef _IMPRESSAO_BPS
 static size_t qtd_de_chamadas_bps = 0;
 #endif
@@ -389,14 +386,14 @@ void progresso_temporal() {
 void duas_chamadas_ao_mesmo_tempo_pg(void)
 {
    size_t i = 0, T = 500;
-   const size_t ms = 100;
+   const size_t ms = 400;
    PG bar = cria_bp(Simples, T, 50);
 
    do {
       taxa_de_aumento(&i);
       atualiza_e_visualiza_bp(&bar, i);
+      breve_pausa(Miliseg, ms);
 
-      breve_pausa(Miliseg, 400);
    } while (i < T);
 }
 
