@@ -512,6 +512,33 @@ test-fio:
 
 run-fio:
 	@bin/tests/ut_fio
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 									Módulo Memória
+# === === ===  === === === === === === === === === === === === === === ====
+BUILD_MEM = build/memoria.o
+BUILD_TST_MEM = build/memoria-teste.o
+EXE_MEM = bin/tests/ut_memoria
+DYLIB_MEM = bin/shared/libmemoria.so
+STLIB_MEM = bin/static/libmemoria.a
+
+obj-memoria:
+	gcc -O3 -I$(HEADERS) -Wall -Werror -c -o $(BUILD_MEM) src/memoria.c
+
+test-memoria:
+	gcc -I$(HEADERS) -D__unit_tests__ -Wall \
+		-c -o $(BUILD_TST_MEM) src/memoria.c
+	gcc -I$(HEADERS) -o $(EXE_MEM) $(BUILD_TST_MEM)
+
+lib-memoria:
+	@gcc -I$(HEADERS) -shared -fPIC -o $(DYLIB_MEM) $(BUILD_MEM)
+	@echo "Biblioteca compartilhada 'libmemoria.so' compilada."
+	@ar crs $(STLIB_MEM) $(BUILD_MEM)
+	@echo "Biblioteca estática 'libmemoria.a' compilada."
+
+run-memoria:
+	@bin/tests/ut_memoria
+
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo HashTable Referência
 # === === ===  === === === === === === === === === === === === === === ====
@@ -819,10 +846,10 @@ usando-iteradores-de-cada-colecao:
 		-L bin/shared -lhtref -lplref
 
 frequencia-de-letras-do-dicionario:
-	clang -O0 -std=gnu2x -I include/ -Wall \
+	clang -O0 -std=gnu2x -I$(HEADERS) -Wall \
 		-o bin/tests/it_frequencia_de_letras_do_dicionario \
 		tests/frequencia_de_letras_do_dicionario.c \
-		-L bin/shared -lhtref -lplref -lprogresso -laleatorio
+		-L$(DLL) -lhtref -lplref -lprogresso -laleatorio
 
 processo-de-desalocacao:
 	@gcc -O0 -std=gnu2x -I include/ -Wall \
