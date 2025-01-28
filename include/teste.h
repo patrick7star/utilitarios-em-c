@@ -45,14 +45,5 @@ void executa_testes_a(bool ativado, int total, ...);
  */
  extern bool str_to_bool(char* s);
 
-/* -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
- *
- *                         Ainda em fase
- *                            de testes
- *
- * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---*/
-/* converte um inteiro, qualquer que seja seu tamanho, na sua forma
- * binária. */
- extern char* binario_str(size_t);
 
 #endif //TESTE_H
