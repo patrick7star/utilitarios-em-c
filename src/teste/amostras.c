@@ -74,9 +74,12 @@ int capitaliza_palavras(void) {
       char* fruta = (char*)frutas[i - 1];
       size_t size = strlen(fruta) + 1;
       char copia[size];
-
-      // strcpy(copia, fruta);
-		strcpy_s(copia, size, fruta);
+	   
+      #ifdef __linux__
+      strcpy(copia, fruta);
+      #elif defined(_WIN32)	   
+	strcpy_s(copia, size, fruta);
+      #endif
       copia[0] = (char)toupper(copia[0]);
       printf("\t%s ===> %s\n", fruta, copia);
    } 
@@ -90,9 +93,12 @@ int string_alternada(void) {
       char* nome = (char*)girls_names[i - 1];
       size_t size = strlen(nome) + 1;
       char copia[size];
-
-      // strcpy(copia, nome);
+	   
+      #ifdef __linux__
+      strcpy(copia, nome);
+      #elif defined(_WIN32)
       strcpy_s(copia, size, nome);
+      #endif
 
       for (size_t i = 0; i < strlen(copia); i++) {
          if (i % 2 == 0) 
