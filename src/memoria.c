@@ -146,7 +146,7 @@ void tipo_nao_suportado(void* type)
  * == == == == == == == == == == == == == == == == == == == == == == == = */
 #include <limits.h>
 #include <locale.h>
-#include <teste.h>
+#include "macros.h"
 
 int main(int qtd, char* args[], char* vars[]) 
 {
