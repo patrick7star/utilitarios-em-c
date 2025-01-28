@@ -71,34 +71,6 @@ void debug_aqui(void) {
  */
 #include "teste/booleano.c"
 
-/* Cuida da estração de bits de quqlquer tipo de dado primitivo dado. Ainda
- * não está terminado, e não tem qualquer protótipo para qualquer mínimo
- * uso ainda. 
- *    
- *    Funções na ordem encontrada:
- *       - algarismo
- *       - binario_str
- *       - binario_complemento_de_dois_oito_bits
- *       - inverte_array
- *       - binario_complemento_de_dois
- */
-#include "teste/bits.c"
-
-/* Nova feature de testes, sendo está pega o nome do teste, e também
- * permite a paralelização, se assim for desejado.
- *
- *    O que ele fornece:
- *       - testes_unitarios
- *       - Unit
- *
- *    Seus testes-unitários:
- *       - novo_suite_de_testes_unitarios
- *       - resultado_de_todos_testes_desativados
- */
-#ifdef _POSIX_C_SOURCE
-// #include "teste/testador.c"
-#endif
-
 
 #ifdef _UT_TESTE
 /* === === === === === === === === === === === === === === === === === ===+
@@ -109,51 +81,6 @@ void debug_aqui(void) {
  * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
  * mais limpo. 
  * === === === === === === === === === === === === === === === === === ===*/
-static void imprime_debug(uint8_t* array, size_t t) {
-   if (t == 0) 
-      { printf("[]\n"); return; }
-
-   printf("[");
-   for (size_t k = 0; k < t; k++)
-      printf("%d, ", array[k]);
-   printf("\b\b]\n");
-}
-
-void teste_conversao_binaria_antiga_implementacao() {
-   for (uint8_t i = 0; i <= 16; i++)
-      printf("%d ===> %s\n",i, binario_str(i));
-}
-
-void amostra_da_nova_implementacao_de_binario() {
-   for (uint8_t n = 1; n < 16; n++) {
-      uint8_t* resultado =  binario_complemento_de_dois_oito_bits(n);
-      imprime_debug(resultado, 8);
-   }
-}
-
-void extracao_de_bits_implementacao_geral() {
-   for (uint8_t n = 1; n < 16; n++) {
-      uint8_t* resultado =  binario_complemento_de_dois_oito_bits(n);
-      uint8_t* outro_resultado = binario_complemento_de_dois(n);
-      printf("antiga: ");
-      imprime_debug(resultado, 8);
-      inverte_array(outro_resultado, 8);
-      printf(" atual: ");
-      imprime_debug(outro_resultado, 8);
-      puts("");
-   }
-}
-
-void verificando_obtendo_de_potencias_de_dois() {
-   // mascaras necessárias para operações AND com todos bits.
-   uint8_t qtd = 30;
-   // complementando máscaras...
-   for (size_t p = 1; p <= qtd; p++) {
-      size_t n = (size_t)pow(2, p - 1);
-      printf("%2luº ---> %9lu -->%31s\n", p, n, binario_str(n));
-   }
-}
-
 void converte_strings_de_valores_logicos() {
    struct par {
       char* entrada;
@@ -179,7 +106,6 @@ void converte_strings_de_valores_logicos() {
    }
 }
 
-
 void testes_tal_declaracao_de_loop(void) {
 #ifdef _POSIX_C_SOURCE
    Temporizador timer = cria_temporizador(Segundo, 3);
@@ -200,11 +126,8 @@ void testes_tal_declaracao_de_loop(void) {
 
 int main(int qtd, char* argumentos[], char* env_vars[]) {
    executa_testes_a(
-      true, 7, teste_conversao_binaria_antiga_implementacao, true,
-         amostra_da_nova_implementacao_de_binario, true,
-         extracao_de_bits_implementacao_geral, false,
+      true, 3, 
          // iteração para gerar máscaras funciona!
-         verificando_obtendo_de_potencias_de_dois, false,
          stringficacao_de_valores_primitivos, false,
          converte_strings_de_valores_logicos, false,
          // consome bastante tempo...

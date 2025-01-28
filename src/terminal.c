@@ -126,8 +126,10 @@ void obtem_dimensao_por_novo_metodo() {
    printf("linhas: %u\tcolunas: %u\n", result.linhas, result.colunas);
 }
 
-void main(void) {
+int main(void) {
    o_teste_apenas_chama_e_mostra_os_resultados();
    obtem_dimensao_por_novo_metodo();
+
+   return 0;
 }
 #endif
