@@ -98,7 +98,7 @@ compila-principais-bibliotecas: lib-progresso lib-legivel lib-tempo \
 compila-principais-tudo: cria-raiz-de-artefatos \
 	compila-principais-objetos compila-principais-bibliotecas \
 	all-teste all-legivel all-terminal all-tempo all-ponto all-conversao \
-	all-progresso all-impressao
+	all-progresso all-lista-array-ref all-impressao
 
 compila-testes-unitarios: test-terminal test-ponto test-aleatorio \
 	test-tempo test-impressao test-legivel test-conversao test-estringue
