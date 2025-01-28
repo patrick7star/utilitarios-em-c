@@ -9,11 +9,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
+#include <threads.h>
 #include <stdio.h>
 #include "tempo.h"
 
-
-#include "tempo/calculo_potencia.c"
 
 /* Pausa a thread principal é extremamente complicado de se fazer
  * com a função da biblioteca padrão, então aqui vou cria um 
@@ -39,17 +38,17 @@ void breve_pausa(TEMPO_TIPO tipo, uint16_t qtd)
          periodo.tv_nsec = 0;
          break;
       case Hora:
-         periodo.tv_sec = qtd * 3600;
+         periodo.tv_sec = qtd * 3.6e3;
          periodo.tv_nsec = 0;
          break;
       // fração de segundos:
       case Miliseg:
          periodo.tv_sec = 0;
-         periodo.tv_nsec = qtd * potencia(10, 6);
+         periodo.tv_nsec = qtd * 1e6; 
          break;
       case Microseg:
          periodo.tv_sec = 0;
-         periodo.tv_nsec = qtd * potencia(10, 3);
+         periodo.tv_nsec = qtd * 1e3;
          break;
       case Nanoseg:
          periodo.tv_sec = 0;
@@ -447,7 +446,10 @@ void disparando_o_cronometro(void) {
 
 int main(int qtd, char* argumentos[], char* envp[]) 
 {
+   #ifdef _WIN32
 	setlocale(LC_CTYPE, "en_US.UTF-8");
+   #endif
+
 	/* Os códigos estão sendo chamados de forma crua, porque a módulo que 
 	 * provém testes precisa deste módulo como depedência. */
    alocacao_e_desalocacao();
