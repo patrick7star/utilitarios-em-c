@@ -79,85 +79,43 @@ lista-todos-testes:
 	@du -hs bin/tests/
 	@du -b bin/tests/*
 
+limpa:
+	@echo "\nExcluindo tudo que já foi compilado ...\n"
+	@rm -frv bin/ build/
+
 # === === ===  === === === === === === === === === === === === === === ====
 #
 #							Compila/ou Executa Todos Grupos:
 #			   	Objetos, Testes Unitários, Bibliotecas e etc.
 #
 # === === ===  === === === === === === === === === === === === === === ====
-compila-objetos-principais: \
-	obj-legivel \
-	obj-terminal \
-	obj-tempo \
-	obj-teste \
-	obj-aleatorio \
-	obj-ponto \
-	obj-progresso
+compila-principais-objetos: obj-legivel obj-terminal obj-tempo obj-teste \
+	obj-aleatorio obj-ponto obj-progresso obj-conversao
 
-compila-bibliotecas: \
-	cria-raiz-de-artefatos \
-	lib-progresso \
-	lib-legivel \
-	lib-tempo \
-	lib-terminal \
-	lib-aleatorio \
-	lib-teste \
-	lib-ponto \
-	lib-conversao
+compila-principais-bibliotecas: lib-progresso lib-legivel lib-tempo \
+	lib-terminal lib-aleatorio lib-teste lib-ponto lib-conversao
 
-compila-testes-unitarios: \
-	cria-raiz-de-artefatos \
-	test-terminal \
-	test-ponto \
-	test-aleatorio \
-	test-tempo \
-	test-impressao \
-	test-legivel \
-	test-conversao \
-	test-estringue
+compila-principais-tudo: cria-raiz-de-artefatos \
+	compila-principais-objetos compila-principais-bibliotecas \
+	all-teste all-legivel all-terminal all-tempo all-ponto all-conversao \
+	all-progresso all-impressao
 
-roda-testes-unitarios: \
-	run-teste \
-	run-terminal \
-	run-ponto \
-	run-tempo \
+compila-testes-unitarios: test-terminal test-ponto test-aleatorio \
+	test-tempo test-impressao test-legivel test-conversao test-estringue
+
+roda-testes-unitarios: run-teste run-terminal run-ponto run-tempo \
 	run-estringue
 	
-compila-bibliotecas-colecoes: \
-	cria-raiz-de-artefatos \
-	lib-hashtable-ref \
-	lib-pilha-ligada-ref \
-	lib-fila-circular-ref \
-	lib-lista-array-ref
+compila-bibliotecas-colecoes: lib-hashtable-ref lib-pilha-ligada-ref \
+	lib-fila-circular-ref lib-lista-array-ref
 
-compila-objetos-colecoes: \
-	cria-raiz-de-artefatos \
-	obj-hashtable-ref \
-	obj-conjunto-ref \
-	obj-pilha-ligada-ref \
-	obj-lista-array-ref \
-	obj-deque-ligada-ref \
-	obj-fila-ligada-ref \
-	obj-fila-array-ref
+compila-objetos-colecoes: obj-hashtable-ref obj-conjunto-ref \
+	obj-pilha-ligada-ref obj-lista-array-ref obj-deque-ligada-ref \
+	obj-fila-ligada-ref obj-fila-array-ref
 
-compila-testes-unitarios-colecoes: \
-	cria-raiz-de-artefatos \
-	test-conjunto-ref \
-	test-hashtable-ref \
-	test-pilha-ligada-ref \
-	test-lista-posicional-ref \
-	test-lista-array-ref \
+compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
+	test-pilha-ligada-ref test-lista-posicional-ref test-lista-array-ref \
 	test-fila-ligada-ref
-
-roda-testes-unitarios-colecoes:
-	@$(EXE_PL)
-	@$(EXE_AL)
-	@$(EXE_SET_REF)
-	@$(EXE_HT_I)
-	@$(EXE_FA_I)
-
-limpa-objetos-principais:
-	rm -v build/*
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Teste
@@ -168,22 +126,24 @@ EXE_TST 		= bin/tests/ut_teste
 EXE_TST_I 	= bin/shared/libteste.so
 EXE_TST_II 	= bin/static/libteste.a
 
+all-teste: obj-teste test-teste lib-teste
+
 obj-teste:
-	gcc -Wall -O3 -Os -I include/ -c -o build/teste.o src/teste.c
+	@gcc -Wall -O3 -Os -I include/ -c -o build/teste.o src/teste.c
 	@echo "Gerou o arquivo objeto 'teste.o' em 'build'."
 
 lib-teste: obj-teste
-	gcc -Iinclude/ -o $(EXE_TST_I) -shared -fPIC src/teste.c $(DEPS_TST)
+	@gcc -Iinclude/ -o $(EXE_TST_I) -shared -fPIC src/teste.c $(DEPS_TST)
 	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
 	@ar crs $(EXE_TST_II) build/teste.o
 	@echo "Compilação da biblioteca estática 'libteste.a'."
 
 test-teste:
-	gcc -Isrc/teste -Iinclude -Wall -Werror \
+	@gcc -Isrc/teste -Iinclude -Wall -Werror \
 		-c -o build/amostras.o src/teste/amostras.c
-	gcc -Wall -Werror -Iinclude $(COMPILA_TST) \
+	@gcc -Wall -Werror -Iinclude $(COMPILA_TST) \
 		-c -o build/test-teste.o src/teste.c
-	gcc -O0 -Iinclude/ $(COMPILA_TST) \
+	@gcc -O0 -Iinclude/ $(COMPILA_TST) \
 		-o $(EXE_TST) build/test-teste.o \
 		$(DEPS_TST) build/progresso.o build/amostras.o -lm
 	@echo "Compilado os testes-unitários de 'teste.c' em bin/tests."
@@ -204,6 +164,8 @@ clean-teste:
 OBJ_TERM = build/terminal_teste.o
 EXE_TERM = ./bin/tests/ut_terminal
 
+all-terminal: obj-terminal test-terminal lib-terminal
+
 obj-terminal:
 	@gcc -O3 -Os -I include -c src/terminal.c -o build/terminal.o
 	@echo "Gerou o arquivo objeto 'terminal.o' em 'build'."
@@ -218,8 +180,7 @@ lib-terminal:
 test-terminal:
 	@echo "Compilando artefato 'terminal_teste.o' em 'build' ..."
 	@clang -std=gnu18 -Wall -I ./include -c \
-		-D_UT_TERMINAL \
-		-Wno-main-return-type \
+		-D__debug__ -D_UT_TERMINAL \
 		-o $(OBJ_TERM) src/terminal.c
 	@echo "Ligamento entre o artefato e o executável ..."
 	@clang -O0 -o $(EXE_TERM) $(OBJ_TERM)
@@ -235,6 +196,8 @@ clean-terminal:
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_PONTO = bin/tests/ut_ponto
 DEPS_PONTO = -L bin/shared -lteste -ltempo -llegivel -lterminal
+
+all-ponto: obj-ponto test-ponto lib-ponto
 
 obj-ponto:
 	@clang -O3 -Os -I include/ -Wall -c -o build/ponto.o src/ponto.c
@@ -264,7 +227,10 @@ clean-ponto:
 EXE_RANDOM = bin/tests/ut_aleatorio
 SRC_RANDOM = src/aleatorio.c
 FLAGS_RANDOM = -I include/ -D__debug__ -D_UT_ALEATORIO -Wall -Werror
-DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo -limpressao
+DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo \
+				  -limpressao
+
+all-aleatorio: obj-aleatorio test-aleatorio lib-aleatorio
 
 obj-aleatorio:
 	@gcc -O3 -Os -c -I include/ -Wall -Werror -o build/aleatorio.o src/aleatorio.c
@@ -305,6 +271,8 @@ DEPS_TIME 	 = -Lbin/shared -llegivel
 COMPILA_TIME = -D_UT_TEMPO -D_DEBUG_CRIA_CRONOMETRO \
 					-D_DEBUG_DESTROI_CRONOMETRO
 
+all-tempo: obj-tempo test-tempo lib-tempo
+
 obj-tempo:
 	@gcc -O3 -Os -Wall -Werror -c -I include/ src/tempo.c -o build/tempo.o
 	@echo "Gerou o arquivo objeto 'tempo.o' em 'build'."
@@ -337,6 +305,8 @@ BUILD_STR_I  = build/estringue-teste.o
 DEPS_STR 	 = $(OBJS_TESTE) build/teste.o
 SRC_STR 	 	 = src/estringue.c
 
+all-estringue: obj-estringue test-estringue lib-estringue
+
 obj-estringue:
 	@gcc -Os -Wall -Werror -Iinclude -c -o $(BUILD_STR) $(SRC_STR)
 	@echo "Gerou o arquivo objeto 'estringue.o' em 'build'."
@@ -363,26 +333,28 @@ clean-estringue:
 
 
 # === === ===  === === === === === === === === === === === === === === ====
-# 									Modulo Legível
+# 									Módulo Legível
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_LEGIVEL		= bin/tests/ut_legivel
 EXE_LEGIVEL_I  = bin/shared/liblegivel.so
 EXE_LEGIVEL_II = bin/static/liblegivel.a
 DEPS_LEGIVEL 	= -Lbin/shared -lteste -ltempo -lterminal -lm
 
+all-legivel: obj-legivel test-legivel lib-legivel
+
 obj-legivel:
-	@gcc -O3 -Os -c src/legivel.c -o build/legivel.o
+	@gcc -I$(HEADERS) -O3 -Os -c src/legivel.c -o build/legivel.o
 	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
 
 test-legivel:
-	@gcc -I$(HEADERS) -o -Wall -Werror -c -o \
+	@gcc -I$(HEADERS) -std=gnu2x -O0 -o -Wall -Werror -c -o \
 		build/legivel-teste.o src/legivel.c
-	@gcc -O0 -std=c2x -I$(HEADERS) -D_UT_LEGIVEL \
+	@gcc -I$(HEADERS) -D_UT_LEGIVEL \
 		-o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
 	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
 
 lib-legivel:
-	@gcc -o $(EXE_LEGIVEL_I) -fPIC -shared -lc build/legivel.o 
+	@gcc -o $(EXE_LEGIVEL_I) -fPIC -shared -lc build/legivel.o -lm
 	@echo "Compilação de uma biblioteca compartilhada 'liblegivel.so'."
 	@ar crs $(EXE_LEGIVEL_II) build/legivel.o
 	@echo "Compilação de uma biblioteca estática 'libprogresso.a'."
@@ -432,6 +404,8 @@ clean-progresso:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Modulo Conversão
 # === === ===  === === === === === === === === === === === === === === ====
+all-conversao: obj-conversao lib-conversao test-conversao
+
 obj-conversao:
 	@clang -O3 -Os -I include/ -c -o build/conversao.o src/conversao.c
 	@echo "Gerou o arquivo objeto 'conversao.o' em 'build'."
@@ -521,6 +495,8 @@ BUILD_TST_MEM = build/memoria-teste.o
 EXE_MEM = bin/tests/ut_memoria
 DYLIB_MEM = bin/shared/libmemoria.so
 STLIB_MEM = bin/static/libmemoria.a
+
+all-memoria: obj-memoria test-memoria lib-memoria
 
 obj-memoria:
 	gcc -O3 -I$(HEADERS) -Wall -Werror -c -o $(BUILD_MEM) src/memoria.c
