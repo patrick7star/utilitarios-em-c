@@ -44,14 +44,4 @@
  typedef bool (*__ge__)(generico_t, generico_t);
  typedef bool (*__gt__)(generico_t, generico_t);
 
- /* Macros importantíssimos para realizarem várias funções importantes. 
-  * Talvez, no futuro, tal sejam portados para o módulo 'teste'. Acho que
-  * seja mais adequado lá. */
- #define stringfy(VAR) #VAR
- #define _concatena_com_nada(NADA, VAR) NADA##VAR
- #define destringfy(VAR) _concatena_com_nada(,VAR) 
- // Apelidos mais curtos:
- #define strfy(VAR) stringfy(VAR)
- #define destrfy(VAR) destringfy(VAR)
-
 #endif
