@@ -17,7 +17,7 @@
   * vamos dizer que permite realizar o mesmo -- função de genéricos em
   * várias linguagens.
   */
- typedef void* generico_t, *Generico;
+ typedef void* generico_t, *Generico, *GNRC;
 
  // Renomeando todos traços referênte aos 'fat pointers' abaixo:
  // Método essencial de cálculo do índice na tabela.

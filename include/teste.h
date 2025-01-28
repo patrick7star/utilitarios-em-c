@@ -34,7 +34,7 @@
  *   Cada nova geração ganha uma letra mais avançada no alfabeto, isso até
  * este tipo de teste for realmente substituído por algo mais avançado. */
 void executa_tst(char*, Fn, bool); 
-void executa_testes(int total, ...);
+void executa_testes(uint8_t total, ...);
 void executa_testes_a(bool ativado, int total, ...);
 
 /* Converte um valor lógico para uma string, em português, dizendo o que 
@@ -44,21 +44,6 @@ void executa_testes_a(bool ativado, int total, ...);
  * então retorna o valor-verdade em sí. 
  */
  extern bool str_to_bool(char* s);
-
- // macros importantes para melhorar a visualização:
- #define bool_to_str(VL) ((bool)VL) ? "verdadeiro": "falso"
- #define null_to_str(PTR) ( !((bool)PTR) ? "none": "válido")
- /* É frequente o uso da instrução 'while (true)' para criar loops sem 
-  * parada(loops infinitos). Aqui, usando de 'macros', vamos criar tal 
-  * tipo de declaração.
-  *   Também pega todos nomes variádos que tal trecho pode ter. Na verdade
-  * são mais uma versão aproximada do primeiro. */
- #define loop_infinito while (true)
- #define LOOP_INFINITO loop_infinito 
- #define LOOP loop_infinito
- #define loop loop_infinito
- #define __LOOP__ loop_infinito
- #define __loop__ loop_infinito
 
 /* -- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
  *
