@@ -7,22 +7,27 @@ static Duracao transforma_para_nanoseg(TEMPO_TIPO t, uint64_t n) {
 
    switch (t) {
       case Segundo:
-         unidades = n * potencia(10, 9);
+         // unidades = n * potencia(10, 9);
+         unidades = n * 1.0e9;
          break;
       case Miliseg:
-         unidades = n * potencia(10, 6);
+         // unidades = n * potencia(10, 6);
+         unidades = n * 1.0e6;
          break;
       case Microseg:
-         unidades = n * potencia(10, 3);
+         // unidades = n * potencia(10, 3);
+         unidades = n * 1.0e3;
          break;
       case Nanoseg:
          unidades = n;
          break;
       case Minuto:
-         unidades = n * 60 * potencia(10, 9);
+         // unidades = n * 60 * potencia(10, 9);
+         unidades = n * 60 * 1.0e9;
          break;
       case Hora:
-         unidades = n * 3600 * potencia(10, 9);
+         // unidades = n * 3600 * potencia(10, 9);
+         unidades = n * 3600 * 1.0e9;
          break;
       default:
          perror("não implementado para tal!");
