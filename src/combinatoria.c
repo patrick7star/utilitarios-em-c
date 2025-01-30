@@ -1,9 +1,3 @@
-/*   Classe de funções básicas que permitem a geração de permutações e seus
- * derivados.
- *   É para uso genérico, ou sejam, aceitam qualquer tipo, dado é claro,
- * as funções que fazem comparações entre tais tipos.
- */
-
 // Declaração de objetos e seus métodos/e funções abaixo:
 #include "combinatoria.h"
 // Biblioteca padrão do C:
@@ -136,148 +130,6 @@ struct Permutas gera_permutacoes(generico_t seq, int n, int sz)
 
 void free_struct_permutas(struct Permutas* X, Drop g)
    { libera_lista_de_resultados(X->list, X->total, g); }
-
-/*   Info de geral do processo de geração de permutas,combinações ou 
- * arranjos. Tempo que demorou, a taxa de geração, uma média variável de 
- * ambas grandezas mencionadas e muito mais.
- */
-struct Informacao {
-   // Quantas permutas, arranjos ou combinações são geradas por segundo.
-   float taxa_de_geracao;
-   int tG;
-
-   // Tempo que levou para gerar tudo ao todo(em segundos).
-   time_t inicio;
-   double decorrido;
-
-   // Percentual de processamento.
-   float percentual;
-
-   // Tempo que decorreu desde da última captura de metadados.
-   struct timeval ritmo;
-
-   // Resposta se tal processamento foi finalizado.
-   bool finalizado;
-};
-
-static void struct_informacao_debug(struct Informacao* a)
-{
-   const char* RECUO = "\t\b\b";
-
-   printf(
-      "\nstruct Informacao {\n"
-      "%sTaxa de geração: %0.1f permutas/seg\n"
-      "%sPercentual: %0.2lf%%\n"
-      "%sDecorrido: %lfseg\n"
-      "}\n",
-      RECUO, a->taxa_de_geracao, RECUO, (a->percentual * 100.0), RECUO, 
-      a->decorrido
-   );
-}
-
-static void realiza_um_registro
-  (Generico seq, int n, uint8_t** list, size_t* q, struct Informacao* a)
-{
-/* Função captura o registro do algorimto, e atualiza a tupla de informação
- * com eles. */
-   size_t Pn; time_t final;
-
-   Pn = fatorial(n);
-   /*   Passado um tempo determinado, registra e calcula algumas 
-    * informações sobre o processsamento geral do algoritmo. */
-   time(&final);
-
-   a->taxa_de_geracao = *q;
-   a->percentual = (float)(*q) / (float)Pn;
-   a->decorrido = difftime(final, a->inicio);
-   a->finalizado = (*q == Pn);
-}
-
-struct TuplaTrediA { 
-   Generico seq; int n; uint8_t** list; size_t* q; 
-   struct Informacao* info; 
-};
-
-int tredi_a(void* argumentos) {
-/* Realiza uma captura dos dados à cada 100 milisegundos. */
-   struct TuplaTrediA* ptr_arg = (struct TuplaTrediA*)argumentos; 
-   struct TuplaTrediA arg = *ptr_arg;
-   size_t Pn = fatorial(arg.n);
-   // 100mi de nanosegundos é o equivalente à 100 milisegudos.
-   const size_t LIMITE = 100000000;
-   const struct timespec PAUSA = { 0, .tv_nsec = LIMITE };
-
-   do {
-      realiza_um_registro
-        (arg.seq, arg.n, arg.list, arg.q, arg.info); 
-
-      // Pausa para o próximo screenshot de variáveis.
-      assert(thrd_sleep(&PAUSA, NULL) == 0);
-
-      #ifdef __debug__
-      struct_informacao_debug(arg.info);
-      #endif
-
-   } while(*arg.q != Pn);
-
-   return EXIT_SUCCESS;
-}
-
-static void algoritmo_gerador_de_permutas_generico (
-  Generico seq, int n, uint8_t** list, size_t* q, int M, int sz, 
-  struct Informacao* info
-){
-   if (M == 1) {
-      list[*q] = clona_array(seq, sz, n);
-      *q += 1;
-
-   } else {
-      uint8_t* a = NULL, *b = NULL;
-
-      for (int p = 0; p < M; p++)
-      {
-         algoritmo_gerador_de_permutas_generico
-            (seq, n, list, q, (M - 1), sz, info);
-
-         if (M % 2 == 1) {
-            a = seq + 0*sz;
-            b = seq + (M - 1) * sz;
-         } else {
-            a = seq + p * sz;
-            b = seq + (M - 1) * sz;
-         }
-         alterna(a, b, sz);
-      }
-   }
-}
-
-struct Permutas gera_permutacoes_info
-  (generico_t seq, int n, int sz, struct Informacao* info)
-{
-   size_t N = fatorial(n), q = 0;
-   uint8_t** list = cria_lista_de_array_de_bytes(N);
-   thrd_t id;
-   struct TuplaTrediA args = {seq, n, list, &q, info};
-
-   if (thrd_create(&id, tredi_a, &args) == thrd_success)
-      puts("Criada a 'tredi_a' com sucesso.");
-   else
-      puts("Falha a criar a  'tredi_a'!");
-
-   /*   Executa o algoritmo de geração de permutações, entrentanto, com uma
-    * ligação externa entre o progresso do processamento. */
-   algoritmo_gerador_de_permutas_generico
-      (seq, n, list, &q, n, sz, info);
-   // realiza_um_registro(seq, n, list, &q, info);
-
-   return (struct Permutas) {
-      .array = seq,
-      .length = n,
-      .size = sz,
-      .list = list,
-      .total = q
-   };
-}
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Geração de Arranjos
@@ -510,6 +362,305 @@ struct Combinacoes gera_combinacoes(generico_t itens, int n, int k, int sz)
 
 void free_struct_combinacoes(struct Combinacoes* X, Drop g)
    { libera_lista_de_resultados(X->results, X->total, g); }
+
+/* == == == == == == == == == == == == == == == == == == == == == == == == =
+ *                Permutações com Informação Instantânea
+ *                         Sobre o Processo
+ * == == == == == == == == == == == == == == == == == == == == == == == = */
+#include <limits.h>
+#include "macros.h"
+#include "impressao.h"
+#include "legivel.h"
+
+#define BUFFER_INFO UCHAR_MAX
+// Meio segundo, ou 500 mil de microsegundos.
+// const struct timeval RITMO = {0, 1e5};
+const int AVALIADO = 5;
+
+struct Informacao {
+/*   Info de geral do processo de geração de permutas,combinações ou 
+ * arranjos. Tempo que demorou, a taxa de geração, uma média variável de 
+ * ambas grandezas mencionadas e muito mais.
+ */
+   // Array que será constantemente manipulada, e seus atributos.
+   Generico seq; int length; int size;
+   // Resultado do processamento.
+   uint8_t** list;
+   size_t* qtd;
+
+   // Quantas permutas, arranjos ou combinações são geradas por segundo.
+   size_t quantia[BUFFER_INFO];
+
+   // Percentual de processamento.
+   double percentual[BUFFER_INFO];
+
+   // Selo dos tempos de cada registro.
+   struct timeval tempo[BUFFER_INFO];
+
+   // Memória total que o objeto ocupa.
+   size_t memoria[BUFFER_INFO];
+
+   // Resposta se tal processamento foi finalizado.
+   bool finalizado;
+
+   // Total de permutações que podem ser geradas.
+   size_t total;
+
+   // Cursor de inserção das "listas" acima.
+   int cursor;
+};
+
+struct Informacao new_struct_informacao
+  (Generico seq, int n, int sz, uint8_t** list, size_t* qtd)
+{
+   struct Informacao self;
+
+   // Zerando arrays trabalhadas...
+   memset(self.percentual, 0x0, sizeof(double) * BUFFER_INFO);
+   memset(self.quantia, 0x0, sizeof(size_t) * BUFFER_INFO);
+   memset(self.tempo, 0x0, sizeof(struct timeval) * BUFFER_INFO);
+   memset(self.memoria, 0x0, sizeof(size_t) * BUFFER_INFO);
+   // Guarda a array e seus atributos.
+   self.seq = seq;
+   self.size = sz;
+   self.length = n;
+   self.list = list;
+   self.qtd = qtd;
+   // Zerando o cursor geral das listas.
+   self.cursor = 0;
+   // Marcando o começo ...
+   self.finalizado = false;
+   // Calcula o total de permutações a gerar.
+   self.total = fatorial(n);
+
+   return self;
+}
+
+static double decorrido_seg(struct timeval i, struct timeval f) {
+   size_t ti = i.tv_sec * 1.0e6 + i.tv_usec;
+   size_t tf = f.tv_sec * 1.0e6 + f.tv_usec;
+
+   return (tf - ti) / 1.0e6;
+}
+
+static double delta_tempo(struct Informacao* self)
+{
+   if (self->cursor == 0)
+      return 0.0;
+   else {
+      int p = self->cursor;
+      struct timeval ta = self->tempo[p - 1];
+      struct timeval tb = self->tempo[p];
+
+      return decorrido_seg(ta, tb);
+   }
+}
+
+static size_t delta_quantia(struct Informacao* self)
+{
+   if (self->cursor == 0)
+      return 0;
+   else {
+      int p = self->cursor;
+      size_t a = self->quantia[p];
+      size_t b = self->quantia[p - 1];
+
+      return a - b;
+   }
+}
+
+static size_t delta_memoria(struct Informacao* self)
+{
+   if (self->cursor == 0)
+      return 0;
+   else {
+      int p = self->cursor;
+      size_t a = self->memoria[p];
+      size_t b = self->memoria[p - 1];
+
+      return a - b;
+   }
+}
+
+static float calcula_percentual(struct Informacao* self)
+{
+   if (self->cursor == 0)
+      return 0.0;
+   else
+      return self->percentual[self->cursor - 1];
+}
+
+void debug_struct_informacao(struct Informacao* self)
+{
+   const char* RECUO = "\t\b\b";
+   double percentual = calcula_percentual(self);
+   /* É uma estimativa. Nem todo processo dura um segundo, e também, o
+    * registro não é temporizado neste valor, más sim, um décimo dele. 
+    * Por isso multiplica por dez. */
+   size_t quantia = delta_quantia(self) * 10;
+   double decorrido = delta_tempo(self);
+   size_t qA = *(self->qtd), qT = self->total;
+   size_t mT = self->memoria[self->cursor];
+   double var_mt = (double)delta_memoria(self) / (double)mT;
+   // Formatações legíveis:
+   char* fmt_mT      = tamanho_legivel(mT);
+   char* fmt_qA      = valor_legivel(qA);
+   char* fmt_qT      = valor_legivel(qT);
+
+   printf(
+      "\nstruct Informacao {\n"
+      "%sTaxa de geração: %zu permutas/seg\n"
+      "%sPercentual: %0.2lf%% ~ %s\n"
+      "%sDecorrido: %lfseg\n"
+      "%sTerminado: %s\n"
+      "%sTotal: %s\n"
+      "%sMemória: %s\t~ %0.1lf%%\n"
+      "}\n",
+      RECUO, quantia, RECUO, percentual, fmt_qA, RECUO, decorrido, 
+      RECUO, bool_to_str(self->finalizado), RECUO, fmt_qT, RECUO, 
+      fmt_mT, var_mt * 100.0
+   );
+
+   free(fmt_mT); free(fmt_qA); free(fmt_qT);
+   imprime_array((int*)self->seq, self->length);
+   putchar('\n');
+}
+
+static void extende_todas_listas(struct Informacao* self)
+{
+   const int ULTIMA_POSICAO = BUFFER_INFO - 1;
+
+   if ((*self).cursor == ULTIMA_POSICAO) 
+   {
+      /* Realiza a cópia dos últimos 'm' últimos valores na array, então
+       * posiciona seu 'cursor' no começo dela, porém não na posição zero.*/
+      for (int k = 0; k < AVALIADO; k++)
+      {
+         int t = BUFFER_INFO - (AVALIADO - k);
+
+         self->quantia[k]     = self->quantia[t];
+         self->tempo[k]       = self->tempo[t];
+         self->percentual[k]  = self->percentual[t];
+      }
+      self->cursor = AVALIADO - 1;
+   }
+}
+
+static void realiza_um_registro(struct Informacao* self)
+{
+/* Função captura o registro do algorimto, e atualiza a tupla de informação
+ * com eles. */
+   extende_todas_listas(self);
+
+   int p = self->cursor + 1;
+   size_t qtd = *(self->qtd);
+   size_t tP = self->total;
+   double qA = qtd;
+   double qT = tP;
+   struct timeval tS;
+
+   #ifdef __debug__
+   printf("cursor: %d\n", self->cursor);
+   #endif
+   // Marca o atual decorrer do tempo.
+   gettimeofday(&tS, NULL);
+
+   self->tempo[p] = tS;
+   self->quantia[p] = qtd;
+   self->percentual[p] = (qA / qT) * 100.0;
+   self->memoria[p] = (
+      // Tamanho crescente da lista de arrays clonadas.
+      self->length * qtd * self->size +
+      // Tamanho da stack de sucetivas chamadas recursivas(algoritmo).
+      (sizeof(Generico) + 3 * sizeof(int) + sizeof(uint8_t**) + 
+      sizeof(size_t*)) * qtd
+   );
+   self->finalizado = (qA == tP);
+   self->cursor += 1;
+}
+
+/* ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ */ 
+static int coleta_informacao_em_paralelo(void* argumentos) {
+/* Realiza uma captura dos dados à cada 100 milisegundos. */
+   struct Informacao* arg = (struct Informacao*)argumentos;
+   // 100mi de nanosegundos é o equivalente à 100 milisegudos.
+   const struct timespec PAUSA = { 0, .tv_nsec = 1.0e8 };
+
+   assert(thrd_sleep(&PAUSA, NULL) == 0);
+   do {
+      realiza_um_registro(arg); 
+      // Pausa para o próximo screenshot de variáveis.
+      assert(thrd_sleep(&PAUSA, NULL) == 0);
+
+      #ifdef __debug__
+      debug_struct_informacao(arg);
+      #endif
+
+   } while(*(arg->qtd) != arg->total);
+
+   return EXIT_SUCCESS;
+}
+
+static void algoritmo_gerador_de_permutas_generico
+  (Generico seq, int n, uint8_t** list, size_t* q, int M, int sz)
+{
+   if (M == 1) {
+      #ifdef __debug__
+      // Não clona nenhum dado em modo debug.
+      #else
+      list[*q] = clona_array(seq, sz, n);
+      #endif
+      *q += 1;
+
+   } else {
+      uint8_t* a = NULL, *b = NULL;
+
+      for (int p = 0; p < M; p++)
+      {
+         algoritmo_gerador_de_permutas_generico
+            (seq, n, list, q, (M - 1), sz);
+
+         if (M % 2 == 1) {
+            a = seq + 0*sz;
+            b = seq + (M - 1) * sz;
+         } else {
+            a = seq + p * sz;
+            b = seq + (M - 1) * sz;
+         }
+         alterna(a, b, sz);
+      }
+   }
+}
+
+struct Permutas gera_permutacoes_info
+  (generico_t seq, int n, int sz, struct Informacao* info)
+{
+   size_t q = 0;
+   uint8_t** list = NULL; // cria_lista_de_array_de_bytes(N);
+   thrd_start_t rotina = coleta_informacao_em_paralelo;
+   thrd_t id;
+
+   // Cria monitor que acompanhará o processo.
+   *info = new_struct_informacao(seq, n, sz, list, &q);
+
+   if (thrd_create(&id, rotina, info) == thrd_success)
+      puts("Criada a thread com sucesso.");
+   else
+      puts("Falha a criar a thread!");
+
+   /*   Executa o algoritmo de geração de permutações, entrentanto, com uma
+    * ligação externa entre o progresso do processamento. */
+   algoritmo_gerador_de_permutas_generico
+      (seq, n, list, &q, n, sz);
+
+   return (struct Permutas) {
+      .array = seq,
+      .length = n,
+      .size = sz,
+      .list = list,
+      .total = q
+   };
+}
 
 
 #if defined(__unit_tests__) && defined(__linux__)
@@ -926,38 +1077,27 @@ void gerador_de_arranjo_completo(void)
    free_struct_arranjos(&out_b, free_struct);
 }
 
-void novos_com_informacao_de_progresso(void)
+void gerador_de_permutas_com_monitor_do_processo(void)
 {
-   struct Informacao infos[3];
-   memset(infos, 0, sizeof(infos));
-   int* inputs[] = { 
-      (int[]){2, 3, 1}, 
-      (int[]){4, 2, 1, 3}, 
-      (int[]){4, 2, 1, 3, 9, 5, 6, 7, 8} 
-   };
+   struct Informacao info;
+   int input[] = {4, 2, 1, 3, 9, 5, 6, 7, 8};
    const int sz = sizeof(int);
-   struct Permutas out, out_a, out_b;
+   const int n = sizeof(input) / sz;
+   struct Permutas out;
 
    // Gera os resultados:
-   out = gera_permutacoes_info(inputs[0], 3, sz, &infos[0]);
-   // Lista os resultados:
-   for (int k = 0; k < out.total; k++)
-      imprime_array((int*)out.list[k], 3);
-   struct_informacao_debug(&infos[0]);
-
-   // Gera os resultados:
-   out_a = gera_permutacoes_info(inputs[1], 4, sz, &infos[1]);
-   // Lista os resultados:
-   for (int k = 0; k < out_a.total; k++)
-      imprime_array((int*)out_a.list[k], 4);
-   struct_informacao_debug(&infos[1]);
-
-   out_b = gera_permutacoes_info(inputs[2], 9, sz, &infos[2]);
-   struct_informacao_debug(&infos[2]);
-
+   out = gera_permutacoes_info(input, n, sz, &info);
+   // Info quando o processo foi finalizado.
+   debug_struct_informacao(&info);
    free_struct_permutas(&out, free_struct);
-   free_struct_permutas(&out_a, free_struct);
-   free_struct_permutas(&out_b, free_struct);
+}
+
+void tamanho_da_estrutura_informacao(void)
+{
+   struct Informacao a;
+   const int sz = sizeof(a);
+
+   printf("struct Informacao: %d bytes\n", sz);
 }
 
 int main(int qtd, char* args[], char* envs[])
@@ -992,8 +1132,9 @@ int main(int qtd, char* args[], char* envs[])
    );
 
    executa_testes_a(
-     true, 1,
-         novos_com_informacao_de_progresso, true
+     true, 2,
+         gerador_de_permutas_com_monitor_do_processo, true,
+         tamanho_da_estrutura_informacao, true
    );
 }
 #endif

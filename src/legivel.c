@@ -27,65 +27,35 @@ const double SECULO     = 100 * ANO;
 const double MILENIO    = 1000 * ANO;
 
 
-// Aloca string do tamanho que você desejar.
 static char* nova_str(int n)
+// Aloca string do tamanho que você desejar.
    { return (char*)malloc(n * sizeof(char)); }
 
-char* tempo_legivel_double(double segundos) 
+static void elimina_digitos_insignificantes
+  (char* output, double valor, const char* peso)
 {
-   // variável com uma letra para agilizar codificação.
-   double s = segundos;
-   // char* resultado = calloc(30, sizeof(char));
-   char* resultado = nova_str(30);
-   // Proposições avaliadas abaixo:
-   bool na_faixa_dos_meses = (s >= MES && s < ANO);
-   bool na_faixa_dos_anos = (s >= ANO && s < DECADA);
-   bool na_faixa_das_decadas = (s >= DECADA && s < SECULO);
-   bool na_faixa_dos_seculos = (s >= SECULO && s < MILENIO);
+/* Faz trucagem de digitos fracionais insignificantes para a leitura. */
+   // Partes inteiras e decimais do valor, separadas pra análise.
+   double inteiro = truncf(valor);
+   double fracao = fabs(truncf(valor) - valor);
 
-   if (s >= 1.0) {
-      if (s < MINUTO)
-         sprintf(resultado, "%0.1lf seg", s);
-
-      else if (s >= MINUTO && s < HORA)
-         sprintf(resultado, "%0.1lf min", s / MINUTO);
-
-      else if (s >= HORA && s < DIA)
-         sprintf(resultado, "%0.1lfh", s / HORA);
-
-      else if (s >= DIA && s < MES)
-         sprintf(resultado, "%0.1lf dias", s / DIA);
-
-      else if (na_faixa_dos_meses)
-         sprintf(resultado, "%0.1lf meses", s / MES);
-      else if (na_faixa_dos_anos)
-         sprintf(resultado, "%0.1lf anos", s / ANO);
-      else if (na_faixa_das_decadas)
-         sprintf(resultado, "%0.1lf déc", s / DECADA);
-      else if (na_faixa_dos_seculos)
-         sprintf(resultado, "%0.1lf séc", s / SECULO);
-      else
-         sprintf(resultado, "%0.1lf milênios", s / MILENIO);
-   } else {
-      if (s >= MILISEG)
-         sprintf(resultado, "%0.0lf ms", s * 1000.0);
-      else if (s >= MICROSEG)
-         sprintf(resultado, "%0.0lf \u03bcs", s * powf(10, 6));
-      else if (s >= NANOSEG)
-         sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
-      else {
-			// qualquer quantia abaixo disso, será considerado zero!
-			strcpy (resultado, "0seg");
-		}
-   }
-   return resultado;
+   if (fracao >= 0.1 && fracao < 0.95)
+      sprintf(output, "%0.1lf %s", valor, peso);
+   else if (fracao >= 0.95 && fracao < 0.99999)
+      // Tal range de decimais podem produzir dígito zero inútil
+      sprintf(output, "%0.0lf %s", round(valor), peso);
+   else
+      sprintf(output, "%0.0lf %s", valor, peso);
 }
 
+/* === === === === === === === === === === === === === === === === === ==
+ *                Legibilidade do Tamanho
+ * === === === === === === === === === === === === === === === === === ==*/
 char* tamanho_legivel(size_t bytes) { 
-   // char* resultado_str = calloc(30, sizeof(char));
    char* resultado_str = nova_str(30);
    char peso_str[5];
    float valor;
+   float fracao;
    // Múltiplos de tamanho(equivalente em bytes).
    const size_t KILO = pow(2, 10); 
    const size_t MEGA = pow(2, 20);
@@ -111,8 +81,9 @@ char* tamanho_legivel(size_t bytes) {
       valor = (float)bytes;
    }
 
-   sprintf(resultado_str, "%0.1f %s", valor, peso_str);
-   return (char*)resultado_str;
+   fracao = abs(round(valor) - valor);
+   elimina_digitos_insignificantes(resultado_str, valor, peso_str);
+   return resultado_str;
 }
 
 /* === === === === === === === === === === === === === === === === === ==
@@ -120,11 +91,11 @@ char* tamanho_legivel(size_t bytes) {
  * === === === === === === === === === === === === === === === === === ==*/
 char* valor_legivel_isize(int64_t unidades) 
 {
-   char* formatacao = malloc(15);
+   char* formatacao = nova_str(15);
    // Apenas a magnitude do valor.
    int64_t m = unidades > 0 ? unidades: (-1) * unidades;
-   char* peso;
-   double potencia;
+   double potencia, decimal;
+   const char* peso;
 
    // Proposições trabalhadas:
    bool faixa_dos_milhares    = (m >= MILHAR) and (m < MILHAO);
@@ -161,23 +132,15 @@ char* valor_legivel_isize(int64_t unidades)
    } else 
       { peso = ""; potencia = 1; }
 
-   double decimal = (double)unidades /(double)potencia;
-   double inteiro = truncf(decimal);
-   double fracao = fabs(inteiro - decimal);
-
-   if (fracao < 0.09)
-   // Não mostra a parte fracionaria do número se for insignificante.
-      sprintf(formatacao, "%0.0lf%s", decimal, peso); 
-   else
-      sprintf(formatacao, "%0.1lf%s", decimal, peso);
-
+   decimal = (double)unidades /(double)potencia;
+   elimina_digitos_insignificantes(formatacao, decimal, peso);
    return formatacao;
 }
 
 char* valor_legivel_usize(size_t unidades) {
    char* peso;
-   double potencia;
-   char* resultado_str = malloc(15);
+   double potencia, decimal;
+   char* resultado_str = nova_str(15);
    uint64_t u = unidades;
 
    if (u >= 1000 && u < pow(10, 6)) {
@@ -201,12 +164,8 @@ char* valor_legivel_usize(size_t unidades) {
    } else 
       { peso = ""; potencia = 1; }
 
-   double novo_valor = (double)unidades /(double)potencia;
-
-   if (novo_valor < 1.0)
-      sprintf(resultado_str, "%d%s", (uint16_t)novo_valor, peso);
-   else
-      sprintf(resultado_str, "%0.1f%s", novo_valor, peso);
+   decimal = (double)unidades /(double)potencia;
+   elimina_digitos_insignificantes(resultado_str, decimal, peso);
    return resultado_str;
 }
 
@@ -219,6 +178,72 @@ char* valor_legivel_f64 (double decimal)
 /* === === === === === === === === === === === === === === === === === ==
  *                   Legibilidade do Tempo
  * === === === === === === === === === === === === === === === === === ==*/
+char* tempo_legivel_double(double segundos) 
+{
+   // variável com uma letra para agilizar codificação.
+   double s = segundos;
+   // char* resultado = calloc(30, sizeof(char));
+   char* resultado = nova_str(30);
+   const char* peso;
+   double decimal;
+   // Proposições avaliadas abaixo:
+   bool na_faixa_dos_meses = (s >= MES && s < ANO);
+   bool na_faixa_dos_anos = (s >= ANO && s < DECADA);
+   bool na_faixa_das_decadas = (s >= DECADA && s < SECULO);
+   bool na_faixa_dos_seculos = (s >= SECULO && s < MILENIO);
+
+   if (s >= 1.0) {
+      if (s < MINUTO)
+         { decimal = s; peso = "seg"; }
+        //  sprintf(resultado, "%0.1lf seg", s);
+
+      else if (s >= MINUTO && s < HORA)
+         { decimal = s / MINUTO; peso = "min"; }
+        //  sprintf(resultado, "%0.1lf min", s / MINUTO);
+
+      else if (s >= HORA && s < DIA)
+         { decimal = s / HORA; peso = "\bh"; }
+         // sprintf(resultado, "%0.1lfh", s / HORA);
+
+      else if (s >= DIA && s < MES)
+         // sprintf(resultado, "%0.1lf dias", s / DIA);
+         { decimal = s / DIA; peso = "dias"; }
+
+      else if (na_faixa_dos_meses)
+         // sprintf(resultado, "%0.1lf meses", s / MES);
+         { decimal = s / MES; peso = "meses"; }
+      else if (na_faixa_dos_anos)
+         // sprintf(resultado, "%0.1lf anos", s / ANO);
+         { decimal = s / ANO; peso = "anos"; }
+      else if (na_faixa_das_decadas)
+         // sprintf(resultado, "%0.1lf déc", s / DECADA);
+         { decimal = s / DECADA; peso = "déc"; }
+      else if (na_faixa_dos_seculos)
+         // sprintf(resultado, "%0.1lf séc", s / SECULO);
+         { decimal = s / SECULO; peso = "séc"; }
+      else
+         // sprintf(resultado, "%0.1lf milênios", s / MILENIO);
+         { decimal = s / MILENIO; peso = "milênios"; }
+   } else {
+      if (s >= MILISEG)
+         // sprintf(resultado, "%0.0lf ms", s * 1000.0);
+         { decimal = s * 1.0e3; peso = "ms"; }
+      else if (s >= MICROSEG)
+         // sprintf(resultado, "%0.0lf \u03bcs", s * powf(10, 6));
+         { decimal = s * 1.0e6; peso = "\u03BCs"; }
+      else if (s >= NANOSEG)
+         // sprintf(resultado, "%0.0lf ns", s * powf(10, 9));
+         { decimal = s * 1.0e9; peso = "ns"; }
+      else 
+			// qualquer quantia abaixo disso, será considerado zero!
+         { decimal = 0.0; peso = "seg"; }
+			// strcpy (resultado, "0seg");
+   }
+
+   elimina_digitos_insignificantes(resultado, decimal, peso);
+   return resultado;
+}
+
 char* tempo_legivel_usize(size_t seg) 
    { return tempo_legivel_double((double)seg); }
 
@@ -260,12 +285,23 @@ double segundos[] = {
 };
 
 void legibilidade_do_tempo(void) {
+   double inputs[] = { 
+      5 * DIA + 30 * HORA, 8000 * MES, 165 * MES + 4e10, 14 * ANO + 30 * MES,
+      1500 * DECADA, 14 * DECADA + 80 * ANO, 400 * DIA, 100 * DIA
+   };
+   const int sz = sizeof(double);
+   const int n = sizeof(inputs) / sz;
+
    for(int p = 0; p < 9; p++)
       printf(
          "%16lf ===> %s\n", 
          segundos[p], 
          tempo_legivel(segundos[p])
       );
+
+   puts("\nEscalas de tempo extremamentes grandes:");
+   for(int p = 0; p < n; p++)
+      printf("%26.0lf ===> %s\n", inputs[p], tempo_legivel(inputs[p]));
    // de avaliação manual?
 }
 
@@ -357,14 +393,33 @@ void tipos_de_tempo_diferentes_a_converter(void) {
    free(str_a); 
 }
 
+void eliminando_digitos_insignificantes(void)
+{
+   double input[] = { 
+      3.153, 352.001, 0.1234, 153.7, 12.07, 3.915, 19.94,
+      103.95, 1.96
+   };
+   const int n = sizeof(input) / sizeof(double);
+   char buffer[50];
+   const char* peso = "[peso]";
+   
+   puts("Verificando a eliminação de dígitos insignificantes ...\n");
+   for (int k = 0; k < n; k++)
+   {
+      elimina_digitos_insignificantes(buffer, input[k], peso);
+      printf("%15lf ===> %14s\n", input[k], buffer);
+   }
+}
+
 int main(void) {
    executa_testes_a(
-      true, 5, 
+      true, 6, 
          legibilidade_do_tempo, true,
          legibilidade_de_tamanhos, true,
 		   o_grosso_de_grande_valores, true,
          valor_legivel_de_todos_limites, true,
-         tipos_de_tempo_diferentes_a_converter, true
+         tipos_de_tempo_diferentes_a_converter, true,
+         eliminando_digitos_insignificantes, true
 	);
    return EXIT_SUCCESS;
 }
