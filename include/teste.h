@@ -4,7 +4,6 @@
 #define TESTE_H
 #include <stdbool.h>
 #include <stdint.h>
-#include "terminal.h"
 
 // nome mais curto, estético e significativo para um ponteiro de
 // de função.
