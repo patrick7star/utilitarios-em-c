@@ -40,6 +40,11 @@
  uint32_t* box_uint32t (uint32_t vl);
  int64_t*  box_int64t  (int64_t  vl);
 
+ // Clona qualquer array, dado o tanto em bytes do seu tipo, e comprimento.
+ uint8_t* clona_array (void* array, int sz, int n);
+ // Alterna de dois valores genéricos, dado eles, e o seu tipo(tanto em bytes).
+ void alterna (void* a, void* b, int sz);
+
  // Apelidos que as funções principais acima também podem ser chamadas:
  // Wide strings(Unicode):
  #define  box_ustr            box_wcs
