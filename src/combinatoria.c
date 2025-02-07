@@ -1,5 +1,6 @@
 // Declaração de objetos e seus métodos/e funções abaixo:
 #include "combinatoria.h"
+#include "memoria.h"
 // Biblioteca padrão do C:
 #include <stdio.h>
 #include <assert.h>
@@ -15,33 +16,6 @@ static void libera_lista_de_resultados(uint8_t** list, size_t n, Drop f)
    for (size_t k = 0; k < n; k++)
       free(list[k]);
    free(list);
-}
-
-void alterna(generico_t a, generico_t b, int sz)
-{
-/*   Método que aplica swap via copia de bytes. Neste caso, o tamanho do
- * tipo de dado trabalhado é preciso ser cedido. */
-   uint8_t* ptr_c = malloc(sz);
-   uint8_t* ptr_a = (uint8_t*)a;
-   uint8_t* ptr_b = (uint8_t*)b;
-
-   memcpy(ptr_c, ptr_a, sz);
-   memcpy(ptr_a, ptr_b, sz);
-   memcpy(ptr_b, ptr_c, sz);
-   ptr_a += sz;
-   ptr_b += sz;
-}
-
-static uint8_t* clona_array(generico_t array, int sz, int n)
-{
-/*  Pega uma array de tipo 'sz'(seu tanto de bytes), e comprimento 'n', e
- * realiza uma cópia de todos seus elementos. Então por fim retorna esta 
- * array clonada. */
-   uint8_t* pointer = (uint8_t*)array;
-   uint8_t* clone = malloc(n * sz);
-
-   memmove(clone, pointer, n * sz);
-   return clone;
 }
 
 static uint8_t** cria_lista_de_array_de_bytes(size_t n)

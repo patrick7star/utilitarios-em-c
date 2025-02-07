@@ -140,6 +140,31 @@ int64_t* box_int64t (signed long valor) {
 void tipo_nao_suportado(void* type)
    { perror("tipo não suportado"); abort(); }
 
+uint8_t* clona_array(void* array, int sz, int n)
+{
+/*  Pega uma array de tipo 'sz'(seu tanto de bytes), e comprimento 'n', e
+ * realiza uma cópia de todos seus elementos. Então por fim retorna esta 
+ * array clonada. */
+   uint8_t* pointer = (uint8_t*)array;
+   uint8_t* clone = malloc(n * sz);
+
+   memmove(clone, pointer, n * sz);
+   return clone;
+}
+
+void alterna(void* a, void* b, int sz)
+{
+   uint8_t* ptr_c = malloc(sz);
+   uint8_t* ptr_a = (uint8_t*)a;
+   uint8_t* ptr_b = (uint8_t*)b;
+
+   memcpy(ptr_c, ptr_a, sz);
+   memcpy(ptr_a, ptr_b, sz);
+   memcpy(ptr_b, ptr_c, sz);
+   ptr_a += sz;
+   ptr_b += sz;
+}
+
 #ifdef __unit_tests__
 /* == == == == == == == == == == == == == == == == == == == == == == == == =
  *                         Testes Unitários 
