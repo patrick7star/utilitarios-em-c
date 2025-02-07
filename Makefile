@@ -16,10 +16,14 @@ DLL = bin/shared/
 # Cria estrutura onde artefatos compilados, de todos tipos, serão
 # depositados:
 cria-raiz-de-artefatos:
-	mkdir --parents --verbose bin/shared
-	mkdir --parents --verbose bin/static
-	mkdir --parents --verbose bin/tests
-	mkdir --parents --verbose build
+	@mkdir --parents --verbose bin/shared
+	@mkdir --parents --verbose bin/static
+	@mkdir --parents --verbose bin/tests
+	@mkdir --parents --verbose build
+
+#lista todos compilados:
+listagem-compilacao:
+	exa --tree --sort=changed --reverse bin/ build/
 
 # Compila tudo acima, seguindo sua hieraquia copiada(cima para baixo):
 compila-tudo: \
@@ -98,7 +102,7 @@ compila-principais-bibliotecas: lib-progresso lib-legivel lib-tempo \
 compila-principais-tudo: cria-raiz-de-artefatos \
 	compila-principais-objetos compila-principais-bibliotecas \
 	all-teste all-legivel all-terminal all-tempo all-ponto all-conversao \
-	all-progresso all-lista-array-ref all-impressao
+	all-progresso all-lista-array-ref all-impressao all-memoria
 
 compila-testes-unitarios: test-terminal test-ponto test-aleatorio \
 	test-tempo test-impressao test-legivel test-conversao test-estringue
@@ -107,7 +111,7 @@ roda-testes-unitarios: run-teste run-terminal run-ponto run-tempo \
 	run-estringue
 	
 compila-bibliotecas-colecoes: lib-hashtable-ref lib-pilha-ligada-ref \
-	lib-fila-circular-ref lib-lista-array-ref
+	lib-fila-circular-ref lib-lista-array-ref lib-fila-ligada-ref
 
 compila-objetos-colecoes: obj-hashtable-ref obj-conjunto-ref \
 	obj-pilha-ligada-ref obj-lista-array-ref obj-deque-ligada-ref \
@@ -465,14 +469,33 @@ clean-impressao:
 		build/impressao.o bin/shared/libimpressao.so bin/static/libimpressao.a
 
 # === === ===  === === === === === === === === === === === === === === ====
-# 									Modulo Combinatória
+# 									Módulo Combinatória
 # === === ===  === === === === === === === === === === === === === === ====
+STLIB_CBT 	= bin/static/libcombinatoria.a
+DYLIB_CBT 	= bin/shared/libcombinatoria.so
+EXE_CBT 		= bin/tests/ut_combinatoria
+OBJ_TST_CBT = build/combinatoria-teste.o
+OBJ_CBT		= build/combinatoria.o
+
+all-combinatoria: obj-combinatoria lib-combinatoria test-combinatoria
+
+obj-combinatoria:
+	@clang -I$(HEADERS) -O3 -Oz -Wall -c -o $(OBJ_CBT) src/combinatoria.c
+	@echo "Objeto do módulo 'combinatória' gerado."
+
+lib-combinatoria: obj-combinatoria
+	@clang -I$(HEADERS) -shared -fPIC -o $(DYLIB_CBT) $(OBJ_CBT) \
+		-Lbin/static -lmemoria
+	@echo "Biblioteca compartilhada 'libcombinatoria.so' compilada."
+	@ar crs  $(STLIB_CBT) $(OBJ_CBT)
+	@echo "Biblioteca estática 'libcombinatoria.a' compilada."
+
 test-combinatoria:
-	clang -Iinclude/ -c -Wall -D__unit_tests__ -D__debug__ \
-		-o build/combinatoria-teste.o src/combinatoria.c
-	clang -Iinclude/ -gdbx -O0 -Wall -D__unit_tests__ \
-		 -o bin/tests/ut_combinatoria build/combinatoria-teste.o \
-		 $(DEPS_RANDOM) -lm -limpressao
+	clang -I$(HEADERS) -c -Wall -D__unit_tests__ -D__debug__ \
+		-o $(OBJ_TST_CBT) src/combinatoria.c
+	clang -I$(HEADERS) -o $(EXE_CBT) $(OBJ_TST_CBT) \
+		 $(DEPS_RANDOM) -lm -limpressao -llegivel -lmemoria
+	@echo "Teste do módulo 'combinatória' gerado."
 
 run-combinatoria:
 	./bin/tests/ut_combinatoria
@@ -490,11 +513,11 @@ run-fio:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Memória
 # === === ===  === === === === === === === === === === === === === === ====
-BUILD_MEM = build/memoria.o
-BUILD_TST_MEM = build/memoria-teste.o
-EXE_MEM = bin/tests/ut_memoria
-DYLIB_MEM = bin/shared/libmemoria.so
-STLIB_MEM = bin/static/libmemoria.a
+BUILD_MEM 		= build/memoria.o
+BUILD_TST_MEM 	= build/memoria-teste.o
+EXE_MEM 			= bin/tests/ut_memoria
+DYLIB_MEM 		= bin/shared/libmemoria.so
+STLIB_MEM 		= bin/static/libmemoria.a
 
 all-memoria: obj-memoria test-memoria lib-memoria
 
@@ -728,17 +751,19 @@ clean-lista-posicional-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Circular Referência
 # === === ===  === === === === === === === === === === === === === === ====
-SRC_FC_REF = src/estrutura-de-dados/filacircular_ref.c 
-BUILD_FC_REF = build/fila-circular-ref.o
-BUILD_FC_REF_I = build/fila-circular-ref-teste.o
-EXE_FC_REF = bin/tests/ut_filacirular_ref 
+SRC_FC_REF 	 = src/estrutura-de-dados/filacircular_ref.c 
+OBJ_FC_REF 	 = build/fila-circular-ref.o
+OBJ_FC_REF_I = build/fila-circular-ref-teste.o
+EXE_FC_REF 	 = bin/tests/ut_filacirular_ref 
+DYLIB_FC_REF = bin/shared/libfcref.so
+STLIB_FC_REF = bin/static/libfcref.a
 
 all-fila-circular-ref: obj-fila-circular-ref lib-fila-circular-ref \
 	test-fila-circular-ref
 
 obj-fila-circular-ref:
 	@clang -O3 -Oz -I include/ -Wall -Werror \
-		-c -o $(BUILD_FC_REF) $(SRC_FC_REF)
+		-c -o $(OBJ_FC_REF) $(SRC_FC_REF)
 	@echo "Gerou o arquivo objeto 'fila-circular-ref.o', em 'build'."
 
 test-fila-circular-ref:
@@ -746,31 +771,49 @@ test-fila-circular-ref:
 		-o $(EXE_FC_REF) $(SRC_FC_REF) $(TESTADOR) -lprogresso
 	@echo "Teste 'ut_fila_array_ref' compilado com sucesso."
 	
-lib-fila-circular-ref:
+lib-fila-circular-ref: obj-fila-circular-ref
 	@clang -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libfcref.so $(BUILD_FC_REF) 
+		-o $(DYLIB_FC_REF) $(OBJ_FC_REF) 
 	@echo "Biblioteca compartilhada 'libfcref.so' compilada."
-	@ar crs bin/static/libfcref.a $(BUILD_FC_REF)
+	@ar crs $(STLIB_FC_REF) $(OBJ_FC_REF)
 	@echo "Biblioteca estática 'libfcref.a' compilada."
 
 clean-fila-circular-ref:
-	@rm -v -f $(EXE_FC_REF) $(BUILD_FC_REF) bin/shared/libfcref.so \
-		$(BUILD_FC_REF_I) bin/static/libfcref.a 
+	@rm -v -f $(EXE_FC_REF) $(OBJ_FC_REF) $(DYLIB_FC_REF) \
+		$(OBJ_FC_REF_I) $(STLIB_FC_REF)
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Ligada Referência
 # === === ===  === === === === === === === === === === === === === === ====
+SRC_FL_REF   = src/estrutura-de-dados/filaligada_ref.c
+OBJ_FL_REF 	 = build/filaligada_ref.o
+EXE_FL_REF 	 = bin/tests/ut_fila_ligada_ref
+DYLIB_FL_REF = bin/shared/libflref.so
+STLIB_FL_REF = bin/static/libflref.a
+
+all-fila-ligada-ref: obj-fila-ligada-ref lib-fila-ligada-ref \
+	test-fila-ligada-ref
+
 obj-fila-ligada-ref:
-	@clang -O3 -Oz -I include/ -Wall -c \
-		-o build/filaligada_ref.o \
-		src/estrutura-de-dados/filaligada_ref.c
+	@clang -O3 -Oz -I$(HEADERS) -Wall -c -o $(OBJ_FL_REF) $(SRC_FL_REF)
 	@echo "Gerou o arquivo objeto 'filaligada_ref.o', em 'build'."
 
+lib-fila-ligada-ref: obj-fila-ligada-ref
+	@clang -std=gnu2x -I$(HEADERS) -shared -fPIC -Wall \
+		-o $(DYLIB_FL_REF) $(OBJ_FL_REF) 
+	@echo "Biblioteca compartilhada 'libflref.so' compilada."
+	@ar crs $(STLIB_FL_REF) $(OBJ_FL_REF)
+	@echo "Biblioteca estática 'libflref.a' compilada."
+
 test-fila-ligada-ref:
-	clang -Wall -Wextra -Iinclude/ -D__UT_FILA_LIGADA_REF__ \
+	@clang -Wall -Wextra -Iinclude/ -D__UT_FILA_LIGADA_REF__ \
 		-Wno-unused-parameter \
-		-o bin/tests/ut_fila_ligada_ref \
-		src/estrutura-de-dados/filaligada_ref.c
+		-o $(EXE_FL_REF) $(SRC_FL_REF)
+	@echo "Teste de 'fila-ligada-ref' compilada."
+
+run-fila-ligada-ref:
+	@echo "Execução dos testes unitários de 'fila-ligada(ref)' ..."
+	@bin/tests/ut_fila_ligada_ref
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Deque-Ligada Referência
@@ -832,3 +875,8 @@ processo-de-desalocacao:
 	-o bin/tests/it_processo_de_desalocacao tests/processo_de_desalocacao.c \
 	-L bin/shared -lteste -ltempo -llegivel -lterminal \
 		-lprogresso -lplref -lfcref -laleatorio -lm
+
+permutacoes-com-info:
+	gcc -g -std=gnu2x -Iinclude/ -Wall \
+		-o bin/tests/it_permutacoes_com_info testes/permutacoes_com_info.c \
+		$(TESTADOR) -limpressao -lterminal -lmemoria -lcombinatoria -lflref
