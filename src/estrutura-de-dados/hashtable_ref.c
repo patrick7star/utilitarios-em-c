@@ -441,18 +441,6 @@ generico_t obtem_ht(HashTable m,  generico_t ch) {
       ch, m->__iguais__
    );
 
-   #ifdef _OBTEM_HT
-   printf (
-      "posição na array: %lu\nestá contido? %s\n", 
-      posicao, bool_to_str (outcome.contido)
-   );
-   // printf ("valor = '%s'.\n", (char*)outcome.item->valor);
-   if (outcome.item != NULL)
-      puts ("parece que o itém não é inválido.");
-   else
-      puts ("item é inválido!");
-   #endif
-
    if (outcome.contido)
       return outcome.item->valor;
    return NULL;
@@ -751,6 +739,7 @@ size_t len_ht (HashTable m) { return tamanho_ht(m); }
 #ifdef _UT_HASHTABLE
 // bibliotecas:
 #include "teste.h"
+#include "macros.h"
 #include <assert.h>
 #include <locale.h>
 #include "dados_testes.h"
