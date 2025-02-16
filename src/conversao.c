@@ -11,6 +11,7 @@
 #include <string.h>
 #include <wchar.h>
 #include <stdarg.h>
+#include <limits.h>
 
 void print_array(uint8_t* array, int t, bool hexadecimal)
 {
@@ -301,120 +302,78 @@ void free_bytes(struct Bytes* a)
  * funções abaixo. */
    { free(a->bytes); }
 
-struct Bytes string_to_bytes(char* input)
+struct Bytes string_to_bytes(char* In)
 {
 /*O requerimento principal para isso funcionar é, a array de otutput deve
  * ter, no mínimo, o tamanho da string(sem contar o caractére nulo). */
-   size_t L = strlen(input);
-   size_t sz = sizeof(char);
-   const size_t sz_int = sizeof(size_t);
-   struct Bytes result;
-   /* Conversão do atual pointeiro para 8-bit inteiro sem sinal. */
-   uint8_t* ptr = (uint8_t*)input;
+   struct Bytes Out;
+   const int sz = sizeof(char);
 
-   size_t Q = L + sz_int;
-   // Alocando memória necessária...
-   result.bytes = malloc(Q * sz);
-   // Contabilizando os 8 bytes do tamanho enfurnado nos bytes da string.
-   result.total = Q;
+   /* Registra o total de bytes(caractéres) que serão registrados. Não, isso
+    * não inclui o caractére nulo. */
+   Out.total = strlen(In);
+   // Aloca o necessário para copiar a 'narrow' string.
+   Out.bytes = malloc(Out.total * sz);
 
-   // Serializando tal valor(comprimento da string)...
-   uint8_t buffer[sz_int];
-   sizet_to_bytes(L, buffer);
-
-   // Copiando primeiro os bytes do tamanho da string...
-   memcpy(result.bytes, buffer, sz_int);
-   // Então copiando os bytes da string em si.
-   memcpy(result.bytes + sz_int, ptr, L);
-
-   return result;
+   // Copia os bytes, então retorna o resultado.
+   memcpy(Out.bytes, (uint8_t*)In, Out.total * sz);
+   return Out;
 }
 
-char* from_bytes_to_string(struct Bytes* input)
+char* from_bytes_to_string(struct Bytes* In)
 {
-   uint8_t* ptr = input->bytes;
-   size_t t = from_bytes_to_sizet(ptr);
-   char* ptr_str, *copia;
-   size_t sz = sizeof(char);
+   size_t t = (*In).total;
+   char* Out;
+   const int sz = sizeof(char);
 
-   // Pula oito bytes referente ao 'tamanho' já decodificado.
-   ptr += 8;
-   ptr_str = (char*)ptr;
-   // Alocando memória. O mais um é para colocar o caractére nulo.
-   copia = malloc((t + 1) * sz);
+   // Alocando memória. O mais um é pra colocar o caractére nulo.
+   Out = malloc((t + 1) * sz);
    // Agora copiando ele para memória alocada.
-   memcpy(copia, ptr_str, t);
+   memcpy(Out, (*In).bytes, t);
    // Fincando o fim da string nela...
-   copia[t] = '\0';
+   Out[t] = '\0';
 
-   return copia;
+   return Out;
 }
 
-struct Bytes string_unicode_to_bytes(wchar_t* input)
+struct Bytes string_unicode_to_bytes(wchar_t* In)
 {
-// O mesmo que acima, porém para 'wide strings'/ou string Unicodes. 
-   // Quantidade de bytes do inteiro de máquina, e do caractére Unicode.
-   const size_t SzWchar = sizeof(wchar_t);
-   const size_t SzInt = sizeof(size_t);
-   // Total de caractéres da string, caractére nulo não contabilizado.
-   size_t qC = wcslen(input);
-   /* Total de bytes que a string Unicode possui, claro, não está contando
-    * o caractére nulo. */
-   size_t tB = SzWchar * qC; 
-   /* Conversão do ponteiro de 'wide character' para ponteiro do inteiro 
-    * positivo de 8-bits. */
-   uint8_t* ptr = (uint8_t*)input;
-   /* Tupla com serializaçao: tanto os bytes, como sua quantidade total. */
-   struct Bytes result;
-   /* Sequência dos bytes da estringue Unicode, e do comprimento dela. */
-   uint8_t bytes_len[SzInt];
-   uint8_t bytes_str[tB];
+/* O retorno são os bytes da string Unicode(excluindo o caractére nulo), e
+ * este total de bytes. Não, o tamanho não é mesclado com a string no seu
+ * ínicio para transmissão. Se for utilizar isso, tem uma função própria
+ * para tal. */
+   // Ponteiro de bytes e tupla contendo o 'output' da função:
+   uint8_t* pointer = (uint8_t*)In;
+   struct Bytes Out;
+   const int sz = sizeof(wchar_t);
+   size_t quantia = wcslen(In);
 
-   // Copiando sequências de bytes para seus respectivos containers...
-   sizet_to_bytes(qC, bytes_len);
-   memcpy(bytes_str, ptr, tB);
+   if (quantia > 2e5) {
+      perror("desativado, por enquanto, para strings deste tamanho!");
+      abort();
+   }
 
-   // Alocando e registrando o atual tanto de bytes...
-   result.total = tB + SzInt;
-   result.bytes = malloc(result.total);
-   // Então copiando ambas sequências para a alocada.
-   memcpy(result.bytes, bytes_len, SzInt);
-   // Compuntando novo ponteiro a iniciar a cópia de bytes...
-   ptr = result.bytes + SzInt;
-   memcpy(ptr, bytes_str, tB);
+   // Total de bytes apenas para os caractéres válidos(não nulo).
+   Out.total = quantia * sz;
+   Out.bytes = malloc(quantia * sz);
+   memcpy(Out.bytes, pointer, quantia * sz);
 
-   return result;
+   return Out;
 }
 
-wchar_t* from_bytes_to_string_unicode(struct Bytes* input)
+wchar_t* from_bytes_to_string_unicode(struct Bytes* In)
 {
-// Deserialização de bytes específicos para strings Unicodes.
-   uint8_t* ptr = input->bytes;
-   wchar_t* string, *ptrSU;
-   /* Quantidade de caractéres da estringue, e o tamanho, em bytes, de um 
-    * caractére Unicode. */
-   size_t qtd, sz = sizeof(wchar_t);
-   // Total de bytes que a estringue contém.
-   size_t tB;
+/* Deserialização de bytes específicos para strings Unicode. Neste caso, o
+ * caractére nulo é automaticamente colocado no fim. */
+   size_t quantia = (*In).total + 1;
+   wchar_t* Out = malloc(quantia);
+   uint8_t* pointer = (*In).bytes;
 
-   // Decodifica os primeiros 8 bytes e transforma num inteiro positivo.
-   qtd = from_bytes_to_sizet(ptr);
-   // Pula oito bytes referente ao 'tamanho' já decodificado.
-   ptr += sizeof(size_t);
-   /* Transforma ponteiro que indica o ínicio da estringue Unicode no 
-    * equivalente ponteiro(poniteiro de wchar). */
-   ptrSU = (wchar_t*)ptr;
-   // Total de bytes que a estringue Unicode conterá, esta contabilizando
-   // o caractére nulo.
-   tB = (qtd + 1) * sz;
-   // Alocando memória. O mais um é para colocar o caractére nulo.
-   string = malloc(tB);
-   // Agora copiando ele para memória alocada.
-   memcpy(string, ptrSU, tB);
-   // Fincando o fim da estringue nela...
-   string[qtd] = L'\0';
-
-   return string;
+   /* Copia apenas a quantia de caractéres, então no fim, anexa um caractére
+    * nulo. */
+   memcpy(Out, pointer, (*In).total);
+   Out[quantia - 1] = L'\0';
+   return Out;
 }
 
 struct Bytes concatena_sb(int quantia, ...)
@@ -517,6 +476,103 @@ uint8_t* concatena_ab(int quantia, ...)
    return result;
 }
 
+// ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+StreamingOfBytes cria_streaming_of_bytes(struct Bytes* In) {
+/* Concatena uma 'struct Bytes' por motivo de comunicação. É basicamente 
+ * quase a mesma array de bytes, porém com os primeiros bytes -- oito, mas 
+ * pode variar por máquina, o tamanho de um 'size_t' -- significam um o total
+ * de bytes que o resto dela carrega. */
+   const int sz = sizeof(int);
+   size_t total = (*In).total;
+   uint8_t* Out = malloc(sz + total); 
+   uint8_t buffer[sz];
+   uint8_t* pointer = buffer;
+
+   sizet_to_bytes(total, pointer);
+   /* Os oito primeiros bytes são os bytes referentes ao comprimento, já os
+    * demais são os restantes. */
+   memcpy(Out, pointer, sz);
+   pointer = (*In).bytes;
+   memcpy(Out, pointer, total);
+   // Por fim o retorno da array de bytes.
+   return Out;
+}
+
+StreamingOfBytes string_unicode_to_streaming_of_bytes(wchar_t* In) {
+/* A mesma que acima, porém converte uma string Unicode diretamente para 
+ * 'Bytes Stream'. Ele apenas converte tal uma 'struct Bytes', e manda via
+ * pipeline para a função que cria 'Bytes Stream'. */
+   struct Bytes In_a = string_unicode_to_bytes(In);
+   StreamingOfBytes Out = cria_streaming_of_bytes(&In_a);
+
+   /* É necessário liberar array de bytes alocada em 'struct Bytes'. Nenhuma
+    * perda, já que, 'Byte Stream' aloca uma array internamente também,
+    * apenas copia da estrutura. */
+   free_bytes(&In_a);
+   return Out;
+}
+
+struct Bytes from_streaming_of_bytes_to_bytes(StreamingOfBytes In) {
+/* Conversão de volta, converte 'BytesStream'bytes streams to 'struct Bytes'.
+ * O que é preciso notar é, pode ser que o 'input' seja inválido, então para
+ * gigantes 'BytesStream', tal função está desabilitada. */
+   struct Bytes Out;
+   uint8_t* pointer = In;
+   size_t total = from_bytes_to_sizet(pointer);
+
+   if (total >= USHRT_MAX && total < INT_MAX)
+      perror("Valor muito grande, tem certeza?!");
+   else if (total >= INT_MAX) {
+      perror("Valor desativado para tal streaming!");
+      abort();
+   }
+
+   // Move o pointeiro depois dos bytes de tamanho.
+   pointer += sizeof(size_t);
+   // Aloca a memória necessário e registra o total de bytes.
+   Out.bytes = malloc(total);
+   Out.total = total;
+
+   // Copia o total que foi decodificado de bytes, então retorna a tupla.
+   memcpy(Out.bytes, pointer, total);
+   return Out;
+}
+
+wchar_t* from_streaming_of_bytes_to_string_unicode(StreamingOfBytes In) {
+/* Apenas um 'pipeline' processo que converte primeiro de um 'SoB' numa
+ * 'struct Bytes', para depois usar uma função que converte de tal pra
+ * uma 'string Unicode'. */
+   struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
+   wchar_t* Out = from_bytes_to_string_unicode(&In_a);
+
+   return Out;
+}
+
+char* from_streaming_of_bytes_to_string(StreamingOfBytes In) {
+/* Mesmo que acima, porém para parâmetros do tipo 'narrow string'. */
+   struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
+   char* Out = from_bytes_to_string(&In_a);
+
+   return Out;
+}
+
+// Todos apelidos mais palatáveis as funções acimas:
+SoB cria_sob(struct Bytes* In)
+   { return cria_streaming_of_bytes(In); }
+SoB string_unicode_to_sob(wchar_t* In)
+   { return string_unicode_to_streaming_of_bytes(In); }
+SoB su_to_bs(wchar_t* In)
+   { return string_unicode_to_sob(In); }
+struct Bytes from_sob_to_bytes(SoB In)
+   { return from_streaming_of_bytes_to_bytes(In); }
+wchar_t* from_sob_to_string_unicode(SoB In) 
+   { return from_streaming_of_bytes_to_string_unicode(In); }
+wchar_t* from_sob_to_su(SoB In) 
+   { return from_sob_to_string_unicode(In); }
+char* from_sob_to_string(SoB In) 
+   { return from_streaming_of_bytes_to_string(In); }
+char* from_sob_to_str(SoB In) 
+   { return from_sob_to_string(In); }
 
 #if defined(__UT_CONVERSAO__) && defined(__linux__)
 /* === === === === === === === === === === === === === === === === === ==
@@ -535,7 +591,7 @@ uint8_t* concatena_ab(int quantia, ...)
 #include <sys/time.h>
 #include "teste.h"
 
-#define POT pow(10.0, 6)
+const int Okay = 0;
 
 void verificacao_da_atual_maquina(void) {
    #ifdef _WIN64
@@ -683,15 +739,14 @@ void serializa_e_deserializa_string_unicode(void)
 static double decorrido(struct timeval i, struct timeval f)
 {
    /* Convertando cada equivalente em segundos. */
-   double start = (double)i.tv_sec + (double)i.tv_usec / POT;
-   double end = (double)f.tv_sec + (double)f.tv_usec / POT;
+   double start = (double)i.tv_sec + (double)i.tv_usec / 1.0e6;
+   double end = (double)f.tv_sec + (double)f.tv_usec / 1.0e6;
 
    return end - start;
 }
 
 void tempo_de_conversao(void) 
 {
-   const int Okay = 0;
    const wchar_t* amostra = {
       L"\U0001f3b5 \U0001f3b6 Salve à noite, \U0001f3b6 \U0001f3b5 me "
       L"levar com eles, \U0001f3b5 \U0001f3b6 os cuzões vem, para me levar "
