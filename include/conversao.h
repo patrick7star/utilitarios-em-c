@@ -21,6 +21,15 @@
   *       precisarão ser desalocados. 
   */
  struct Bytes { uint8_t* bytes; size_t total; };
+ // Apelido mais curto para estrutura acima:
+ typedef struct Bytes SB, Bytes;
+ /* Bytes de streaming são uma versão concatenada do 'struct Bytes', onde
+  * o total de bytes é codificado também em bytes(os oito primeiros bytes)
+  * e enviado junto com o arranjo deles. Tal tipo de dado pode ser formado
+  * de uma simples string, seja Unicode ou ASCII, ou também pode ser formada
+  * dado uma 'struct Bytes'. 
+  */
+ typedef uint8_t* StreamingOfBytes, *SoB;
 
  // Método para desalocar a estrutura acima.
  void free_bytes (struct Bytes*);
@@ -85,8 +94,8 @@
   */
  struct Bytes  string_to_bytes               (char*         In);
  struct Bytes  string_unicode_to_bytes       (wchar_t*      In);
-    char*      from_bytes_to_string          (struct Bytes* In);
-   wchar_t*    from_bytes_to_string_unicode  (struct Bytes* In);
+ char*         from_bytes_to_string          (struct Bytes* In);
+ wchar_t*      from_bytes_to_string_unicode  (struct Bytes* In);
 
  /* Operações abaixo imprimem pequenas arrays -- na verdade até uma que é 
   * relativamente grande; o outro método já compara arrays relativamente
@@ -100,10 +109,31 @@
   * de bytes ser embutido na tupla, não é necessário fornecer o tamanho
   * dela na frente dela ao lista-la no campo de argumentos.
   */
-    void       print_array   (uint8_t* array, int t, bool hexa);
-    bool       arrays_iguais (uint8_t* a, uint8_t* b, int t); 
-   uint8_t*    concatena_ab  (int quantia, ...);
+ void          print_array   (uint8_t* array, int t, bool hexa);
+ bool          arrays_iguais (uint8_t* a, uint8_t* b, int t); 
+ uint8_t*      concatena_ab  (int quantia, ...);
  struct Bytes  concatena_sb  (int quantia, ...);
 
+ /* 'Streaming of Bytes' é um mesmo tipo de representão  que 'struct Bytess',
+  * porém, o total de bytes é codificado nos bytes iniciais da array. Uma
+  * forma muito bom para enviar/receber dados onde quer que seja, já que,
+  * basicamente o tamanho de bytes é fixo(o maior inteiro de bytes positivo)
+  * e fácil de localizar(ínicio dela). */
+ SoB       cria_streaming_of_bytes                    (Bytes* In);
+ SoB       string_unicode_to_streaming_of_bytes       (wchar_t* In); 
+ Bytes     from_streaming_of_bytes_to_bytes           (SoB In); 
+ wchar_t*  from_streaming_of_bytes_to_string_unicode  (SoB In);
+ char*     from_streaming_of_bytes_to_string          (SoB In);
+
+ /* Vários outros nomes alternativos para chamar as funções acima. Elas 
+  * seguem a ordem de codificação, por motivos óbivos de legibilidade. */
+ SoB      cria_sob                    (Bytes* In);
+ SoB      string_unicode_to_sob       (wchar_t* In);
+ SoB      su_to_bs                    (wchar_t* In);
+ Bytes    from_sob_to_bytes           (SoB In);
+ wchar_t* from_sob_to_string_unicode  (SoB In);
+ wchar_t* from_sob_to_su              (SoB In);
+ char*    from_sob_to_string          (SoB In);
+ char*    from_sob_to_str             (SoB In);
 
 #endif

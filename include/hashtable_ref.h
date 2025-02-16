@@ -26,20 +26,21 @@
    // Formas estáticas(para pegarem o objeto, precisam de ponteiros):
    hashtable_t,  HASHTABLE,
    // Ponteiros, ambas formas são comumente escritas:
-   *Hashtable, *HashTable;
+   *Hashtable, *HashTable, *HT;
 
- // criação e destruição da instância da estrutura de dados.
- HashTable cria_com_capacidade_ht (size_t, Hash, Eq);
- HashTable cria_ht (Hash, Eq);
- /* Criado de tabela, que postega a adição(importantíssima) dos métodos
-  * de hash e igualdade entre os tipos internos de dados. Você tem a
-  * instância do tipo de objeto, porém não pode fazer operações nele.
-  * Para usar tal, tem que usar também a função 'adiciona_metodos'. */
- HashTable cria_branco_ht (void);
- bool destroi_ht (HashTable);
- /* Também desaloca o tipo de dados internos, se for passado também o
-  * desalocador de tal tipo abstrato que foi alocada na tabela. */
- bool destroi_interno_ht (HashTable, Drop k, Drop v);
+ /* Criação e alocação de várias formas possíveis. Alocação pode ser feita
+  * com um buffer inicial, com um buffer definido de forma automática, e
+  * com buffer automático, porém, os métodos de 'hashing' e 'igualdade', 
+  * podem ser delegados para uma inserção posterior. Já a desalocação há duas
+  * possibilidades: um que simplesmente desaloca toda estrutura de mapa, e
+  * a outra também desaloca os dados internos, se devidamente passados os 
+  * descontrutores tanto da chave quando to valor. 
+  */
+ HashTable  cria_com_capacidade_ht  (size_t, Hash, Eq);
+ HashTable  cria_ht                 (Hash, Eq);
+ HashTable  cria_branco_ht          (void);
+ bool       destroi_ht              (HashTable);
+ bool       destroi_interno_ht      (HashTable, Drop k, Drop v);
 
  /* Necessário para o último método de criação, que não passa as condições
   * necessárias para que a maioria dos métodos abaixo, mudem ou não a
@@ -50,16 +51,16 @@
 
  /* Operações que mexem com o iterno da 'tabela', mudam ela para mais ou
   * menos, até igual, mas mudam. */
- bool insere_ht (HashTable m, generico_t ch, generico_t vl);
+ bool insere_ht   (HashTable m, generico_t ch, generico_t vl);
  bool atualiza_ht (HashTable m,  generico_t ch,  generico_t nv);
- bool deleta_ht (HashTable m, generico_t ch);
+ bool deleta_ht   (HashTable m, generico_t ch);
 
  /* Obtem informações sobre ela, seja seu tamanho, estado, se tem ou não
   * o item, até o 'item' em sí. */
- bool contem_ht (HashTable, generico_t ch);
- generico_t obtem_ht (HashTable m,  generico_t ch);
- bool vazia_ht (HashTable);
- size_t tamanho_ht (HashTable);
+ bool        contem_ht   (HashTable, generico_t ch);
+ generico_t  obtem_ht    (HashTable m,  generico_t ch);
+ bool        vazia_ht    (HashTable);
+ size_t      tamanho_ht  (HashTable);
 
  /* Métodos para visualização da tabela, seja o resultado uma string, ou
   * na saída principal. */
@@ -72,8 +73,8 @@
   *
   * Nota: ainda estão instaveis, portanto o uso vem com possíveis clashes
   * no programa. */
- generico_t* valores_ht (HashTable);
- generico_t* chaves_ht (HashTable);
+ generico_t*  valores_ht (HashTable);
+ generico_t*  chaves_ht  (HashTable);
 /* === === === === === === === === === === === === === === === === === ==
  *                      Iteradores e seus
  *                         Métodos
@@ -86,13 +87,12 @@
  // cédula em branco para indicar termino da iteração ou invalidação.
  extern const IterOutputHT NULO_HT;
 
- IteradorHT cria_iter_ht (HashTable);
- IteradorHT clona_iter_ht (IterHT);
- void destroi_iter_ht (IterHT);
-
- size_t contagem_iter_ht (IterHT);
- IterOutputHT next_ht (IterHT);
- bool consumido_iter_ht (IterHT);
+ IteradorHT    cria_iter_ht      (HashTable);
+ IteradorHT    clona_iter_ht     (IterHT);
+ void          destroi_iter_ht   (IterHT);
+ size_t        contagem_iter_ht  (IterHT);
+ IterOutputHT  next_ht           (IterHT);
+ bool          consumido_iter_ht (IterHT);
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários
@@ -101,20 +101,17 @@
  *
  * Observação: Estão espaçado e agrupadas de acordo com as originais.
  * === === === === === === === === === === === === === === === === === ==*/
- HashTable new_with_capacity_ht (size_t, Hash, Eq);
- HashTable new_ht (Hash, Eq);
- HashTable default_ht (void);
- bool delete_ht (HashTable);
-
- bool add_ht (HashTable, generico_t key, generico_t vl);
- bool update_ht (HashTable,  generico_t key,  generico_t nvl);
- bool remove_ht (HashTable, generico_t key);
-
- bool contains_ht (HashTable, generico_t key);
- generico_t get_ht (HashTable,  generico_t key);
- bool empty_ht (HashTable);
- size_t len_ht (HashTable);
-
- void print_ht (HashTable, ToString fk, ToString gv);
+ HT      new_with_capacity_ht (size_t, Hash, Eq);
+ HT      new_ht               (Hash, Eq);
+ HT      default_ht           (void);
+ bool    delete_ht            (HT);
+ bool    add_ht               (HT, GNRC key, GNRC vl);
+ bool    update_ht            (HT,  GNRC key,  GNRC nvl);
+ bool    remove_ht            (HT, GNRC key);
+ bool    contains_ht          (HT, GNRC key);
+ GNRC    get_ht               (HT, GNRC key);
+ bool    empty_ht             (HT);
+ size_t  len_ht               (HT);
+ void    print_ht             (HT, ToString fk, ToString gv);
 
 #endif
