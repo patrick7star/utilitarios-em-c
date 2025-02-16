@@ -83,7 +83,7 @@ char* box_str(char* str) {
    char* obj = malloc(n * sz);
 
    strcpy(obj, str);
-   obj[n] = '\0';
+   obj[n - 1] = '\0';
    return obj;
 }
 
@@ -93,7 +93,7 @@ wchar_t* box_wcs(wchar_t* str) {
    wchar_t* obj = malloc(n * sz);
 
    wcscpy(obj, str);
-   obj[n] = L'\0';
+   obj[n - 1] = L'\0';
    return obj;
 }
 
