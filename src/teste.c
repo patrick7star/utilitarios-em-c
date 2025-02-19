@@ -1,4 +1,6 @@
-
+// Definição das funções e estruturas do módulo:
+#include "teste.h"
+// Biblioteca padrão do C:
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,16 +10,12 @@
 #include <ctype.h>
 #include <assert.h>
 #include <tgmath.h>
-// para não compilar no Windows, assim mantém compatibilidade
+// Outros módulos do próprio projeto:
 #ifndef _WIN64
 #include "tempo.h"
 #include "legivel.h"
 #endif
 #include "terminal.h"
-/* incluindo aqui por quê? Primeiro, tem macros importantes definidos lá,
- * que é preciso também usar aqui; segundo, o 'header guards' garantem que 
- * não entra-se num loop de inclusão. */
-#include "teste.h"
 #include "macros.h"
 
 
@@ -38,7 +36,11 @@
  *    Variável:
  *       - testes_contagem
  */
-#include "teste/old-tester.c"
+#ifdef __linux__
+#include "teste/tester.c"
+#elif defined(_WIN32)
+#include "teste/windows/tester.c"
+#endif
 
 // conta quantos usos a função abaixo tem.
 static uint8_t contagem_de_usos = 0;
@@ -48,16 +50,6 @@ void debug_aqui(void) {
    printf("\no erro está bem ... ... ...aqui!(%d)\n", contagem_de_usos + 1);
    contagem_de_usos++;
 }
-
-/* Módulo inclui funções e objetos que são utilizados no escopo principal
- * para que tal fique compatível com a plataforma Windows. 
- *
- *    Funções:
- *       - pausa
- *       - espera_pouco_segundos
- *       - intervalo_de_milisegundos
- */
-#include "teste/windows.c"
 
 /* Função e seus protótipos para converter uma string que representa um 
  * valor lógica, seja qualquer a forma que ele está escrito, no respectivo
@@ -72,7 +64,7 @@ void debug_aqui(void) {
 #include "teste/booleano.c"
 
 
-#ifdef _UT_TESTE
+#ifdef __unit_tests__
 /* === === === === === === === === === === === === === === === === === ===+
  *
  *                         Testes Unitários
@@ -107,7 +99,6 @@ void converte_strings_de_valores_logicos() {
 }
 
 void testes_tal_declaracao_de_loop(void) {
-#ifdef _POSIX_C_SOURCE
    Temporizador timer = cria_temporizador(Segundo, 3);
    loop_infinito {
       puts("mensagem fica se repetindo.");
@@ -119,22 +110,9 @@ void testes_tal_declaracao_de_loop(void) {
       }
    }
    destroi_temporizador(timer);
-#else
-   puts("testes não existente para sistemas diferente de Linux!");
-#endif
 }
 
-int main(int qtd, char* argumentos[], char* env_vars[]) {
-   executa_testes_a(
-      true, 3, 
-         // iteração para gerar máscaras funciona!
-         stringficacao_de_valores_primitivos, false,
-         converte_strings_de_valores_logicos, false,
-         // consome bastante tempo...
-         testes_tal_declaracao_de_loop, false
-   );
-
-   #ifdef __linux__
+void primeiro_executor_datado(void) {
    // Teste da função interna sem nada com atual módulo:
    executa_testes(
       4, percorrendo_string, true,
@@ -142,7 +120,23 @@ int main(int qtd, char* argumentos[], char* env_vars[]) {
          primeira_versao_alternativa_de_executa_testes, true,
          teste_interruptor_renomeado, true
    );
-   #endif
+}
+
+int main(int qtd, char* argumentos[], char* env_vars[]) {
+   executa_testes_a(
+      false, 4, 
+         // iteração para gerar máscaras funciona!
+         stringficacao_de_valores_primitivos, false,
+         converte_strings_de_valores_logicos, false,
+         primeiro_executor_datado, true,
+         // consome bastante tempo...
+         testes_tal_declaracao_de_loop, false
+   );
+
+   executa_testes_a(
+     true, 1,
+         processo_de_construcao_do_executa_testes_b, true
+   );
 
    return EXIT_SUCCESS;
 }

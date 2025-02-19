@@ -11,6 +11,7 @@ tabela.
 // Biblioteca padrão do C:
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <stdint.h>
 #include <wchar.h>
 #include <string.h>
@@ -362,6 +363,79 @@ void imprime_array_i64(int64_t* array, int length)
 void imprime_array_u64(uint64_t* array, int length)
    { imprime_array_tipos_de_int(array, length, u64); }
 
+/* === === === === === === === === === === === === === === === === === ===+
+ *                      Coloração de Resultados
+ * === === === === === === === === === === === === === === === === === ===*/
+#define ANSI_VERMELHO   "\x1b[031m"
+#define ANSI_VERDE      "\x1b[032m"
+#define ANSI_AMARELO    "\x1b[033m"
+#define ANSI_AZUL       "\x1b[034m"
+#define ANSI_VIOLETA    "\x1b[035m"
+#define ANSI_MARINHO    "\x1b[036m"
+#define ANSI_DESLIGADO  "\x1b[00m"
+
+// Buffer para copia temporaria de string.
+static char TEXTO[UCHAR_MAX];
+
+static char* const cor_selecionada(enum Cores cor) {
+   switch(cor) {
+      case Vermelho:
+         return ANSI_VERMELHO;
+      case Violeta:
+         return ANSI_VIOLETA;
+         break;
+      case AzulMarinho:
+         return ANSI_MARINHO;
+         break;
+      case Azul:
+         return ANSI_AZUL;
+      case Amarelo:
+         return ANSI_AMARELO;
+      case Verde:
+         return ANSI_VERDE;
+      default:
+         perror("Tipo de cor não definida aidna.");
+         abort();
+   }
+}
+
+StrColorida colori_string(char* In_a, enum Cores In_b) {
+/*   Aplica protocolo ANSI numa cópia da string, que será posteriormente
+ * retornada. A string retornada foi antes alocada dinâmicamente na memória.
+ */
+   int m = strlen(ANSI_VIOLETA);
+   int n = strlen(In_a);
+   int sz = n + 2*m + 1;
+   StrColorida Out = malloc(sz);
+   char* selecao = cor_selecionada(In_b);
+   char* off = ANSI_DESLIGADO;
+
+   sprintf(Out, "%s%s%s", selecao, In_a, off);
+   return Out;
+}
+
+StrColorida muda_cor_da_string(char* In_a, enum Cores In_b) {
+/* Faz o mesmo que acima, porém sem alocação dinâmica. A desvantagem aqui
+ * é que é uma função 'thread-unsafe', e que tem limitação da quantia 
+ * de caractéres que podem ser usadas. A função confrotado com o tamanho
+ * superior de caractéres que ela permite, simplesmente interromperá o
+ * programa. */
+   int m = strlen(ANSI_VERDE);
+   int comprimento = strlen(In_a);
+
+   if (comprimento + 2*m >= UCHAR_MAX) {
+      perror
+         ("string passada é muito comprida para o buffer que a função usa.");
+      abort();
+   }
+
+   char* selecao = cor_selecionada(In_b); 
+   char* off = ANSI_DESLIGADO;
+   char* Out = TEXTO;
+
+   sprintf(Out, "%s%s%s", selecao, In_a, off);
+   return Out;
+}
 
 /* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
@@ -499,6 +573,33 @@ void impressao_de_strings_e_caracteres_unicode(void)
    imprime_array_char_unicode(input_a, n);
 }
 
+void aplicacao_randomica_de_cores_em_pequenas_strings(void)
+{
+   enum Cores colors[] = {
+      Azul, Violeta, Verde, AzulMarinho, Amarelo, 
+      Vermelho
+   };
+   const int N = sizeof(colors) / sizeof(enum Cores);
+
+   for (int i = 0; i < FRUTAS; i++) {
+      char* in = (char*)frutas[i];
+      enum Cores cor = colors[i % N];
+      char* out = colori_string(in, cor);
+
+      printf(" - %-30s~ %s\n", out, frases_i[i]);
+      free(out);
+   }
+
+   puts("\nOutro método de coloração aplicado(há um trade-off).");
+   for (int i = 0; i < OBJETOS; i++) {
+      char* in = (char*)objetos[i];
+      enum Cores cor = colors[i % N];
+      char* out = muda_cor_da_string(in, cor);
+
+      printf(" - %-30s~ %s\n", out, frases_i[i]);
+   }
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
@@ -511,6 +612,11 @@ int main(void)
          impressao_de_array_gigante_de_strings, true,
          impressao_de_outros_tipos_de_inteiros, true,
          impressao_de_strings_e_caracteres_unicode, true
+   );
+
+   executa_testes_b(
+     true, 1,
+         Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true) 
    );
 }
 #endif
