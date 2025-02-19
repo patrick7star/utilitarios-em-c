@@ -124,7 +124,7 @@ compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Teste
 # === === ===  === === === === === === === === === === === === === === ====
-COMPILA_TST = -D_UT_TESTE -D__debug__
+COMPILA_TST = -D__unit_tests__ -D__debug__ -D__debug__executa_testes_b
 DEPS_TST 	= build/tempo.o build/legivel.o build/terminal.o
 EXE_TST 		= bin/tests/ut_teste
 EXE_TST_I 	= bin/shared/libteste.so
@@ -145,9 +145,9 @@ lib-teste: obj-teste
 test-teste:
 	@gcc -Isrc/teste -Iinclude -Wall -Werror \
 		-c -o build/amostras.o src/teste/amostras.c
-	@gcc -Wall -Werror -Iinclude $(COMPILA_TST) \
+	@gcc -Wall -Iinclude $(COMPILA_TST) \
 		-c -o build/test-teste.o src/teste.c
-	@gcc -O0 -Iinclude/ $(COMPILA_TST) \
+	@gcc -O0 -g3 -Iinclude/ $(COMPILA_TST) \
 		-o $(EXE_TST) build/test-teste.o \
 		$(DEPS_TST) build/progresso.o build/amostras.o -lm
 	@echo "Compilado os testes-unitários de 'teste.c' em bin/tests."
@@ -454,11 +454,10 @@ lib-impressao: obj-impressao
 	@echo "Biblioteca estática 'libimpressao.a' compilada."
 
 test-impressao:
-	@clang -Iinclude/ -O0 -Wall -Werror -D__unit_tests__ -D__debug__ \
+	@clang -Iinclude/ -g3 -O0 -Wall -Werror -D__unit_tests__ -D__debug__ \
 		-c -o build/impressao-teste.o src/impressao.c 
 	@clang -o bin/tests/ut_impressao build/impressao-teste.o \
-		-Lbin/shared -llaref -lterminal -lteste -llegivel -lterminal \
-		-ltempo -lm
+		$(TESTADOR) -llaref
 	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
 
 run-impressao:
