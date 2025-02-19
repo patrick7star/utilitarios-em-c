@@ -17,6 +17,20 @@
  #define SEM_NOME SEM_MENSAGEM
 
  extern void debug_aqui(void);
+
+/* Endereço de memória da função a executar; e sua definação,... se é para
+ * executa-la?! */
+struct TesteConfig { const char* nome; Fn rotina; bool ativado; };
+
+#define UnitB(FUNCAO, ESTADO) (  \
+   (struct TesteConfig){         \
+      .nome = #FUNCAO,           \
+      .rotina = FUNCAO,          \
+      .ativado = ESTADO          \
+   }                             \
+)
+#define Unit UnitB
+
 /* Executa variados testes passados. Os parâmetros seguem a seguinte
  * lógica: o total de argumentos totais, aí começa a alternância
  * entre o endereço da funçõa a ser executada, a confirmação se você
@@ -35,6 +49,7 @@
 void executa_tst       (char*, Fn, bool);
 void executa_testes    (int total, ...);
 void executa_testes_a  (bool ativado, int total, ...);
+void executa_testes_b  (bool ativado, int total, ...);
 
 /* Converte um valor lógico para uma string, em português, dizendo o que
  * ele representa. Nome similires, mas fazem a mesma coisas também estão
