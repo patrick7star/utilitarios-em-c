@@ -438,7 +438,6 @@ uint8_t* concatena_ab(int quantia, ...)
    const int sz = sizeof(uint8_t);
    va_list argumentos;
    uint8_t* result, *src, *dest;
-   bool acionado = false;
    uint8_t* arrays[quantia]; 
    size_t sizes[quantia], S = 0;
 
@@ -477,7 +476,7 @@ uint8_t* concatena_ab(int quantia, ...)
 }
 
 // ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
-StreamingOfBytes cria_streaming_of_bytes(struct Bytes* In) {
+unsigned char* cria_streaming_of_bytes(struct Bytes* In) {
 /* Concatena uma 'struct Bytes' por motivo de comunicação. É basicamente 
  * quase a mesma array de bytes, porém com os primeiros bytes -- oito, mas 
  * pode variar por máquina, o tamanho de um 'size_t' -- significam um o total
@@ -498,12 +497,12 @@ StreamingOfBytes cria_streaming_of_bytes(struct Bytes* In) {
    return Out;
 }
 
-StreamingOfBytes string_unicode_to_streaming_of_bytes(wchar_t* In) {
+uint8_t* string_unicode_to_streaming_of_bytes(wchar_t* In) {
 /* A mesma que acima, porém converte uma string Unicode diretamente para 
  * 'Bytes Stream'. Ele apenas converte tal uma 'struct Bytes', e manda via
  * pipeline para a função que cria 'Bytes Stream'. */
    struct Bytes In_a = string_unicode_to_bytes(In);
-   StreamingOfBytes Out = cria_streaming_of_bytes(&In_a);
+   uint8_t* Out = cria_streaming_of_bytes(&In_a);
 
    /* É necessário liberar array de bytes alocada em 'struct Bytes'. Nenhuma
     * perda, já que, 'Byte Stream' aloca uma array internamente também,
@@ -512,7 +511,7 @@ StreamingOfBytes string_unicode_to_streaming_of_bytes(wchar_t* In) {
    return Out;
 }
 
-struct Bytes from_streaming_of_bytes_to_bytes(StreamingOfBytes In) {
+struct Bytes from_streaming_of_bytes_to_bytes(uint8_t* In) {
 /* Conversão de volta, converte 'BytesStream'bytes streams to 'struct Bytes'.
  * O que é preciso notar é, pode ser que o 'input' seja inválido, então para
  * gigantes 'BytesStream', tal função está desabilitada. */
@@ -538,8 +537,8 @@ struct Bytes from_streaming_of_bytes_to_bytes(StreamingOfBytes In) {
    return Out;
 }
 
-wchar_t* from_streaming_of_bytes_to_string_unicode(StreamingOfBytes In) {
-/* Apenas um 'pipeline' processo que converte primeiro de um 'SoB' numa
+wchar_t* from_streaming_of_bytes_to_string_unicode(uint8_t* In) {
+/* Apenas um 'pipeline' processo que converte primeiro de um 'uint8_t*' numa
  * 'struct Bytes', para depois usar uma função que converte de tal pra
  * uma 'string Unicode'. */
    struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
@@ -548,7 +547,7 @@ wchar_t* from_streaming_of_bytes_to_string_unicode(StreamingOfBytes In) {
    return Out;
 }
 
-char* from_streaming_of_bytes_to_string(StreamingOfBytes In) {
+char* from_streaming_of_bytes_to_string(uint8_t* In) {
 /* Mesmo que acima, porém para parâmetros do tipo 'narrow string'. */
    struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
    char* Out = from_bytes_to_string(&In_a);
@@ -557,21 +556,21 @@ char* from_streaming_of_bytes_to_string(StreamingOfBytes In) {
 }
 
 // Todos apelidos mais palatáveis as funções acimas:
-SoB cria_sob(struct Bytes* In)
+uint8_t* cria_sob(struct Bytes* In)
    { return cria_streaming_of_bytes(In); }
-SoB string_unicode_to_sob(wchar_t* In)
+uint8_t* string_unicode_to_sob(wchar_t* In)
    { return string_unicode_to_streaming_of_bytes(In); }
-SoB su_to_bs(wchar_t* In)
+uint8_t* su_to_bs(wchar_t* In)
    { return string_unicode_to_sob(In); }
-struct Bytes from_sob_to_bytes(SoB In)
+struct Bytes from_sob_to_bytes(uint8_t* In)
    { return from_streaming_of_bytes_to_bytes(In); }
-wchar_t* from_sob_to_string_unicode(SoB In) 
+wchar_t* from_sob_to_string_unicode(uint8_t* In) 
    { return from_streaming_of_bytes_to_string_unicode(In); }
-wchar_t* from_sob_to_su(SoB In) 
+wchar_t* from_sob_to_su(uint8_t* In) 
    { return from_sob_to_string_unicode(In); }
-char* from_sob_to_string(SoB In) 
+char* from_sob_to_string(uint8_t* In) 
    { return from_streaming_of_bytes_to_string(In); }
-char* from_sob_to_str(SoB In) 
+char* from_sob_to_str(uint8_t* In) 
    { return from_sob_to_string(In); }
 
 #if defined(__UT_CONVERSAO__) && defined(__linux__)

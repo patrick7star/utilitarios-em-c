@@ -344,9 +344,9 @@ void todos_tipos_de_visualizacao_das_estruturas(void) {
    str = array_ponto_to_str(sequencia, 10);
    printf("Array de Pontos: %s\n", str);
    free(str);
-   free(sequencia);
 
    imprime_array_ponto(sequencia, 10);
+   free(sequencia);
    imprime_ponto(a);
    imprime_ponto(b);
    imprime_ponto(c);
