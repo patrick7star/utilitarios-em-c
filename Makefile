@@ -406,12 +406,12 @@ clean-progresso:
 		bin/static/libprogresso.a
 	
 # === === ===  === === === === === === === === === === === === === === ====
-# 									Modulo Conversão
+# 									Módulo Conversão
 # === === ===  === === === === === === === === === === === === === === ====
 all-conversao: obj-conversao lib-conversao test-conversao
 
 obj-conversao:
-	@clang -O3 -Os -I include/ -c -o build/conversao.o src/conversao.c
+	@clang -Iinclude/ -Wall -O3 -Oz -c -o build/conversao.o src/conversao.c
 	@echo "Gerou o arquivo objeto 'conversao.o' em 'build'."
 
 lib-conversao:
@@ -521,12 +521,12 @@ STLIB_MEM 		= bin/static/libmemoria.a
 all-memoria: obj-memoria test-memoria lib-memoria
 
 obj-memoria:
-	gcc -O3 -I$(HEADERS) -Wall -Werror -c -o $(BUILD_MEM) src/memoria.c
+	@gcc -O3 -I$(HEADERS) -Wall -Werror -c -o $(BUILD_MEM) src/memoria.c
 
 test-memoria:
-	gcc -I$(HEADERS) -D__unit_tests__ -Wall \
+	@gcc -I$(HEADERS) -D__unit_tests__ -Wall \
 		-c -o $(BUILD_TST_MEM) src/memoria.c
-	gcc -I$(HEADERS) -o $(EXE_MEM) $(BUILD_TST_MEM)
+	@gcc -I$(HEADERS) -o $(EXE_MEM) $(BUILD_TST_MEM)
 
 lib-memoria:
 	@gcc -I$(HEADERS) -shared -fPIC -o $(DYLIB_MEM) $(BUILD_MEM)
