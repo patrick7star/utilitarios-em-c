@@ -73,4 +73,35 @@
   * como também não é thread-safe(TS). */
  StrColorida muda_cor_da_string (char* s, enum Cores c);
 
+ /*   Transforma as arrays dos seguintes tipos numa string(aquele famoso 
+  * 'stringfy'). 
+  *   E claro, abaixo tem um macro que reune todas as chamadas de forma
+  * automática, com um nome mais curto e genérico.
+  */
+ char*  array_i8_to_str  (signed char* array, int n);
+ char*  array_u8_to_str  (unsigned char* array, int n);
+ char*  array_i16_to_str (signed short* array, int n);
+ char*  array_u16_to_str (unsigned short* array, int n);
+ char*  array_i32_to_str (int* array, int n);
+ char*  array_u32_to_str (unsigned int* array, int n);
+ char*  array_i64_to_str (signed long* array, int n);
+ char*  array_u64_to_str (unsigned long* array, int n);
+ char*  array_f32_to_str (float* array, int n);
+ char*  array_f64_to_str (double* array, int n);
+
+ #define array_to_string(ARRAY, LEN) _Generic((ARRAY), \
+   signed char*:     array_i8_to_str,                  \
+   unsigned char*:   array_u8_to_str,                  \
+   signed short*:    array_i16_to_str,                 \
+   unsigned short*:  array_i16_to_str,                 \
+   signed int*:      array_i32_to_str,                 \
+   unsigned int*:    array_u32_to_str,                 \
+   signed long*:     array_i64_to_str,                 \
+   unsigned long*:   array_u64_to_str,                 \
+   float*:           array_f32_to_str,                 \
+   double*:          array_f64_to_str                  \
+ )(ARRAY, LEN)
+ // Já está em inglês, porém outro nome bom seria este:
+ // #define stringfy_array(A, L) array_to_string(A, L)
+
 #endif
