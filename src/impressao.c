@@ -278,63 +278,74 @@ void imprime_array_double(double* array, int length)
 //                      Tipos de Inteiros Específicos:
 //                   8-bits, 16-bits, 32-bits, 64-bits
 // ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
-enum InteiroPositivo {i8, u8, i16, u16, i32, u32, i64, u64};
+typedef enum TipoPrimitivo 
+   {i8, u8, i16, u16, i32, u32, i64, u64, f32, f64} TP;
 
-static void imprime_array_tipos_de_int(void* array, int length, 
-  enum InteiroPositivo tipo_de_int)
+static void impressao_de_item_generico(void* array, TP qual_o_tipo, int p) {
+   uint8_t*  ptr_u8;       int8_t*  ptr_i8;
+   uint16_t* ptr_u16;      int16_t* ptr_i16;
+   uint32_t* ptr_u32;      int32_t* ptr_i32;
+   uint64_t* ptr_u64;      int64_t* ptr_i64;
+   float*    ptr_f32;      double*  ptr_f64;
+
+   switch(qual_o_tipo)
+   {
+      case u8:
+         ptr_u8 = (uint8_t*)array;
+         printf("%u, ", ptr_u8[p]);
+         break;
+      case u16:
+         ptr_u16 = (uint16_t*)array;
+         printf("%u, ", ptr_u16[p]);
+         break;
+      case u32:
+         ptr_u32 = (uint32_t*)array;
+         printf("%u, ", ptr_u32[p]);
+         break;
+      case u64:
+         ptr_u64 = (uint64_t*)array;
+         printf("%lu, ", ptr_u64[p]);
+         break;
+      case i8:
+         ptr_i8 = (int8_t*)array;
+         printf("%d, ", ptr_i8[p]);
+         break;
+      case i16:
+         ptr_i16 = (int16_t*)array;
+         printf("%d, ", ptr_i16[p]);
+         break;
+      case i32:
+         ptr_i32 = (int32_t*)array;
+         printf("%d, ", ptr_i32[p]);
+         break;
+      case i64:
+         ptr_i64 = (int64_t*)array;
+         printf("%ld, ", ptr_i64[p]);
+         break;
+      case f32:
+         ptr_f32 = (float*)array;
+         printf("%0.2f, ", ptr_f32[p]);
+         break;
+      case f64:
+         ptr_f64 = (double*)array;
+         printf("%0.2lf, ", ptr_f64[p]);
+         break;
+      default:
+         perror("Tipo não compátivel!");
+         abort();
+   }
+}
+
+static void imprime_array_de_qualquer_tipo(void* array, int length, TP tipo)
 {
    assert(length >= 0 && array != NULL); 
    /* Números grandes de mais são totalmente desnecessário para o que isso
     * foi feito. */
    assert(length <= LIMITE);
 
-   uint8_t* ptr_u8; int8_t* ptr_i8;
-   uint16_t* ptr_u16; int16_t* ptr_i16;
-   uint32_t* ptr_u32; int32_t* ptr_i32;
-   uint64_t* ptr_u64; int64_t* ptr_i64;
-
    putchar('[');
    for (int p = 0; p < length; p++)
-   {
-      switch(tipo_de_int)
-      {
-         case u8:
-            ptr_u8 = (uint8_t*)array;
-            printf("%u, ", ptr_u8[p]);
-            break;
-         case u16:
-            ptr_u16 = (uint16_t*)array;
-            printf("%u, ", ptr_u16[p]);
-            break;
-         case u32:
-            ptr_u32 = (uint32_t*)array;
-            printf("%u, ", ptr_u32[p]);
-            break;
-         case u64:
-            ptr_u64 = (uint64_t*)array;
-            printf("%lu, ", ptr_u64[p]);
-            break;
-         case i8:
-            ptr_i8 = (int8_t*)array;
-            printf("%d, ", ptr_i8[p]);
-            break;
-         case i16:
-            ptr_i16 = (int16_t*)array;
-            printf("%d, ", ptr_i16[p]);
-            break;
-         case i32:
-            ptr_i32 = (int32_t*)array;
-            printf("%d, ", ptr_i32[p]);
-            break;
-         case i64:
-            ptr_i64 = (int64_t*)array;
-            printf("%ld, ", ptr_i64[p]);
-            break;
-         default:
-            perror("Tipo não compátivel!");
-            abort();
-      }
-   }
+      impressao_de_item_generico(array, tipo, p);
 
    if (length == 0)
       puts("]");
@@ -343,25 +354,25 @@ static void imprime_array_tipos_de_int(void* array, int length,
 }
 
 void imprime_array_i8(int8_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, i8); }
+   { imprime_array_de_qualquer_tipo(array, length, i8); }
    
 void imprime_array_u8(uint8_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, u8); }
+   { imprime_array_de_qualquer_tipo(array, length, u8); }
 
 void imprime_array_i16(int16_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, i16); }
+   { imprime_array_de_qualquer_tipo(array, length, i16); }
 
 void imprime_array_u16(uint16_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, u16); }
+   { imprime_array_de_qualquer_tipo(array, length, u16); }
 
 void imprime_array_u32(uint32_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, u32); }
+   { imprime_array_de_qualquer_tipo(array, length, u32); }
 
 void imprime_array_i64(int64_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, i64); }
+   { imprime_array_de_qualquer_tipo(array, length, i64); }
 
 void imprime_array_u64(uint64_t* array, int length)
-   { imprime_array_tipos_de_int(array, length, u64); }
+   { imprime_array_de_qualquer_tipo(array, length, u64); }
 
 /* === === === === === === === === === === === === === === === === === ===+
  *                      Coloração de Resultados
@@ -436,6 +447,97 @@ StrColorida muda_cor_da_string(char* In_a, enum Cores In_b) {
    sprintf(Out, "%s%s%s", selecao, In_a, off);
    return Out;
 }
+
+/* === === === === === === === === === === === === === === === === === ===+
+ *             Converte arrays de qualquer tipo numa string 
+
+ *   O método usado aqui é usar a impressão da saída padrão para pegar-la, ao
+ * invés de simplesmente fazer uma iteração e transformar item por item
+ * concatenando tudo, como sempre foi feito. Tal novo método, será bem mais
+ * sostificado.
+ * === === === === === === === === === === === === === === === === === ===*/
+ #include <limits.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+
+char* captura_impressao_de_qualquer_array
+  (void* array, int n, const int sz, TP tipo)
+{
+/* Aplica uma impressão de uma array genérica, dado é claro seu tamanho e 
+ * tipo(tanto de bytes). Entretanto, a saída padrão(stdout) está conectada
+ * a um pipe local, ou seja, toda impressão transmitida para um local que
+ * deve está atrelada a algum buffer que pode lê e armazenar tal impressão. 
+ * Como este é todo o objetivo do código, tal buffer que captorou os bytes,
+ * é copiado na heap e retornado.
+ */
+   const int In = 0, Out = 1, MAX = SHRT_MAX / 10;
+   int tubos[2], saida_padrao, lido;
+   unsigned char buffer[MAX];
+   char* formatacao;
+
+   // Deixar o stdout sem qualquer conteúdo.
+   fflush(stdout);
+   // Salva a saída padrão do processo antes de entubar ela em outro lugar.
+   saida_padrao = dup(fileno(stdout));
+   // Cria 'pipes', então conecta a saída padrão ao tubo de saída dos 'pipes'.
+   pipe(tubos);
+   dup2(tubos[Out], fileno(stdout));
+
+   /* Executa função que utiliza do 'stdout', porém conecatada ao pipe, os
+    * bytes serão transmitidos pra la ao invés do normal. Em seguida, após 
+    * tal execução, lemos os bytes transmitidos. Como a impressão via 
+    * 'printf' vem com uma quebra-de-linha, vamos anula-la. */
+   imprime_array_de_qualquer_tipo(array, n, tipo);
+   lido = read(tubos[In], buffer, MAX);
+   buffer[lido - 1] = '\0';
+
+   // Libera o resto que está no stdout, então recupera antiga 'saída'.
+   fflush(stdout);
+   dup2(saida_padrao, fileno(stdout));
+
+   /* Aloca o necessário de memória, que é exatamente o que foi lido(mais um,
+    * apenas pra ter total segurança). Copia o conteúdo do 'buffer', então
+    * retorna. */
+   formatacao = malloc((lido + 1) * sz);
+   memcpy(formatacao, buffer, lido);
+
+   return formatacao;
+}
+
+/* Nome mais curto para caber tudo na curta tela que uso. Também é um nome
+ * com um 'pascal case', ou seja, faz um destaque bem notável. */
+static char* (*CapturaDaImpressao) (void*, int, const int, TP)
+   = captura_impressao_de_qualquer_array;
+
+char* array_i8_to_str(signed char* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(char), i8); }
+
+char* array_u8_to_str(unsigned char* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(uint8_t), u8); }
+
+char* array_i16_to_str(signed short* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(int16_t), i16); }
+
+char* array_u16_to_str(unsigned short* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(uint16_t), u16); }
+
+char* array_i32_to_str(int* array, int n) 
+   { return CapturaDaImpressao(array, n, sizeof(uint32_t), i32); }
+
+char* array_u32_to_str(unsigned int* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(uint32_t), u32); }
+
+char* array_i64_to_str(signed long* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(int64_t), i64); }
+
+char* array_u64_to_str(unsigned long* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(uint64_t), u64); }
+
+char* array_f32_to_str(float* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(float), f32); }
+
+char* array_f64_to_str(double* array, int n)
+   { return CapturaDaImpressao(array, n, sizeof(double), f64); }
 
 /* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
@@ -600,6 +702,63 @@ void aplicacao_randomica_de_cores_em_pequenas_strings(void)
    }
 }
 
+void transformacao_de_array_int_em_string_via_pipes(void)
+{
+   int input[] = {-3, 2, -1, 0, 1, -2, 3, -4};
+   const int n = sizeof(input) / sizeof(int);
+   char* output = array_i32_to_str(input, n);
+
+   printf("Impressão do que foi conseguido '%s'.\n", output);
+
+}
+
+void conversao_de_arrays_genericas_em_string_por_pipes(void)
+{
+   char* output_a, *output_b, *output_c;
+   uint32_t input_a[] = {9, 99, 999, 9999, 9.9999e4, 9.99999e5};
+   float input_b[] = {3.14, 0.1234, 1.41849123, 5.9};
+   signed char input_c[] = {127, -128, 0, 1, 33};
+   const int nA = sizeof(input_a) / sizeof(uint32_t);
+   const int nB = sizeof(input_b) / sizeof(float);
+   const int nC = sizeof(input_c) / sizeof(char);
+
+   output_a = array_u32_to_str(input_a, nA);
+   printf("Impressão de uma array(u32): '%s'\n", output_a);
+   free(output_a);
+
+   output_b = array_f32_to_str(input_b, nB);
+   printf("Impressão de uma array(f32): '%s'\n", output_b);
+   free(output_b);
+
+   output_c = array_i8_to_str(input_c, nC);
+   printf("Impressão de uma array(i8): '%s'\n", output_c);
+   free(output_c);
+}
+
+void stringficacao_usando_macro_geral(void)
+{
+   char*    Out    = NULL;
+   uint32_t In_a[] = {1, 2, 3, 4, 97, 98, 99, 100};
+   int      In_a2[]= {-1, 2, -3, -4, 97, -98, 99, -100};
+   float    In_b[] = {3.14, -0.23, 1.44, -5.9, 12.01, -7.99, 0.01, -501.07};
+   double   In_b2[]= {3.14, -0.23, 1.44, -5.9, 12.01, -7.99, 0.01, -501.07};
+   uint8_t  In_c[] = {127, 128, 0, 1, 33, 57, 23, 12};
+   int8_t   In_c2[]= {127, -128, 0, -1, 33, -57, 23, -12};
+
+   Out = array_to_string(In_a, 8);
+   puts(Out); free(Out);
+   Out = array_to_string(In_a2, 8);
+   puts(Out); free(Out);
+   Out = array_to_string(In_b, 8);
+   puts(Out); free(Out);
+   Out = array_to_string(In_b2, 8);
+   puts(Out); free(Out);
+   Out = array_to_string(In_c, 8);
+   puts(Out); free(Out);
+   Out = array_to_string(In_c2, 8);
+   puts(Out); free(Out);
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
@@ -615,8 +774,15 @@ int main(void)
    );
 
    executa_testes_b(
-     true, 1,
+     false, 1,
          Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true) 
+   );
+
+   executa_testes_b(
+     true, 3,
+         Unit(transformacao_de_array_int_em_string_via_pipes, true),
+         Unit(conversao_de_arrays_genericas_em_string_por_pipes, true),
+         Unit(stringficacao_usando_macro_geral, true)
    );
 }
 #endif
