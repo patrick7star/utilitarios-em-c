@@ -421,11 +421,14 @@ lib-conversao:
 	@ar crs bin/static/libconversao.a build/conversao.o
 	@echo "Biblioteca estática 'libconversao.a' compilada."
 
-test-conversao:
-	@clang -c -D__UT_CONVERSAO__ -D__debug__ -I include/ \
-		-o build/conversao-teste.o src/conversao.c
-	@clang -g -std=gnu18 -Wall -Wextra -I include/ \
-		-o bin/tests/ut_conversao build/conversao-teste.o \
+obj-test-conversao:
+	@clang -Iinclude -Wall -Werror -pedantic -std=c17 \
+		-D__unit_tests__ -D__debug__ \
+		-c -o build/conversao-teste.o src/conversao.c
+	@echo "Objeto dos testes de 'conversão' compilado."
+
+test-conversao: obj-test-conversao
+	@clang -I include/ -o bin/tests/ut_conversao build/conversao-teste.o \
 		-lm -Lbin/shared -lteste -ltempo -llegivel -lterminal
 	@echo "Compilado os testes-unitários de 'conversao' em bin/tests."
 
