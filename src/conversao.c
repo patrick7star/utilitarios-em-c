@@ -1,7 +1,8 @@
 /* Aqui ficam a transformação de vários tipos de inteiros em bytes, em dois
  * principais tipos de ordem: little endian and big endian. Existe a versão
- * padrão também, que respeita a plataforma que ela está sendo chamada. 
+ * padrão também, que respeita a plataforma que ela está sendo chamada.
  */
+
 // Definições de todos dados e funções abaixo:
 #include "conversao.h"
 // Biblioteca padrão do C:
@@ -20,11 +21,11 @@ void print_array(uint8_t* array, int t, bool hexadecimal)
    if (t == 0)
       { puts("[]"); return; }
    else if (t > MAX)
-   /* Imprime mais que este excedente é loucura para uma ferramenta de 
+   /* Imprime mais que este excedente é loucura para uma ferramenta de
     * debugging. */
       { perror("excedeu capacidade de impressão."); abort(); }
 
-   /* Amostra o tamanho prá quando fica díficil contabilizar o total a 
+   /* Amostra o tamanho prá quando fica díficil contabilizar o total a
     * primeira vista. */
    if (t >= 7)
       printf("(%d)::[", t);
@@ -44,13 +45,8 @@ void print_array(uint8_t* array, int t, bool hexadecimal)
 
 bool arrays_iguais(uint8_t* a, uint8_t* b, int t) {
 /* O algoritmo consiste no seguinte, supõe que todos itens são iguais, caso
- * ache algum valor que não bate, então desconfirma hipotese inicial, caso 
+ * ache algum valor que não bate, então desconfirma hipotese inicial, caso
  * contrário confirma. */
-   #ifdef __debug__
-   print_array(a, t, false);
-   print_array(b, t, false);
-   #endif 
-
    for (int i = 1; i <= t; i++)
    {
       if (a[i - 1] != b[i - 1])
@@ -60,8 +56,8 @@ bool arrays_iguais(uint8_t* a, uint8_t* b, int t) {
 }
 
 bool maquina_little_endian(void) {
-/* Se o processador tem uma ordem "little endian", o valor de 11, por 
- * exemplo, só pode ter o byte relevante no começo, os outros três sendo 
+/* Se o processador tem uma ordem "little endian", o valor de 11, por
+ * exemplo, só pode ter o byte relevante no começo, os outros três sendo
  * iguais a zero. */
    uint8_t array_do_valor_onze[] = {0xB, 0x0, 0x0, 0x0};
    int valor_arbitrario = 11;
@@ -73,8 +69,8 @@ bool maquina_little_endian(void) {
 
 bool maquina_big_endian(void) {
 /* Tenta verificar se a ordem dos bytes é "little endian", se não confirmar,
- * só pode ser o oposto, "big endian". Aqui não aplicarei a negativa do 
- * código acima, pelo contrário, copiarei ele, e só mudarei a array de 
+ * só pode ser o oposto, "big endian". Aqui não aplicarei a negativa do
+ * código acima, pelo contrário, copiarei ele, e só mudarei a array de
  * comparação, prá justamente mostrar que tal algoritmo funciona. */
    uint8_t array_do_valor_onze[] = {0x0, 0x0, 0x0, 0xb};
    int valor_arbitrario = 11;
@@ -89,7 +85,7 @@ void int_to_bytes(int input, uint8_t* output) {
 /* Assumindo que tal tem 4 bytes, então este é o tamanho da array trabalhada
  * neste algoritmo. A ordem é a da máquina, a transformação é direta, então
  * antes de utilizar o resultada aqui, apenas verifica, com as funções dadas
- * acima, se ela é little-endian ou big-endian. Os bytes capturados, via 
+ * acima, se ela é little-endian ou big-endian. Os bytes capturados, via
  * endereço da variável passada, serão copiadas para o buffer também passado
  * por argumento. */
    int size = sizeof(int);
@@ -103,14 +99,14 @@ void int_to_bytes(int input, uint8_t* output) {
 }
 
 int from_bytes_to_int(uint8_t* input) {
-/*   Pega a array de 4 bytes que representa um inteiro, então converte ela 
+/*   Pega a array de 4 bytes que representa um inteiro, então converte ela
  * para o respectivo inteiro. A array de bytes tem que representar a mesma
- * ordem da atual máquina(big ou little)-endian, se não o resultado pode 
- * ser indefinido com uma entrada não válida. 
+ * ordem da atual máquina(big ou little)-endian, se não o resultado pode
+ * ser indefinido com uma entrada não válida.
  *
- *   A conversão é o mesmo método * que o algoritmo anterior, porém, ao 
- * inverso. Aqui o pointeiro de bytes serão passados, converteremos para um 
- * pointeiro do determinado tipo desta * função, e no fim, retornamos o 
+ *   A conversão é o mesmo método * que o algoritmo anterior, porém, ao
+ * inverso. Aqui o pointeiro de bytes serão passados, converteremos para um
+ * pointeiro do determinado tipo desta * função, e no fim, retornamos o
  * valor que ele forma. */
    int* pointeiro = (int*)input;
 
@@ -118,8 +114,8 @@ int from_bytes_to_int(uint8_t* input) {
 }
 
 /* Parece muito trivial para apenas um byte, entretanto, seria bastante
- * trabalhoso fazer isso toda vez. Sem falar, que por mais que pareça 
- * desenecessário, as vezes, apenas seguindo os demais, este tipo de 
+ * trabalhoso fazer isso toda vez. Sem falar, que por mais que pareça
+ * desenecessário, as vezes, apenas seguindo os demais, este tipo de
  * raciocínio pode ser aplicado, então é melhor fazer aqui facilitar futuros
  * códigos, sem falar que serve meio como algum tipo de interface. */
 void u8_to_bytes(uint8_t input, uint8_t* output)
@@ -135,8 +131,8 @@ int8_t from_bytes_to_i8(uint8_t* input)
    { return (int8_t)*input; }
 
 void u16_to_bytes(uint16_t input, uint8_t* output) {
-/* Quase o mesmo algoritmo que é aplicado para o inteiro(padrão do * C, que 
- * é com sinal, e de 32-bits). O que muda aqui é a array de output tem que 
+/* Quase o mesmo algoritmo que é aplicado para o inteiro(padrão do * C, que
+ * é com sinal, e de 32-bits). O que muda aqui é a array de output tem que
  * ter apenas dois bytes, e a entrada é um inteiro positivo de 2 bytes. */
    int size = sizeof(uint16_t);
    /* Pega endereço que armazena chuck de bytes do inteiro de 32-bits. */
@@ -169,10 +165,10 @@ int16_t from_bytes_to_i16(uint8_t* input) {
 
 /*   Com estas foram a primeira feita, porém com o nome original, não vale a
  * pena copiar o código, apenas fazer a chamadas internas com os mesmos
- * argumentos. Refazendo nesta parte só por um caso de consistências com 
- * os tipos precedentes. 
+ * argumentos. Refazendo nesta parte só por um caso de consistências com
+ * os tipos precedentes.
  *
- *   Note que 'int32_t' é só um apelido para 'int'. 
+ *   Note que 'int32_t' é só um apelido para 'int'.
  */
 void i32_to_bytes(int32_t input, uint8_t* output)
    { int_to_bytes(input, output);}
@@ -254,12 +250,12 @@ void double_to_bytes(double input, uint8_t* output) {
       "Inteiro errado que é equivalente ao decimal longo"
    );
    double* ptr_f64 = &input;
-   uint64_t* pointer = (uint64_t*)ptr_f64; 
-   u64_to_bytes(*pointer, output); 
+   uint64_t* pointer = (uint64_t*)ptr_f64;
+   u64_to_bytes(*pointer, output);
 }
 
 double from_bytes_to_double(uint8_t* input)
-{ 
+{
 /* Mesmo esquema da serialização, converte para o inteiro de mesmo número
  * de bytes, então usa seus bits, estes que são iguais, para uma realizar
  * uma transmutação entres os valores. */
@@ -267,7 +263,7 @@ double from_bytes_to_double(uint8_t* input)
     * convertido. */
    uint64_t valor = from_bytes_to_u64(input);
    /* Entretanto, tal inteiro representa na verdade um decimal de 64-bits,
-    * logo pegamos seus mesmos bytes(bits), e reinterpletamos como 
+    * logo pegamos seus mesmos bytes(bits), e reinterpletamos como
     * tal valor decimal. */
    double* pointeiro = (double*)&valor;
    return *pointeiro;
@@ -281,15 +277,15 @@ void float_to_bytes(float input, uint8_t* output) {
    /* Reiterpletando os bytes do decimal de 32-bits como se fosse um inteiro
     * com o tanto de bytes equivalente.*/
    float* ptr_float = &input;
-   int* pointer = (int*)ptr_float; 
+   int* pointer = (int*)ptr_float;
    /* Evaluando estes bytes equivalentes, então convertendo, apesar de que
     * não resultará no mesmo valor(sem fração) serializado, isso é de total
     * irrelevância no processo final de deserialização. */
-   int_to_bytes(*pointer, output); 
+   int_to_bytes(*pointer, output);
 }
 
 float from_bytes_to_float(uint8_t* input)
-{ 
+{
 /* Mesmo algoritmo do 'double' acima, pois funciona! Apenas é claro, troca
  * os 'casts' pelo tipo e inteiro equivalente que trabalhamos agora. */
    int valor = from_bytes_to_int(input);
@@ -298,7 +294,7 @@ float from_bytes_to_float(uint8_t* input)
 }
 
 void free_bytes(struct Bytes* a)
-/* Libera alocação dinâmica da estrutura acima que é o retorno de várias 
+/* Libera alocação dinâmica da estrutura acima que é o retorno de várias
  * funções abaixo. */
    { free(a->bytes); }
 
@@ -395,7 +391,7 @@ struct Bytes concatena_sb(int quantia, ...)
    va_start(args, quantia);
    resultado.total = 0;
 
-   for (int i = 1; i <= quantia; i++) 
+   for (int i = 1; i <= quantia; i++)
    {
       // uint8_t* pointer = va_arg(args, uint8_t*);
       seq[i - 1] = *(va_arg(args, struct Bytes*));
@@ -408,14 +404,14 @@ struct Bytes concatena_sb(int quantia, ...)
    resultado.bytes = malloc(resultado.total);
    uint8_t* dst = resultado.bytes, *src;
 
-   for (int j = 0; j < quantia; j++) 
+   for (int j = 0; j < quantia; j++)
    {
       src = seq[j].bytes;
-      /* Copia neste ponto do concatenador acumulador a certa quantia de 
+      /* Copia neste ponto do concatenador acumulador a certa quantia de
        * bytes da sequência iterada. */
       memcpy(dst, src, seq[j].total);
 
-      /* Move para a próxima parte do array onde será copiado à partir de 
+      /* Move para a próxima parte do array onde será copiado à partir de
        * lá. */
       if (j < (quantia - 1))
          dst += seq[j].total;
@@ -427,7 +423,7 @@ uint8_t* concatena_ab(int quantia, ...)
 {
 /* O mesmo que acima, entretanto, com 'raw arrays'(aquelas que são arrays
  * de bytes, não uma tupla com array e tamanho). Por causa de arrays com
- * vários tamanhos será necessária: a quantidade delas, seguida com cada 
+ * vários tamanhos será necessária: a quantidade delas, seguida com cada
  * par, que é a array de bytes, e um inteiro positivo de máquina informando
  * o comprimento dela. O resultado final será uma array com a cópia de todas
  * passados como argumento, sendo o seu comprimento a soma de todas elas,
@@ -438,11 +434,11 @@ uint8_t* concatena_ab(int quantia, ...)
    const int sz = sizeof(uint8_t);
    va_list argumentos;
    uint8_t* result, *src, *dest;
-   uint8_t* arrays[quantia]; 
+   uint8_t* arrays[quantia];
    size_t sizes[quantia], S = 0;
 
    va_start(argumentos, quantia);
-   /* Inserindo as arrays e seus respectivos tamanhos nas respectivas 
+   /* Inserindo as arrays e seus respectivos tamanhos nas respectivas
     * filas para cada um. Também computa o tamanho total a ser alocado
     * para a array de bytes resultante.
     */
@@ -459,7 +455,7 @@ uint8_t* concatena_ab(int quantia, ...)
 
    /* O esquema é o seguinte remove o primeiro item "inserido"(FIFO), assim
     * como seu respectivo tamanho, computa o começo onde copiar na array
-    * resultante para em seguida copiar a array "inserida" à partir dalí. 
+    * resultante para em seguida copiar a array "inserida" à partir dalí.
     * Incrementa no "cursor" o tanto copiado, assim o próximo pointeiro
     * apontando a posição na "array resultante" seja facilmente posicionada.
     * O loop será feito a quantia de vezes passada como argumento -- é o
@@ -476,47 +472,30 @@ uint8_t* concatena_ab(int quantia, ...)
 }
 
 // ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
-unsigned char* cria_streaming_of_bytes(struct Bytes* In) {
-/* Concatena uma 'struct Bytes' por motivo de comunicação. É basicamente 
- * quase a mesma array de bytes, porém com os primeiros bytes -- oito, mas 
- * pode variar por máquina, o tamanho de um 'size_t' -- significam um o total
- * de bytes que o resto dela carrega. */
-   const int sz = sizeof(int);
-   size_t total = (*In).total;
-   uint8_t* Out = malloc(sz + total); 
-   uint8_t buffer[sz];
-   uint8_t* pointer = buffer;
+typedef struct Bytes Bytes, BYTES, *BytesRef;
 
-   sizet_to_bytes(total, pointer);
-   /* Os oito primeiros bytes são os bytes referentes ao comprimento, já os
-    * demais são os restantes. */
-   memcpy(Out, pointer, sz);
-   pointer = (*In).bytes;
-   memcpy(Out, pointer, total);
-   // Por fim o retorno da array de bytes.
-   return Out;
+Bytes compacta_struct_bytes (BytesRef In) {
+	const int sz = sizeof(size_t);
+	uint8_t buffer[sz];
+	struct Bytes Out;
+
+	// Transformando inteiro que representa 'total' numa array de bytes.
+	sizet_to_bytes((*In).total, buffer);
+	// Alocando e registrando novo total.
+	Out.total = (*In).total + sz;
+	Out.bytes = malloc(Out.total);
+	// Copiando os bytes no inicio, e os demais também.
+	memcpy(Out.bytes, buffer, sz);
+	memcpy(Out.bytes + sz, (*In).bytes, (*In).total);
+
+	return Out;
 }
 
-uint8_t* string_unicode_to_streaming_of_bytes(wchar_t* In) {
-/* A mesma que acima, porém converte uma string Unicode diretamente para 
- * 'Bytes Stream'. Ele apenas converte tal uma 'struct Bytes', e manda via
- * pipeline para a função que cria 'Bytes Stream'. */
-   struct Bytes In_a = string_unicode_to_bytes(In);
-   uint8_t* Out = cria_streaming_of_bytes(&In_a);
-
-   /* É necessário liberar array de bytes alocada em 'struct Bytes'. Nenhuma
-    * perda, já que, 'Byte Stream' aloca uma array internamente também,
-    * apenas copia da estrutura. */
-   free_bytes(&In_a);
-   return Out;
-}
-
-struct Bytes from_streaming_of_bytes_to_bytes(uint8_t* In) {
-/* Conversão de volta, converte 'BytesStream'bytes streams to 'struct Bytes'.
- * O que é preciso notar é, pode ser que o 'input' seja inválido, então para
- * gigantes 'BytesStream', tal função está desabilitada. */
-   struct Bytes Out;
+static Bytes restaura_struct_bytes_a(uint8_t* In) {
+/* O algoritmo consiste em, decodificar os bytes iniciais referentes ao
+ * comprimento dela toda, criar uma nova 'struct Bytes' com isso, então*/
    uint8_t* pointer = In;
+   struct Bytes Out;
    size_t total = from_bytes_to_sizet(pointer);
 
    if (total >= USHRT_MAX && total < INT_MAX)
@@ -537,44 +516,38 @@ struct Bytes from_streaming_of_bytes_to_bytes(uint8_t* In) {
    return Out;
 }
 
-wchar_t* from_streaming_of_bytes_to_string_unicode(uint8_t* In) {
-/* Apenas um 'pipeline' processo que converte primeiro de um 'uint8_t*' numa
- * 'struct Bytes', para depois usar uma função que converte de tal pra
- * uma 'string Unicode'. */
-   struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
-   wchar_t* Out = from_bytes_to_string_unicode(&In_a);
-
-   return Out;
+BYTES restaura_struct_bytes(BytesRef In) {
+/* O mesmo que a versão alternativa. Desembrulhamos o que foi recebido, e
+ * injetamos nela, o retorno é o mesmo, então apenas deixa. Fizemos a acima
+ * primeiro, porque ela faz mais sentido na arquitetura inicial, porém a
+ * ordem é irrelevante no uso, ou no resultado final. */
+	return restaura_struct_bytes_a((*In).bytes);
 }
 
-char* from_streaming_of_bytes_to_string(uint8_t* In) {
-/* Mesmo que acima, porém para parâmetros do tipo 'narrow string'. */
-   struct Bytes In_a = from_streaming_of_bytes_to_bytes(In);
-   char* Out = from_bytes_to_string(&In_a);
+bool struct_bytes_eq(BytesRef a, BytesRef b) {
+/* Usa novamente a função que compara arrays para atingir o mesmo resultado.
+ * Como o tamanho vem empacotado, faz isso. Um diferencial deste é, se os
+ * totais de bytes não baterem, nega tal igualdade. A função interna que se
+ * usa, sempre assumiu os totais como iguais. */
+	uint8_t* bytes_a = (*a).bytes, *bytes_b = (*b).bytes;
+	size_t nA = (*a).total, nB = (*b).total;
 
-   return Out;
+	return ((nA == nB) && arrays_iguais(bytes_a, bytes_b, nA));
 }
 
-// Todos apelidos mais palatáveis as funções acimas:
-uint8_t* cria_sob(struct Bytes* In)
-   { return cria_streaming_of_bytes(In); }
-uint8_t* string_unicode_to_sob(wchar_t* In)
-   { return string_unicode_to_streaming_of_bytes(In); }
-uint8_t* su_to_bs(wchar_t* In)
-   { return string_unicode_to_sob(In); }
-struct Bytes from_sob_to_bytes(uint8_t* In)
-   { return from_streaming_of_bytes_to_bytes(In); }
-wchar_t* from_sob_to_string_unicode(uint8_t* In) 
-   { return from_streaming_of_bytes_to_string_unicode(In); }
-wchar_t* from_sob_to_su(uint8_t* In) 
-   { return from_sob_to_string_unicode(In); }
-char* from_sob_to_string(uint8_t* In) 
-   { return from_streaming_of_bytes_to_string(In); }
-char* from_sob_to_str(uint8_t* In) 
-   { return from_sob_to_string(In); }
+void struct_bytes_debug(BytesRef obj)
+/* Usa a função de impressão de array de bytes em hexadecimal como auxiliar,
+ * basicamente ela já faz tudo. O total vem empacotado no tipo, então apenas
+ * passa ele. A escolha de formatação hexadecimal é definida padrão. */
+	{ print_array((*obj).bytes, (*obj).total, true); }
 
-#if defined(__UT_CONVERSAO__) && defined(__linux__)
-/* === === === === === === === === === === === === === === === === === ==
+void struct_bytes_drop(BytesRef obj)
+/* Método mais rebuscado de desalocar o objeto. Apenas chama a primeira
+ * implementação feita dentro. */
+	{ free_bytes(obj); }
+
+#if defined(__unit_tests__) && defined(__linux__)
+/* === === === === === === === === === === === === === === === === === === ==
  *                      Testes Unitários
  *
  *   A coisa agora é restringir a execução de testes unitários no sistema
@@ -582,7 +555,7 @@ char* from_sob_to_str(uint8_t* In)
  * há incômodo de fazer isso multiplataforma. Isso é apenas com o teste,
  * as funções em sí são compatíveis com multiplas plataformas, se não forem
  * estarão marcadas assim no cabeçalho.
- * === === === === === === === === === === === === === === === === === ==*/
+ * === === === === === === === === === === === === === === === === === === */
 #include <locale.h>
 #include <time.h>
 #include <float.h>
@@ -626,7 +599,7 @@ void alguns_testes(void) {
    #ifdef _WIN64
    printf("%lld\n", timestamp);
    // #ifdef __linux__
-   #elif defined(__linux__) 
+   #elif defined(__linux__)
    printf("%ld\n", timestamp);
    #endif
    uint8_t bytes_tt[8];
@@ -635,7 +608,7 @@ void alguns_testes(void) {
    time_t reconvertido_tt = from_bytes_to_sizet(bytes_tt);
    #ifdef _WIN64
    printf("reconvertendo novamente ==> %lld\n", reconvertido_tt);
-   #elif defined(__linux__) 
+   #elif defined(__linux__)
    printf("reconvertendo novamente ==> %ld\n", reconvertido_tt);
    #endif
    assert(timestamp == reconvertido_tt);
@@ -670,7 +643,7 @@ void serializa_e_deserializa_string_ascii(void)
 
    struct Bytes result = string_to_bytes(s);
    printf(
-      "Tentando verificar conteudo(%lu):\n %s\n", 
+      "Tentando verificar conteudo(%lu):\n %s\n",
       result.total, result.bytes
    );
    print_array(result.bytes, result.total, false);
@@ -744,16 +717,16 @@ static double decorrido(struct timeval i, struct timeval f)
    return end - start;
 }
 
-void tempo_de_conversao(void) 
+void tempo_de_conversao(void)
 {
    const wchar_t* amostra = {
       L"\U0001f3b5 \U0001f3b6 Salve à noite, \U0001f3b6 \U0001f3b5 me "
       L"levar com eles, \U0001f3b5 \U0001f3b6 os cuzões vem, para me levar "
       L"emborar, \U0001f3a7 eu queria muito ficar \U0001f3b5 \U0001f3b5"
-   }; 
+   };
    wchar_t* pointer = (wchar_t*)amostra;
    const double qtd = (double)UINT16_MAX;
-   double sT, dT, tT = 0.0;
+   double sT = 0.0, dT = 0.0, tT = 0.0;
    struct timeval start, end, inicio, fim;
 
    printf("Conteúdo trabalhado:\n%ls\n", amostra);
@@ -787,14 +760,14 @@ void tempo_de_conversao(void)
 }
 void serializacao_de_decimais_64_bits(void) {
    double samples[] = {
-      0.0001, 54321.6789, 3.14915, 5.99, 
+      0.0001, 54321.6789, 3.14915, 5.99,
       999.99, DBL_MIN, DBL_MAX
    };
    int sz = sizeof(double);
    int n = sizeof(samples) / sz;
    uint8_t buffer[sz];
 
-   for (int i = 0; i < n; i++) 
+   for (int i = 0; i < n; i++)
    {
       double A = samples[i];
       printf("Antes da conversão: %lf\n", A);
@@ -807,14 +780,14 @@ void serializacao_de_decimais_64_bits(void) {
 
 void serializacao_de_decimais_32_bits(void) {
    float samples[] = {
-      0.0009F, 54321.6789F, 3.14915F, 5.0099F, 
+      0.0009F, 54321.6789F, 3.14915F, 5.0099F,
       999.99F, FLT_MAX
    };
    int sz = sizeof(float);
    int n = sizeof(samples) / sz;
    uint8_t buffer[sz];
 
-   for (int i = 0; i < n; i++) 
+   for (int i = 0; i < n; i++)
    {
       double A = samples[i];
       printf("Antes da conversão: %f\n", A);
@@ -827,13 +800,13 @@ void serializacao_de_decimais_32_bits(void) {
 
 bool checa_se_A_esta_em_B(struct Bytes* a, struct Bytes* b)
 {
-/*   Checa se a subarray está na array maior, verificando todos vagões 
+/*   Checa se a subarray está na array maior, verificando todos vagões
  * possíveis que ela permite. */
    const int tb = b->total;
    const int ta = a->total;
-   assert(ta <= tb); 
+   assert(ta <= tb);
    const int fim = tb - ta;
-   
+
    for (int i = 0; i <= fim; i++)
    {
       #ifdef __debug__
@@ -855,7 +828,7 @@ void concatenacao_de_bytes_structs(void)
 {
    struct Bytes* a, *b, *c;
    struct Bytes output, inputs[] = {
-      string_to_bytes("cachorro"),   
+      string_to_bytes("cachorro"),
       string_to_bytes("garrafa"),
       string_to_bytes("maçã")
    };
@@ -903,7 +876,7 @@ void concatenacao_de_arrays_de_bytes(void)
       print_array(array, n, true);
       S += n;
    }
-   
+
    printf("\nComprimento final tem que ser %d\n", S);
 
    uint8_t* output_a = concatena_ab(
@@ -930,11 +903,29 @@ void concatenacao_de_arrays_de_bytes(void)
    free(output_b);
 }
 
+void compactacao_e_descompactacao_de_struct_bytes(void)
+{
+	const wchar_t AMOSTRA[] = L"Hoje é um dia bem especial";
+	wchar_t* ptr = (wchar_t*)AMOSTRA;
+
+	Bytes input_a = string_unicode_to_bytes(ptr);
+	struct_bytes_debug(&input_a);
+	Bytes input = compacta_struct_bytes(&input_a);
+	struct_bytes_debug(&input);
+	Bytes output = restaura_struct_bytes(&input);
+	assert(struct_bytes_eq(&input_a, &output));
+	struct_bytes_debug(&output);
+
+	free_bytes(&input_a);
+	free_bytes(&input);
+	free_bytes(&output);
+}
+
 int main(void) {
    setlocale(LC_CTYPE, "");
 
    executa_testes_a(
-      true, 11,
+      false, 11,
       verificacao_da_atual_maquina, true,
       alguns_testes, false,
       experimento_os_macros, true,
@@ -947,5 +938,12 @@ int main(void) {
       concatenacao_de_bytes_structs, true,
       concatenacao_de_arrays_de_bytes, true
    );
+
+	executa_testes_b(
+	  true, 1,
+			Unit(compactacao_e_descompactacao_de_struct_bytes, true)
+	);
+
+	return EXIT_SUCCESS;
 }
 #endif
