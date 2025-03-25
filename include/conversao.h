@@ -17,79 +17,75 @@
  /* Várias funções retornam de forma direta a serialização as seguinte tupla
   * abaixo, os bytes e o total.
   *
-  * Nota: os bytes que geralmente retornam são da memória dinâmica, logo 
-  *       precisarão ser desalocados. 
+  * Nota: os bytes que geralmente retornam são da memória dinâmica, logo
+  *       precisarão ser desalocados.
   */
- struct Bytes { uint8_t* bytes; size_t total; };
- // Apelido mais curto para estrutura acima:
- typedef struct Bytes SB, Bytes;
- /* Bytes de streaming são uma versão concatenada do 'struct Bytes', onde
-  * o total de bytes é codificado também em bytes(os oito primeiros bytes)
-  * e enviado junto com o arranjo deles. Tal tipo de dado pode ser formado
-  * de uma simples string, seja Unicode ou ASCII, ou também pode ser formada
-  * dado uma 'struct Bytes'. 
-  */
- typedef uint8_t* StreamingOfBytes, *SoB;
+ typedef struct Bytes { uint8_t* bytes; size_t total; } 
+   Bytes, BYTES, *BytesRef;
 
+ // Todos métodos e operações involvendo o 'struct Bytes':
+ bool struct_bytes_eq	 (BytesRef, BytesRef);
+ void struct_bytes_debug (BytesRef);
+ void struct_bytes_drop  (BytesRef);
  // Método para desalocar a estrutura acima.
  void free_bytes (struct Bytes*);
 
  /* Verificam a ordem dos bytes da máquina que está usando, já que as arrays
   * convertidas abaixo seguirão tal, importante chamar tal antes de usar
   * a serialização dos inteiros abaixo. */
- bool maquina_little_endian (void); 
+ bool maquina_little_endian (void);
  bool maquina_big_endian    (void);
 
- /* Primeiro feito, feito para o inteiro básico, e principal tipo da 
+ /* Primeiro feito, feito para o inteiro básico, e principal tipo da
   * linguagem C. */
- void int_to_bytes      (int      In, uint8_t* Out); 
- int  from_bytes_to_int (uint8_t* In); 
- /* Ciclo de serialização para outros tipos de dados primitivos que há 
+ void int_to_bytes      (int      In, uint8_t* Out);
+ int  from_bytes_to_int (uint8_t* In);
+ /* Ciclo de serialização para outros tipos de dados primitivos que há
   * na linguagem C. */
  void   bool_to_bytes        (bool     In, uint8_t* Out);
- void   double_to_bytes      (double   In, uint8_t* Out); 
+ void   double_to_bytes      (double   In, uint8_t* Out);
  double from_bytes_to_double (uint8_t* In);
  void   float_to_bytes       (float    In, uint8_t* Out);
  float  from_bytes_to_float  (uint8_t* In);
 
  /* Transforma um inteiro de determinado tipo numa array de bytes. O tamanho
-  * da array será do determinado tipo, use 'sizeof' macro para verifcar. 
-  * Abaixo em escala crescente todas conversões: 
+  * da array será do determinado tipo, use 'sizeof' macro para verifcar.
+  * Abaixo em escala crescente todas conversões:
   */
  void u8_to_bytes    (uint8_t  In, uint8_t* Out);
  void i8_to_bytes    (int8_t   In, uint8_t* Out);
  void u16_to_bytes   (uint16_t In, uint8_t* Out);
  void i16_to_bytes   (int16_t  In, uint8_t* Out);
  void i32_to_bytes   (int32_t  In, uint8_t* Out);
- void u32_to_bytes   (uint32_t In, uint8_t* Out); 
- void u64_to_bytes   (uint64_t In, uint8_t* Out); 
+ void u32_to_bytes   (uint32_t In, uint8_t* Out);
+ void u64_to_bytes   (uint64_t In, uint8_t* Out);
  void i64_to_bytes   (int64_t  In, uint8_t* Out);
  void sizet_to_bytes (size_t   In, uint8_t* Out);
 
  /* Deserialização de uma determinada array de bytes. Novamente, segue o
-  * tamanho dos tipos, se for passado uma array menor para a conversão de 
-  * um tipo que não bate com o tamanho, o retorno será indefinido. Sua 
-  * responsabilidade passar arrays com ao devido 'bound'. 
+  * tamanho dos tipos, se for passado uma array menor para a conversão de
+  * um tipo que não bate com o tamanho, o retorno será indefinido. Sua
+  * responsabilidade passar arrays com ao devido 'bound'.
   */
  uint8_t  from_bytes_to_u8    (uint8_t* In);
  int8_t   from_bytes_to_i8    (uint8_t* In);
  uint16_t from_bytes_to_u16   (uint8_t* In);
  int16_t  from_bytes_to_i16   (uint8_t* In);
  int32_t  from_bytes_to_i32   (uint8_t* In);
- uint32_t from_bytes_to_u32   (uint8_t* In); 
- uint64_t from_bytes_to_u64   (uint8_t* In); 
- int64_t  from_bytes_to_i64   (uint8_t* In); 
+ uint32_t from_bytes_to_u32   (uint8_t* In);
+ uint64_t from_bytes_to_u64   (uint8_t* In);
+ int64_t  from_bytes_to_i64   (uint8_t* In);
  size_t   from_bytes_to_sizet (uint8_t* In);
 
  /* Serialização e deserialização de ambos tipos de string('narrow' e wide).
-  * Observe retorno de ambas funções de serialização. Sim, não é uma pura 
-  * array de bytes(unsigned char), e sim uma tupla que contém os bytes da 
+  * Observe retorno de ambas funções de serialização. Sim, não é uma pura
+  * array de bytes(unsigned char), e sim uma tupla que contém os bytes da
   * string(unsigned char) num campo, e o tanto de bytes no outro.
   *
-  * Nota: não é possível apenas pegar tal tupla e colocar uma array de 
+  * Nota: não é possível apenas pegar tal tupla e colocar uma array de
   *       caractéres com esta quantidade de caractéres, o retorno da função
-  *       que serializa, codifica o comprimento da string no começo dos 
-  *       bytes, tem que se levar isso em consideração, qualquer coisa 
+  *       que serializa, codifica o comprimento da string no começo dos
+  *       bytes, tem que se levar isso em consideração, qualquer coisa
   *       simplesmente não funcionaria.
   */
  struct Bytes  string_to_bytes               (char*         In);
@@ -97,11 +93,11 @@
  char*         from_bytes_to_string          (struct Bytes* In);
  wchar_t*      from_bytes_to_string_unicode  (struct Bytes* In);
 
- /* Operações abaixo imprimem pequenas arrays -- na verdade até uma que é 
+ /* Operações abaixo imprimem pequenas arrays -- na verdade até uma que é
   * relativamente grande; o outro método já compara arrays relativamente
   * grandes, porém tem que ter o mesmo comprimento obviamente. Também tem
   * a opção que quer tais impressões como hexadecimal ou não. A opção de
-  * concatenar arrays de bytes, ou seja, nada de struct, apenas algumas 
+  * concatenar arrays de bytes, ou seja, nada de struct, apenas algumas
   * arrays do tipo(unsigned char) -- claro que cada uma seguida com seu
   * respectivo tamanho, onde o resultado é uma array com cada concatenada
   * na ordem que foram posta como argumentos. A concatenação da tupla
@@ -110,30 +106,18 @@
   * dela na frente dela ao lista-la no campo de argumentos.
   */
  void          print_array   (uint8_t* array, int t, bool hexa);
- bool          arrays_iguais (uint8_t* a, uint8_t* b, int t); 
+ bool          arrays_iguais (uint8_t* a, uint8_t* b, int t);
  uint8_t*      concatena_ab  (int quantia, ...);
  struct Bytes  concatena_sb  (int quantia, ...);
 
- /* 'Streaming of Bytes' é um mesmo tipo de representão  que 'struct Bytess',
-  * porém, o total de bytes é codificado nos bytes iniciais da array. Uma
-  * forma muito bom para enviar/receber dados onde quer que seja, já que,
-  * basicamente o tamanho de bytes é fixo(o maior inteiro de bytes positivo)
-  * e fácil de localizar(ínicio dela). */
- SoB       cria_streaming_of_bytes                    (Bytes* In);
- SoB       string_unicode_to_streaming_of_bytes       (wchar_t* In); 
- Bytes     from_streaming_of_bytes_to_bytes           (SoB In); 
- wchar_t*  from_streaming_of_bytes_to_string_unicode  (SoB In);
- char*     from_streaming_of_bytes_to_string          (SoB In);
-
- /* Vários outros nomes alternativos para chamar as funções acima. Elas 
-  * seguem a ordem de codificação, por motivos óbivos de legibilidade. */
- SoB      cria_sob                    (Bytes* In);
- SoB      string_unicode_to_sob       (wchar_t* In);
- SoB      su_to_bs                    (wchar_t* In);
- Bytes    from_sob_to_bytes           (SoB In);
- wchar_t* from_sob_to_string_unicode  (SoB In);
- wchar_t* from_sob_to_su              (SoB In);
- char*    from_sob_to_string          (SoB In);
- char*    from_sob_to_str             (SoB In);
+ /*   Compacta o 'total' de bytes na array de bytes no ínicio da array. O
+  * retorno é uma nova struct Bytes, porém, como já dito, com os seus bytes
+  * iniciais representando o total da 'struct Bytes' passado para gera-lo.
+  *   A outra versão entrega apenas a array de bytes. Lembre-se, neste caso,
+  * para encontrar o tamanho, apenas leia os oito primeiros bytes(se o maior
+  * inteiro positivo de máquina usar tudo, geralmente faz).
+  */
+ Bytes compacta_struct_bytes (BytesRef In); 
+ Bytes restaura_struct_bytes (BytesRef In);
 
 #endif
