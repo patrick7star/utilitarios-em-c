@@ -446,7 +446,7 @@ clean-conversao:
 all-impressao: obj-impressao lib-impressao test-impressao
 
 obj-impressao:
-	@clang -O3 -Iinclude/ -std=gnu2x -Wall -Werror \
+	@clang -O3 -Iinclude/ -std=gnu2x -Wall -Werror -pedantic \
 		-c -o build/impressao.o src/impressao.c
 	@echo "Gerou o arquivo objeto 'impressao.o' em 'build'."
 
@@ -457,7 +457,7 @@ lib-impressao: obj-impressao
 	@echo "Biblioteca estática 'libimpressao.a' compilada."
 
 test-impressao:
-	@clang -Iinclude/ -g3 -O0 -Wall -Werror -D__unit_tests__ -D__debug__ \
+	@clang -Iinclude/ -g3 -O0 -Wall -D__unit_tests__ -D__debug__ \
 		-c -o build/impressao-teste.o src/impressao.c 
 	@clang -o bin/tests/ut_impressao build/impressao-teste.o \
 		$(TESTADOR) -llaref
