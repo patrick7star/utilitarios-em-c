@@ -540,6 +540,95 @@ char* array_f64_to_str(double* array, int n)
    { return CapturaDaImpressao(array, n, sizeof(double), f64); }
 
 /* === === === === === === === === === === === === === === === === === ===+
+ *                Listagem de Checagem de Qualquer Lista 
+ *
+ *   O objetivo aqui é fazer uma visualização de checagem de qualquer tipo
+ * de dado que se desejar. Apenas coloque o nome do item, e seu estado, ou
+ * seja, se ele foi checado/ou não. Haverá a opção tanto de coloração, que
+ * é padrão dependendo da plataforma.
+ * === === === === === === === === === === === === === === === === === ===*/
+struct Checagem 
+   { char nome[UCHAR_MAX * 2]; bool resultado; };
+
+struct ListaDeChecagem 
+   { struct Checagem array[UCHAR_MAX * 2]; int quantia; int maior; };
+
+static void imprime_resultado(bool resultado, bool colorido)
+{
+   const wchar_t POSITIVO = L'\u2714', NEGATIVO = L'\u2718'; 
+   char buffer[10];
+   StringColorida fmt;
+   
+   if (colorido) {
+      sprintf(buffer, "%lc", resultado ? POSITIVO: NEGATIVO);
+      fmt = colori_string(buffer, resultado ? Verde: Vermelho);
+      printf("%s", fmt);
+      free(fmt);
+   } else 
+      printf("%lc", resultado ? POSITIVO: NEGATIVO);
+}
+
+static void imprime_margem_esquerda(void)
+   { printf("    "); }
+
+static void imprime_legenda(char* legenda) 
+   { printf("%s", legenda); }
+
+static void imprime_recuo(int n, int m) {
+   char formatacao[UCHAR_MAX * 2];
+
+   memset(formatacao, '.', m - n);
+   formatacao[m - n] = '\0';
+   printf("%s ", formatacao);
+}
+
+static void imprime_checagem(struct Checagem* obj, const int M) 
+{
+   imprime_margem_esquerda();
+   imprime_legenda((*obj).nome);
+   imprime_recuo(strlen((*obj).nome), M);
+   imprime_resultado((*obj).resultado, true);
+   putchar('\n');
+}
+
+struct ListaDeChecagem nova_ldc(void) {
+   return (struct ListaDeChecagem) { .quantia = 0, .maior = 0};
+}
+
+bool adiciona_ldc(struct ListaDeChecagem* list, struct Checagem* obj)
+{
+   if (list == NULL || obj == NULL)
+      return false;
+
+   int posicao = (*list).quantia, length = strlen((*obj).nome);
+   const int size = sizeof(struct Checagem);
+   struct Checagem* array = list->array;
+
+   if (posicao + 1 >= UCHAR_MAX * 2)
+      return false;
+
+   if (length > (*list).maior)
+   // Registrando um comprimento maior de string.
+      (*list).maior = length + 5;
+
+   memcpy(&array[posicao], obj, size);
+   list->quantia += 1;
+
+   // Se tudo ocorreu com sucesso.
+   return true;
+}
+
+void visualiza_ldc(struct ListaDeChecagem* list) 
+{
+   int n = (*list).quantia;
+   struct Checagem * array = (*list).array;
+
+   printf("\nLista de todos %d itens abaixo:\n", n);
+   for (int q = 1; q <= n; q++)
+      imprime_checagem(&array[q - 1], (*list).maior);
+}
+
+/* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
  * ........................Testes Unitários...............................&
  * .......................................................................&
@@ -547,7 +636,6 @@ char* array_f64_to_str(double* array, int n)
 #ifdef __unit_tests__
 #include "dados_testes.h"
 #include "teste.h"
-#include <limits.h>
 #include <locale.h>
 
 char* constchar_to_str(generico_t dt) {
@@ -759,12 +847,41 @@ void stringficacao_usando_macro_geral(void)
    puts(Out); free(Out);
 }
 
+void coloracao_de_caracteres_checadores_unicode(void)
+{
+	StringColorido positivo = colori_string("\u2714", Verde);
+	StringColorido negativo = colori_string("\u2718", Vermelho);
+	char texto[UCHAR_MAX];
+
+	sprintf(texto, "Avaliação positiva: %s\nAvaliação negativa: %s\n",
+		positivo, negativo);
+	puts(texto);
+}
+
+void listagem_generica_de_checagens(void) {
+   struct Checagem obj_a = {"Armario cinza", true};
+   struct Checagem obj_b = {"Mala de camisas", false};
+   struct Checagem obj_c = {"Bolas", false};
+
+   imprime_checagem(&obj_a, 40);
+   imprime_checagem(&obj_b, 40);
+   imprime_checagem(&obj_c, 40);
+
+   struct ListaDeChecagem lista = nova_ldc();
+
+   adiciona_ldc(&lista, &obj_a);
+   adiciona_ldc(&lista, &obj_b);
+   adiciona_ldc(&lista, &obj_c);
+
+   visualiza_ldc(&lista);
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
 
    executa_testes_a(
-     true, 6,
+     false, 6,
          primeiro_exemplo_da_funcao_de_listagem, true,
          checando_um_caractere_multibyte, false,
          impressao_de_varios_tipos_de_array, true,
@@ -774,12 +891,14 @@ int main(void)
    );
 
    executa_testes_b(
-     false, 1,
-         Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true) 
+     true, 3,
+         Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true),
+			Unit(coloracao_de_caracteres_checadores_unicode, true),
+         Unit(listagem_generica_de_checagens, true)
    );
 
    executa_testes_b(
-     true, 3,
+     false, 3,
          Unit(transformacao_de_array_int_em_string_via_pipes, true),
          Unit(conversao_de_arrays_genericas_em_string_por_pipes, true),
          Unit(stringficacao_usando_macro_geral, true)
