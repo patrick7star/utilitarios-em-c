@@ -59,7 +59,7 @@
  /* Vários apelidos para diferência strings coloridas das normais. Na raíz,
   * elas são as mesmas coisas, entranto, as coloridas são mais cumpridas 
   * para acomodar o protocolo ANSI. */
- typedef char* StringColorido, *StrColorida, *SC;
+ typedef char* StringColorido, *StringColorida, *StrColorida, *SC;
 
  /*   Faz uma copia da string com os devidos protocolos ANSI para que fique
   * com a pigmentação escolhida. Por fazer uma cópia, é preciso liberar
@@ -102,6 +102,16 @@
    double*:          array_f64_to_str                  \
  )(ARRAY, LEN)
  // Já está em inglês, porém outro nome bom seria este:
- // #define stringfy_array(A, L) array_to_string(A, L)
+ #define stringfy_array(A, L) array_to_string(A, L)
 
+ /*   Criação de checklist pra visualização. Um modo bem interessante de você
+  * organizar qualquer coisa que está, tem, possui e etc; e seu estado oposto
+  * antagonico. */
+ typedef struct ListaDeChecagem CheckList;
+ typedef struct Checagem Check;
+
+ CheckList nova_ldc(void); 
+ bool adiciona_ldc(CheckList* list,  Check* obj);
+ void visualiza_ldc(CheckList* list); 
+ 
 #endif
