@@ -13,6 +13,8 @@
 
 static void libera_lista_de_resultados(uint8_t** list, size_t n, Drop f)
 {
+/* Libera lista de pointeiro com um comprimento 'n', do tipo genérico que
+ * pode ser liberado pela função 'f'. */
    for (size_t k = 0; k < n; k++)
       free(list[k]);
    free(list);
@@ -39,7 +41,13 @@ size_t fatorial(int n)
       return 1;
 }
 
-static void algoritmo_gerador_de_permutas(struct Permutas* obj, int M)
+void free_resultados_combinatorios(ResultadosCombinatorios* X, Drop g)
+   { libera_lista_de_resultados(X->results, X->total, g); }
+
+/* === === === === === === === === === === === === === === === === === ==
+ *                      Geração de Permutações
+ * === === === === === === === === === === === === === === === === === ==*/
+static void algoritmo_gerador_de_permutas(Permutas* obj, int M)
 {
  /*   A legenda dos parâmetors: S é a array que será amplamente modificada
  * durante o processo; já 'm' é o tamanho relativo, indica até que parte
@@ -47,12 +55,12 @@ static void algoritmo_gerador_de_permutas(struct Permutas* obj, int M)
  * array; 'out' é a lista que "concatena" as permutas; já 'q' é o cursor
  * que ajuda a contabilizar, e a adiciona as permutas geradas. */
    int sz       = obj->size;
-   uint8_t* seq = obj->array;
+   uint8_t* seq = obj->items;
    int t        = obj->length;
    size_t n     = obj->total;
 
    if (M == 1) {
-      obj->list[n] = clona_array(seq, sz, t);
+      obj->results[n] = clona_array(seq, sz, t);
       obj->total = n + 1;
 
    } else {
@@ -76,24 +84,26 @@ static void algoritmo_gerador_de_permutas(struct Permutas* obj, int M)
    }
 }
 
-struct Permutas gera_permutacoes(generico_t seq, int n, int sz)
+Permutas gera_permutacoes(generico_t seq, int n, int sz)
 {
 /*   Neste caso não é preciso passar uma tupla, apenas a array, seu
  * comprimento, e o tanto de bytes do seu tipo. */
    size_t t = fatorial(n);
-   struct Permutas output;
+   Permutas output;
    const int Q = sizeof(uint8_t*);
    uint8_t** list = (uint8_t**)malloc(t * Q);
 
    for (size_t p = 0; p < t; p++)
       list[p] = NULL;
 
-   output = (struct Permutas) {
-      .array = seq,
-      .length = n,
-      .size = sz,
-      .total = 0,
-      .list = list
+   output = (Permutas) {
+      .items   = seq,
+      .length  = n,
+      .size    = sz,
+      .total   = 0,
+      .results = list,
+      // Desnecessários para este tipo de resultado:
+      .k = -1,
    };
 
    algoritmo_gerador_de_permutas(&output, n);
@@ -102,8 +112,6 @@ struct Permutas gera_permutacoes(generico_t seq, int n, int sz)
    return output;
 }
 
-void free_struct_permutas(struct Permutas* X, Drop g)
-   { libera_lista_de_resultados(X->list, X->total, g); }
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Geração de Arranjos
@@ -226,17 +234,12 @@ static bool sem_itens_repetidos(generico_t array, int n, int sz)
    return true;
 }
 
-struct Arranjos gera_arranjos(generico_t array, int n, int k, int sz)
+static void condicoes_necessarias_sobre_algoritmo_do_arranjo
+  (generico_t array, int n, int k, int sz)
 {
- /*   Gera um arranjo, sem repetição, de todos itens na 'array' com 
-  * comprimento 'n', estes tomados de 'k' à 'k'.
-  *
-  * Nota: não é aceito um 'k' maior ou igual a 'n'. O primeiro obviamente é
-  *       um erro, porque é inválida com a propriedade matemática; já o
-  *       último, porque geraria o mesmo resultado do gerador original de 
-  *       permutações, assim fica meio sem sentido usar este. Este segundo
-  *       geraria o resultado perfeitamente, porém com uma carga extra de
-  *       tempo, portanto não vale a pena. */
+/* Todas condições necessárias para execução do algoritmo. Se não forem 
+ * seguidas corretamente, então o programa provalvemente quebra, e manda
+ * uma informação sobre o error. */
    if (k > n) {
       perror("Valor de agrupamento inválido, não pode ser maior");
       abort();
@@ -247,9 +250,23 @@ struct Arranjos gera_arranjos(generico_t array, int n, int k, int sz)
       perror("Apenas array com itens distintos permitida.");
       abort();
    }
+}
+
+Arranjos gera_arranjos(generico_t array, int n, int k, int sz)
+{
+ /*   Gera um arranjo, sem repetição, de todos itens na 'array' com 
+  * comprimento 'length', estes tomados de 'k' à 'k'.
+  *
+  * Nota: não é aceito um 'k' maior ou igual a 'n'. O primeiro obviamente é
+  *       um erro, porque é inválida com a propriedade matemática; já o
+  *       último, porque geraria o mesmo resultado do gerador original de 
+  *       permutações, assim fica meio sem sentido usar este. Este segundo
+  *       geraria o resultado perfeitamente, porém com uma carga extra de
+  *       tempo, portanto não vale a pena. */
+  condicoes_necessarias_sobre_algoritmo_do_arranjo(array, n, k, sz);
    
    size_t t = calcula_arranjos(n, k);
-   struct Arranjos output = {
+   Arranjos output = {
       .items = array,
       .length = n, .k = k, 
       .size = sz,
@@ -265,8 +282,6 @@ struct Arranjos gera_arranjos(generico_t array, int n, int k, int sz)
    return output;
 }
 
-void free_struct_arranjos(struct Arranjos* X, Drop g)
-   { libera_lista_de_resultados(X->results, X->total, g); }
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Geração de Combinações
@@ -307,7 +322,7 @@ static void gerador_de_combinacao_generica(generico_t items, int n,
    }
 }
 
-struct Combinacoes gera_combinacoes(generico_t itens, int n, int k, int sz)
+Combinacoes gera_combinacoes(generico_t itens, int n, int k, int sz)
 {
 /* Encapsulando vários parâmetros de contagem, apenas retorna a lista 
  * de combinações geradas e sua contagem. Também os itens usados, seu 
@@ -317,12 +332,12 @@ struct Combinacoes gera_combinacoes(generico_t itens, int n, int k, int sz)
    size_t N = computa_combinacoes(n, k);
    uint8_t** L = cria_lista_de_array_de_bytes(N);
    int m = 0; size_t p = 0;
-   struct Combinacoes output; 
+   Combinacoes output; 
 
    gerador_de_combinacao_generica(itens, n, buffer, &m, L, &p, 0, k, sz);
-   output = (struct Combinacoes){
+   output = (Combinacoes) {
       .items = itens,
-      .n = n, .k = k, .size = sz,
+      .length = n, .k = k, .size = sz,
       .results = L,
       .total = N,
    };
@@ -333,10 +348,6 @@ struct Combinacoes gera_combinacoes(generico_t itens, int n, int k, int sz)
 
    return output;
 }
-
-void free_struct_combinacoes(struct Combinacoes* X, Drop g)
-   { libera_lista_de_resultados(X->results, X->total, g); }
-
 
 #if defined(__unit_tests__) && defined(__linux__)
 /* === === === === === === === === === === === === === === === === === ==
@@ -396,9 +407,9 @@ void swap_de_ponteiros_void(void)
 void array_inteira_permutacao(void)
 {
    int** L = malloc(6 * sizeof(int*));
-   struct Permutas out = {
-      (int[]){1, 5, 10}, 3, sizeof(int),
-      (uint8_t**)L, 0
+   Permutas out = {
+      .items = (int[]){1, 5, 10}, .length = 3, 
+      .size = sizeof(int), .results = (uint8_t**)L, 0
    };
 
    puts("Resultado de simples permutação:");
@@ -406,62 +417,62 @@ void array_inteira_permutacao(void)
    printf("Contabilização: %zu\n", out.total);
 
    for (int i = 0; i < out.total; i++)
-      imprime_array((int*)out.list[i], 3);
-   free_struct_permutas(&out, free_struct);
+      imprime_array((int*)out.results[i], 3);
+   free_resultados_combinatorios(&out, free_struct);
 }
 
 void permuta_de_pequenos_genericos(void)
 {
-   struct Permutas inputs[] = {
+   Permutas inputs[] = {
       {
-         .array = (int[]){1, 2, 3, 4},
-         .length =4,
-         .size = sizeof(int),
-         .list = cria_lista_de_array_de_bytes(fatorial(4)),
-         .total = 0
+         .items   = (int[]){1, 2, 3, 4},
+         .length  = 4,
+         .size    = sizeof(int),
+         .results = cria_lista_de_array_de_bytes(fatorial(4)),
+         .total   = 0
       },
       {
-         .array = (float[]){0.1234, 3.14159, 2.71, 0.999999},
-         .length= 4,
-         .size = sizeof(float),
-         .list = cria_lista_de_array_de_bytes(fatorial(4)),
-         .total = 0
+         .items   = (float[]){0.1234, 3.14159, 2.71, 0.999999},
+         .length  = 4,
+         .size    = sizeof(float),
+         .results = cria_lista_de_array_de_bytes(fatorial(4)),
+         .total   = 0
       },
       {
-         .array = (char[]){'b', 'A', 'r', 'C', 'o', '\0'},
-         .length= 5,
-         .size = sizeof(char),
-         .list = cria_lista_de_array_de_bytes(fatorial(5)),
-         .total = 0
+         .items   = (char[]){'b', 'A', 'r', 'C', 'o', '\0'},
+         .length  = 5,
+         .size    = sizeof(char),
+         .results = cria_lista_de_array_de_bytes(fatorial(5)),
+         .total   = 0
       },
       {
-         .array = (bool[]){true, false, true},
-         .length= 3,
-         .size = sizeof(bool),
-         .list = cria_lista_de_array_de_bytes(fatorial(3)),
-         .total = 0
+         .items   = (bool[]){true, false, true},
+         .length  = 3,
+         .size    = sizeof(bool),
+         .results = cria_lista_de_array_de_bytes(fatorial(3)),
+         .total   = 0
       },
    };
-   const int n = sizeof(inputs) / sizeof(struct Permutas);
+   const int n = sizeof(inputs) / sizeof(Permutas);
 
    for (int i = 0; i < n; i++)
       algoritmo_gerador_de_permutas(&inputs[i], inputs[i].length);
 
    for (int t = 0; t < inputs[0].total; t++)
-      imprime_array((int*)inputs[0].list[t], inputs[0].length);
+      imprime_array((int*)inputs[0].results[t], inputs[0].length);
 
    for (int t = 0; t < inputs[1].total; t++)
-      imprime_array((float*)inputs[1].list[t], inputs[1].length);
+      imprime_array((float*)inputs[1].results[t], inputs[1].length);
 
    for (int t = 0; t < inputs[2].total; t++)
-      imprime_array((char*)inputs[2].list[t], inputs[2].length);
+      imprime_array((char*)inputs[2].results[t], inputs[2].length);
 
    for (int t = 0; t < inputs[3].total; t++)
-      imprime_array((bool*)inputs[3].list[t], inputs[3].length);
+      imprime_array((bool*)inputs[3].results[t], inputs[3].length);
 
    printf("Liberando ...");
    for (int i = 0; i < 4; i++)
-      free_struct_permutas(&inputs[i], free_struct);
+      free_resultados_combinatorios(&inputs[i], free_struct);
    puts("feito");
 }
 
@@ -508,7 +519,7 @@ void funcao_principal_de_geracao_de_permutas(void)
    int in_b[] = {0 , 1};
    float in_c[] = {3.14159, 1.6, 0.4321};
    char* in_d[] = {"dado", "bola", "petéca"};
-   struct Permutas out_a , out_b, out_c, out_d;
+   Permutas out_a , out_b, out_c, out_d;
 
    out_a = gera_permutacoes(in_a, 4, sizeof(char));
    out_b = gera_permutacoes(in_b, 2, sizeof(int));
@@ -516,21 +527,21 @@ void funcao_principal_de_geracao_de_permutas(void)
    out_d = gera_permutacoes(in_d, 3, sizeof(char*));
 
    for (int i = 1; i <= out_a.total; i++)
-      imprime_array((char*)out_a.list[i - 1], out_a.length);
+      imprime_array((char*)out_a.results[i - 1], out_a.length);
 
    for (int i = 1; i <= out_b.total; i++)
-      imprime_array((int*)out_b.list[i - 1], out_b.length);
+      imprime_array((int*)out_b.results[i - 1], out_b.length);
 
    for (int i = 1; i <= out_c.total; i++)
-      imprime_array((float*)out_c.list[i - 1], out_c.length);
+      imprime_array((float*)out_c.results[i - 1], out_c.length);
 
    for (int i = 1; i <= out_d.total; i++)
-      imprime_array((char**)out_d.list[i - 1], out_d.length);
+      imprime_array((char**)out_d.results[i - 1], out_d.length);
 
-   free_struct_permutas(&out_a, free_struct);
-   free_struct_permutas(&out_b, free_struct);
-   free_struct_permutas(&out_c, free_struct);
-   free_struct_permutas(&out_d, free_struct);
+   free_resultados_combinatorios(&out_a, free_struct);
+   free_resultados_combinatorios(&out_b, free_struct);
+   free_resultados_combinatorios(&out_c, free_struct);
+   free_resultados_combinatorios(&out_d, free_struct);
 }
 
 void tamanho_de_alguns_ponteiros_tipos(void)
@@ -591,20 +602,20 @@ void teste_do_gerador_completo_de_combinacoes(void)
    const int N = sizeof(in) / sz;
    const int K = 3;
 
-   struct Combinacoes out = gera_combinacoes(in, N, K, sz);
+   Combinacoes out = gera_combinacoes(in, N, K, sz);
 
    printf("Total de combinações geradas: %zu\n", out.total);
    for (size_t p = 0; p < out.total; p++)
       imprime_array((char*)out.results[p], out.k);
-   free_struct_combinacoes(&out, free_struct);
+   free_resultados_combinatorios(&out, free_struct);
 
    int8_t in_a[] = {-4, -3, -2, -1, 0, 1, 2, 3, 4};
-   struct Combinacoes out_a = gera_combinacoes(in_a, 9, 7, sizeof(int8_t));
+   Combinacoes out_a = gera_combinacoes(in_a, 9, 7, sizeof(int8_t));
 
    printf("\nOutro tipo de dado. Total: %zu combinações\n", out_a.total);
    for (size_t p = 0; p < out_a.total; p++)
       imprime_array((int8_t*)out_a.results[p], out_a.k);
-   free_struct_combinacoes(&out_a, free_struct);
+   free_resultados_combinatorios(&out_a, free_struct);
 }
 
 static bool arrays_i8_iguais(int8_t* a, int8_t* b, int n)
@@ -617,7 +628,7 @@ static bool arrays_i8_iguais(int8_t* a, int8_t* b, int n)
    return true;
 }
 
-static bool verificando_igualdade_entre_suas_saidas(struct Combinacoes* in)
+static bool verificando_igualdade_entre_suas_saidas(Combinacoes* in)
 {
    size_t      eq = 0, ne = 0;
    size_t      n  = in->total;
@@ -643,7 +654,7 @@ static bool verificando_igualdade_entre_suas_saidas(struct Combinacoes* in)
    return eq == 0;
 }
 
-static void escolhe_algumas_combinacoes_i8(struct Combinacoes* in)
+static void escolhe_algumas_combinacoes_i8(Combinacoes* in)
 {
    uint8_t** list = (*in).results;
    size_t t = (*in).total;
@@ -662,11 +673,11 @@ void checando_que_combinacoes_nao_sao_iguais(void)
    signed char in[] = {-4, -3, -2, -1, 0, 1, 2, 3, 4};
    const int sz = sizeof(signed char);
    const int N = sizeof(in) / sz, K = 3;
-   struct Combinacoes out = gera_combinacoes(in, N, K, sz);
+   Combinacoes out = gera_combinacoes(in, N, K, sz);
 
    assert(verificando_igualdade_entre_suas_saidas(&out));
    escolhe_algumas_combinacoes_i8(&out);
-   free_struct_combinacoes(&out, free_struct);
+   free_resultados_combinatorios(&out, free_struct);
 }
 
 void tentando_gerar_anagramas_com_motor_de_permutas(void)
@@ -729,59 +740,60 @@ void gerador_de_arranjo_completo(void)
 {
    char in[] = "cebo";
    const int sz = sizeof(char);
-   struct Arranjos out = gera_arranjos(in, strlen(in), 3, sz);
+   Arranjos out = gera_arranjos(in, strlen(in), 3, sz);
 
    for (size_t p = 0; p < out.total; p++)
       imprime_array((char*)out.results[p], out.k);
-   free_struct_arranjos(&out, free_struct);
+   free_resultados_combinatorios(&out, free_struct);
 
    char in_a[] = "trem";
-   struct Arranjos out_a = gera_arranjos(in_a, strlen(in_a), 2, sz);
+   Arranjos out_a = gera_arranjos(in_a, strlen(in_a), 2, sz);
 
    for (size_t p = 0; p < out_a.total; p++)
       imprime_array((char*)out_a.results[p], out_a.k);
-   free_struct_arranjos(&out_a, free_struct);
+   free_resultados_combinatorios(&out_a, free_struct);
 
    int in_b[] = {8, 7, 1, 3, 4, 5, 2};
    const int szB = sizeof(int);
    const int nB = sizeof(in_b) / szB;
-   struct Arranjos out_b = gera_arranjos(in_b, nB, 2, szB);
+   Arranjos out_b = gera_arranjos(in_b, nB, 2, szB);
 
    for (size_t p = 0; p < out_b.total; p++)
       imprime_array((int*)out_b.results[p], out_b.k);
-   free_struct_arranjos(&out_b, free_struct);
+   free_resultados_combinatorios(&out_b, free_struct);
 }
 
 
 int main(int qtd, char* args[], char* envs[])
 {
-   executa_testes_a(
-     false, 7,
-         swap_de_ponteiros_void, true,
-         maximo_potencial_do_fatorial, true,
-         array_inteira_permutacao, true,
+   executa_testes_b(
+     true, 7,
+         // Testes de features totalmente fora do escopo deste módulo:
+         Unit(swap_de_ponteiros_void, true),
+         Unit(maximo_potencial_do_fatorial, true),
          // [off] a saída de texto é gigante
-         permuta_de_pequenos_genericos, false,
+         Unit(permuta_de_pequenos_genericos, false),
          // [off] Testes rápidos de funções auxiliares bobas:
-         clonagem_de_void_arrays, false,
+         Unit(clonagem_de_void_arrays, false),
          // [off] É um teste da linguagem:
-         tamanho_de_alguns_ponteiros_tipos, false,
+         Unit(tamanho_de_alguns_ponteiros_tipos, false),
          // ... continuando ...
-         funcao_principal_de_geracao_de_permutas, true
+         Unit(array_inteira_permutacao, true),
+         Unit(funcao_principal_de_geracao_de_permutas, true)
    );
 
-   executa_testes_a(
+   executa_testes_b(
      true, 3,
-         teste_do_gerador_completo_de_combinacoes, true,
-         checando_que_combinacoes_nao_sao_iguais, true,
+         Unit(teste_do_gerador_completo_de_combinacoes, true),
+         Unit(checando_que_combinacoes_nao_sao_iguais, true),
          // [off] Teste de algoritmo apenas:
-         geracao_de_combinacoes_prototipo, false
+         Unit(geracao_de_combinacoes_prototipo, false)
    );
 
-   executa_testes_a(
+   executa_testes_b(
      true, 2,
-       tentando_gerar_anagramas_com_motor_de_permutas, true,
-       gerador_de_arranjo_completo, true
+       Unit(tentando_gerar_anagramas_com_motor_de_permutas, true),
+       Unit(gerador_de_arranjo_completo, true)
    );
 }
 #endif
