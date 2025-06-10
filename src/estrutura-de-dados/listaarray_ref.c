@@ -1,12 +1,3 @@
-/*       
- *        Simples implementação genérica da 'Array List'.
- *
- *   Se ficar muito boa se juntará as estruturas de dados tipo(iii) no
- * projeto utilitários, pois é uma array dinâmica que serve incrivelmente
- * para qualquer projeto que precisa armazenar um grande número de objetos,
- * seja eles qualquer que tipo.
- */
-
 // Definições das estruturas, dados, métodos, e funções abaixo:
 #include "listaarray_ref.h"
 // Apenas bibliotecas padrão do C:
@@ -64,7 +55,7 @@ ArrayLista cria_com_capacidade_al(size_t n) {
    return lista;
 }
 
-ArrayLista cria_al() 
+ArrayLista cria_al(void) 
 /* Cria tal array com um tamanho definido automaticamente, não é gigante
  * tal valor, porém ainda pode ser relevante para programa muito 
  * compactos. */
@@ -445,18 +436,70 @@ IterAL clona_iter_al(IteradorRefAL iter) {
 }
 // === === === === === === === === === === === === === === === === === ===
 
-/* Testando todos métodos, funções, e dados abstratos acima. Deixando
+bool destroi_interno_al(Vetor l, Drop g) {
+/* Desalocador da lista, mas que também desaloca memória interna alocada 
+ * inserida nela, claro, se o desconstrutor 'g' do tipo homogênio interno
+ * for cedido também. */
+   if (l == NULL || g == NULL)
+   // Caso algum dos argumentos não for válido, então não prossegue na 
+   // liberação, e somente retorna a negação da operação.
+      return false;
+
+   IterAL iteracao = cria_iter_al(l);
+
+   while (consumido_iter_al(&iteracao)) 
+       g(next_al(&iteracao).item);
+
+   destroi_al(l);
+   return true;
+}
+
+void imprime_lista_al(Vetor l, ToString f) {
+/* Formatação da lista apenas, passado a função que converte o tipo genérico
+ * que ela retém inicialmente, numa string. Sim, existe um limite de itens
+ * que está função iprime, você tem que ativar ela se quer a impressão de 
+ * tudo, caso contrário um erro será emitido. */
+   if (l == NULL || f == NULL)
+      return;
+   else if (tamanho_al(l) > (int)1.0e4) {
+      perror("não é possível imprimir com está quantia de itens."); 
+      abort();
+   }
+
+   IterAL iteracao = cria_iter_al(l);
+   char* fmt;
+   IterOutputAL out;
+
+   printf("ListaArray(%d) [", (int)tamanho_al(l));
+
+   if (vazia_al(l))
+      { puts("]"); return; }
+
+   while (!consumido_iter_al(&iteracao)) {
+      out = next_al(&iteracao);
+      fmt = f(out.item);
+      printf("%s, ", fmt); 
+      free(fmt);
+   }
+   printf("\b\b]\n");
+} 
+
+#if defined(__unit_tests__)
+/* === === === === === === === === === === === === === === === === === === =
+ *                         Testes Unitários
+ *
+ * Testando todos métodos, funções, e dados abstratos acima. Deixando
  * bem referênciado esta parte, pois fica fácil descartar -- além de 
  * ser necessário se os tipos forem trocados, do contrário o programa
  * não compila; se copiado para vários projetos. Caso também tal trecho,
  * futuramente, for colocada num subdiretório, e os tipos serem trocados
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
- */
-#if defined(__unit_tests__)
+ * === === === === === === === === === === === === === === === === === === */
+#include <assert.h>
 #include "teste.h"
 #include "dados_testes.h"
-#include <assert.h>
+#include "memoria.h"
 
 void visualizacao_array_list_char(vetor_t* l) {
    size_t t = tamanho_al(l);
@@ -660,7 +703,7 @@ char* stringfy_str(generico_t X) {
 }
 
 void conversao_em_string(void) {
-   ArrayLista v = cria_al();
+   Vetor v = cria_al();
    uint16_t* array = (uint16_t*)valores_padronizados_i;
 
    for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
@@ -713,17 +756,66 @@ void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
    destroi_al(v);
 }
 
+static bool free_str(generico_t e) 
+   { free((char*)e); return true; }
+
+void desalocador_interno(void) {
+   Vetor lista = cria_al(); 
+
+   for (int i = 1; i <= BOYS_NAMES; i++)
+      insere_al(lista, box_str((char*)boys_names[i - 1]));
+
+   assert(tamanho_al(lista) == BOYS_NAMES);
+   bool result = destroi_interno_al(lista, free_str);
+   assert(result);
+   puts("A liberação, com destruição de dados, foi sucedida.");
+
+   assert(!destroi_interno_al(NULL, free_str));
+   puts("Liberação não ocorre quando não há uma lista.");
+   lista = cria_al();
+   assert(!destroi_interno_al(lista, NULL));
+   puts("Liberação também não acontence quando não há um 'desconstrutor'.");
+   assert(destroi_al(lista));
+}
+
+static char* generico_to_str(Generico a)
+   { return (char*)a; }
+
+void impressao_de_lista(void) {
+   Vetor v = cria_al();
+
+   for (size_t i = 1; i <= FRUITS; i++) {
+      char* clone = box_str((char*)fruits[i - 1]);
+      insere_al(v, clone);
+   }
+
+   imprime_lista_al(v, generico_to_str);
+   destroi_interno_al(v, free_str);
+}
+
 int main(int total, char* argumentos[], char* variaveis[]) {
    executa_testes_a (
-     true, 8, 
-         demonstracao_com_inteiros, true,
-         demonstracao_com_caracteres, true,
-         demonstracao_com_strings, true,
-         remocao_em_pontos_criticos, true,
-         redimensionamento_automatico_da_capacidade, true,
-         conversao_em_string, true,
-         novo_tipo_de_criacao_da_lista, true,
-         uso_para_chacagem_do_funcionmanento_do_iterador, true
+     false, 4, 
+         remocao_em_pontos_criticos, false,
+         redimensionamento_automatico_da_capacidade, false,
+         conversao_em_string, true
+   );
+
+   executa_testes_b(
+   // Testes sobre as alocações e desalocações, todas as modalidades é claro.
+      true, 5,
+         Unit(demonstracao_com_inteiros, true),
+         Unit(demonstracao_com_caracteres, false),
+         Unit(demonstracao_com_strings, false),
+         Unit(novo_tipo_de_criacao_da_lista, true),
+         Unit(desalocador_interno, true)
+   );
+
+   executa_testes_b(
+   // Testes específico dos iterador da estrutura:
+      true, 2,
+         Unit(uso_para_chacagem_do_funcionmanento_do_iterador, true),
+         Unit(impressao_de_lista, true)
    );
 
    return EXIT_SUCCESS;
