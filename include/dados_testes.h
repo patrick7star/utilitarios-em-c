@@ -14,10 +14,10 @@
  * em números romanos.
  */
 
-#include <stdint.h>
 
 #ifndef DADOS_TESTES_H
 #define DADOS_TESTES_H
+#include <stdint.h>
 
 // tamanho de cada array abaixo:
 #define FRUTAS 9llu
