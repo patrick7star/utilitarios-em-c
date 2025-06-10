@@ -621,7 +621,7 @@ clean-conjunto-ref:
 COMPILA_LA_REF = -D_ALOCACAO_E_DESALOCACAO -D__unit_tests__ -D_TO_STRING
 SRC_LA_REF = src/estrutura-de-dados/listaarray_ref.c
 BUILD_LA_REF = build/lista-array-ref-teste.o
-DEPS_LA_REF = -Lbin/shared -lteste -llegivel -lm -ltempo
+DEPS_LA_REF = -Lbin/shared -lteste -llegivel -lm -ltempo -lmemoria
 EXE_LA_REF = bin/tests/ut_lista_array_ref
 
 all-lista-array-ref: obj-lista-array-ref lib-lista-array-ref \
