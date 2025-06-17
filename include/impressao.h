@@ -52,14 +52,20 @@
 
  // Cores disponíveis:
  enum Cores { 
-    Vermelho = 0x0000001, Verde = 0x0000010, Amarelo = 0x0000100, 
-    Azul = 0x0001000, Violeta = 0x0010000, AzulMarinho = 0x0100000, 
-    SemCor = 0x1000000
+    Vermelho = 0x0000001, Verde   = 0x0000010, Amarelo     = 0x0000100, 
+    Azul     = 0x0001000, Violeta = 0x0010000, AzulMarinho = 0x0100000, 
+    Cinza    = 0x1100000, SemCor  = 0x1000000
+ };
+ // Tipos de efeitos aplicados:
+ enum Efeitos { 
+   Negrito, Italico, Pisca, Frio, Sublinhado, Riscado, 
+   Normal 
  };
  /* Vários apelidos para diferência strings coloridas das normais. Na raíz,
   * elas são as mesmas coisas, entranto, as coloridas são mais cumpridas 
   * para acomodar o protocolo ANSI. */
  typedef char* StringColorido, *StringColorida, *StrColorida, *SC;
+ 
 
  /*   Faz uma copia da string com os devidos protocolos ANSI para que fique
   * com a pigmentação escolhida. Por fazer uma cópia, é preciso liberar
@@ -72,6 +78,7 @@
   * na heap. Entretanto, existe um limite para o tamanho da string, assim,
   * como também não é thread-safe(TS). */
  StrColorida muda_cor_da_string (char* s, enum Cores c);
+ StrColorida aplica_formatacao(char* In, enum Cores, enum Efeitos);
 
  /*   Transforma as arrays dos seguintes tipos numa string(aquele famoso 
   * 'stringfy'). 
