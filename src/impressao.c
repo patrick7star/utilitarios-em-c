@@ -448,6 +448,48 @@ StrColorida muda_cor_da_string(char* In_a, enum Cores In_b) {
    return Out;
 }
 
+static int codigo_efeito(enum Efeitos escolha) {
+   switch (escolha) {
+      case Negrito:     return 1;
+      case Frio:        return 2;
+      case Italico:     return 3;
+      case Sublinhado:  return 4;
+      case Pisca:       return 5;
+      case Riscado:     return 9;
+      default:          return 0;
+   }
+}
+
+static int codigo_cor(enum Cores escolha) {
+   switch (escolha) {
+      case Vermelho:    return 31;
+      case Verde:       return 32;
+      case Amarelo:     return 33;
+      case Azul:        return 34;
+      case Violeta:     return 35;
+      case AzulMarinho: return 36;
+      case Cinza:       return 37;
+      case SemCor:      return 38;
+      default:          return 38;
+   }
+}
+
+StrColorida aplica_formatacao(char* In, enum Cores In_a, enum Efeitos In_b)
+{
+   char fmt[strlen(In) + CHAR_MAX];
+   int efeito = codigo_efeito(In_b);
+   int cor = codigo_cor(In_a);
+   char* Out;
+   const int sz = sizeof(char);
+
+   sprintf(fmt, "\033[%d;%dm%s\033[0m", efeito, cor, In);
+   // Copia a string que foi formatada.
+   Out = malloc(strlen(fmt) * sz);
+   memcpy(Out, fmt, strlen(fmt) * sz);
+
+   return Out;
+}
+
 /* === === === === === === === === === === === === === === === === === ===+
  *             Converte arrays de qualquer tipo numa string 
 
@@ -876,6 +918,22 @@ void listagem_generica_de_checagens(void) {
    visualiza_ldc(&lista);
 }
 
+void atributos_de_formatacao_sem_ser_cor(void) {
+   int efeitos[] = {Negrito, Riscado, Frio, Pisca, Italico, Sublinhado };
+   const int N = sizeof(efeitos) / sizeof(enum Efeitos);
+   const char* const TEXTO = "O sol já começou a subir!";
+
+   puts("Várias formartações do texto abaixo:");
+
+   for (int i = 0; i < N; i++) {
+      enum Efeitos e = efeitos[i];
+      char * formatado = aplica_formatacao((char*)TEXTO, SemCor, e);
+
+      printf("\t\b\b\"%s\"\n", formatado);
+      free(formatado);
+   }
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
@@ -891,10 +949,11 @@ int main(void)
    );
 
    executa_testes_b(
-     true, 3,
+     true, 4,
          Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true),
 			Unit(coloracao_de_caracteres_checadores_unicode, true),
-         Unit(listagem_generica_de_checagens, true)
+         Unit(listagem_generica_de_checagens, true),
+         Unit(atributos_de_formatacao_sem_ser_cor, true)
    );
 
    executa_testes_b(
