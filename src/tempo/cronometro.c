@@ -1,9 +1,3 @@
-
-/* Passar o cronômetro para aqui, onde fica mais organizado a distinção
- * entre seus métodos, e outras funções do 'módulo tempo', sem falar
- * que facilita a leitura.
- */
-
 #include <stdio.h>
 #include <stdbool.h>
 #include "legivel.h"
@@ -27,7 +21,7 @@ struct cronometro {
 // tamanho da 'struct' acima.
 #define CLOCK_SIZE sizeof (struct cronometro)
 
-Cronometro cria_cronometro() {
+Cronometro cria_cronometro(void) {
    Cronometro novo = malloc(CLOCK_SIZE);
 
    // se alocado corretamente.
