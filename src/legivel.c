@@ -1,3 +1,8 @@
+// Importantes definições para funcionar no Windows.
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
+
 // Cabeçalho com definições da funções:
 #include "legivel.h"
 // Biblioteca padrão do C:
@@ -10,9 +15,9 @@
 const size_t MILHAR     = 1e3;
 const size_t MILHAO     = 1e6;
 const size_t BILHAO     = 1e9;
-const size_t TRILHAO    = 1e12;
-const size_t QUADRILHAO = 1e15;
-const size_t QUINTILHAO = 1e18;
+const size_t TRILHAO    = (size_t)1e12;
+const size_t QUADRILHAO = (size_t)1e15;
+const size_t QUINTILHAO = (size_t)1e18;
 // para comparação ...
 const double NANOSEG    = 1e-9;
 const double MICROSEG   = 1e-6;
@@ -36,7 +41,7 @@ static void elimina_digitos_insignificantes
 {
 /* Faz trucagem de digitos fracionais insignificantes para a leitura. */
    // Partes inteiras e decimais do valor, separadas pra análise.
-   double inteiro = truncf(valor);
+   // double inteiro = truncf(valor);
    double fracao = fabs(truncf(valor) - valor);
 
    if (fracao >= 0.1 && fracao < 0.95)
@@ -54,8 +59,7 @@ static void elimina_digitos_insignificantes
 char* tamanho_legivel(size_t bytes) { 
    char* resultado_str = nova_str(30);
    char peso_str[5];
-   float valor;
-   float fracao;
+   float valor = 0.0;
    // Múltiplos de tamanho(equivalente em bytes).
    const size_t KILO = pow(2, 10); 
    const size_t MEGA = pow(2, 20);
@@ -81,7 +85,7 @@ char* tamanho_legivel(size_t bytes) {
       valor = (float)bytes;
    }
 
-   fracao = abs(round(valor) - valor);
+   // fracao = abs(round(valor) - valor);
    elimina_digitos_insignificantes(resultado_str, valor, peso_str);
    return resultado_str;
 }
@@ -247,6 +251,7 @@ char* tempo_legivel_double(double segundos)
 char* tempo_legivel_usize(size_t seg) 
    { return tempo_legivel_double((double)seg); }
 
+#ifdef __linux__
 double timespec_to_seg(struct timespec a)
    { return (double)a.tv_sec + (double)a.tv_nsec / 1.0e9; }
 
@@ -258,13 +263,14 @@ double timeval_to_seg(struct timeval e)
 
 char* tempo_legivel_timeval(struct timeval t)
    { return tempo_legivel_double(timeval_to_seg(t)); }
+#endif
 
 /* === === === === === === === === === === === === === === === === === ===+
  * .......................................................................&
  * ........................Testes Unitários...............................&
  * .......................................................................&
  * === === === === === === === === === === === === === === === === === = */
-#ifdef _UT_LEGIVEL
+#if defined(__unit_tests__) && defined(__linux__)
 // Biblioteca padrão em C(libs muito utilizadas.):
 #include <stdbool.h>
 #include <assert.h>
@@ -421,6 +427,145 @@ int main(void) {
          tipos_de_tempo_diferentes_a_converter, true,
          eliminando_digitos_insignificantes, true
 	);
+   return EXIT_SUCCESS;
+}
+#elif defined(_WIN32) && defined(__unit_tests__)
+#include <stdbool.h>
+#include <assert.h>
+#include <limits.h>
+#include <float.h>
+#include <locale.h>
+#define _CRT_NONSTDC_NO_DEPRECATE
+
+uint64_t entradas[] = {
+   382, 12832, 3842394, 7712340981,
+   111931512, 50123812341, 100030231892377
+};
+
+double segundos[] = {
+   51.3232, 12832.15, 8328.0,
+   38832.312, 0.001, 0.038,
+   0.000851, 0.000000701, 190.5321
+};
+
+void legibilidade_do_tempo(void) {
+   double inputs[] = { 
+      5 * DIA + 30 * HORA, 8000 * MES, 165 * MES + 4e10, 14 * ANO + 30 * MES,
+      1500 * DECADA, 14 * DECADA + 80 * ANO, 400 * DIA, 100 * DIA
+   };
+   const int sz = sizeof(double);
+   const int n = sizeof(inputs) / sz;
+
+   for(int p = 0; p < 9; p++)
+      printf(
+         "%16lf ===> %s\n", 
+         segundos[p], 
+         tempo_legivel(segundos[p])
+      );
+
+   puts("\nEscalas de tempo extremamentes grandes:");
+   for(int p = 0; p < n; p++)
+      printf("%26.0lf ===> %s\n", inputs[p], tempo_legivel(inputs[p]));
+   // de avaliação manual?
+}
+
+void legibilidade_de_tamanhos(void) {
+   for(size_t p = 1; p <= 7; p++) {
+		uint64_t valor = entradas[p - 1];
+		char* traducao = tamanho_legivel(valor);
+		printf ("%20llu ==> %s\n", valor, traducao);
+		free (traducao);
+	}
+}
+
+void o_grosso_de_grande_valores(void) {
+   for(int p = 0; p < 7; p++)
+      printf("%16llu ===> %s\n", entradas[p], valor_legivel(entradas[p]));
+
+   float inputs_a[] = {3000531.14159, 12345.6789, 1.71001e4, 3.14159e9};
+   const int na = sizeof(inputs_a) / sizeof(float);
+   
+   puts("\nAgora valores decimais(float/double):");
+   for (int k = 0; k < na; k++)
+      printf("%21f ===> %s\n", inputs_a[k], valor_legivel(inputs_a[k]));
+}
+
+void valor_legivel_de_todos_limites(void)
+{
+   struct ParES { 
+      // Formatação da decisão dos dígitos.
+      const char* const In_a; 
+      // Representação do inteiro de máquina trabalhado.
+      const char* const In_b; 
+      // Resultado da conversão.
+      char* Out;
+   };
+
+   char* (*transform_a)(size_t) = valor_legivel_usize;
+   char* (*transform_b)(int64_t) = valor_legivel_isize;
+   char* (*transform_c)(double) = valor_legivel_f64;
+   struct ParES results[] = {
+      // Inteiros positivos sem sinal:
+      (struct ParES) {"%21u", "8-bits", transform_a(UCHAR_MAX)},
+      (struct ParES) {"%21u","16-bits", transform_a(USHRT_MAX)},
+      (struct ParES) {"%21u", "32-bits", transform_a(UINT_MAX)},
+      (struct ParES) {"%21zu", "size_t", transform_a(SIZE_MAX)},
+      // Constantes referentes a inteiros com sinal.
+      (struct ParES) {"%21d", "8-bits", transform_b(CHAR_MAX)}, 
+      (struct ParES) {"%21d", "8-bits", transform_b(CHAR_MIN)},
+      (struct ParES) {"%21d", "16-bits", transform_b(SHRT_MAX)},
+      (struct ParES) {"%21d", "16-bits", transform_b(SHRT_MIN)},
+      (struct ParES) {"%21d", "32-bits", transform_b(INT_MAX)},
+      (struct ParES) {"%21d", "32-bits", transform_b(INT_MIN)},
+      (struct ParES) {"%21ld", "64-bits", transform_b(LONG_MAX)},
+      (struct ParES) {"%21ld", "64-bits", transform_b(LONG_MIN)},
+      // Valores decimais:
+      (struct ParES) {"%21.6lf", "64-bits", transform_c(DBL_MAX)},
+      (struct ParES) {"%21.6lf", "64-bits", transform_c(DBL_MIN)},
+      (struct ParES) {"%21.6f", "32-bits", transform_c(FLT_MAX)},
+       (struct ParES) {"%21.6f", "32-bits", transform_c(FLT_MIN)}
+
+      // Nota: algums não compatíveis com Windows, foram desabilitados, ou seja
+      // apenas foram comentados.
+   };
+   const int N = sizeof(results) / sizeof(struct ParES);
+
+   puts("Inteiros sem sinal: ");
+   puts("\nInteiros com sinal: ");
+   puts("\nAmbos tipos decimais: ");
+
+   for (int i = 0; i < N; i++)
+      free(results[i].Out);
+}
+
+void eliminando_digitos_insignificantes(void)
+{
+   double input[] = { 
+      3.153, 352.001, 0.1234, 153.7, 12.07, 3.915, 19.94,
+      103.95, 1.96
+   };
+   const int n = sizeof(input) / sizeof(double);
+   char buffer[50];
+   const char* peso = "[peso]";
+   
+   puts("Verificando a eliminação de dígitos insignificantes ...\n");
+   for (int k = 0; k < n; k++)
+   {
+      elimina_digitos_insignificantes(buffer, input[k], peso);
+      printf("%15lf ===> %14s\n", input[k], buffer);
+   }
+}
+
+int main(int total, char* args[], char* vars[]) 
+{
+   setlocale(LC_CTYPE, "en_US.UTF-8");
+
+	legibilidade_do_tempo();
+	legibilidade_de_tamanhos();
+	o_grosso_de_grande_valores();
+	valor_legivel_de_todos_limites();
+	eliminando_digitos_insignificantes();
+
    return EXIT_SUCCESS;
 }
 #endif
