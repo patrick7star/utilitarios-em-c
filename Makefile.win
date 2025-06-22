@@ -27,7 +27,36 @@ legivel-run:
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Tempo
 # === === ===  === === === === === === === === === === === === === === ====
+tempo-all: tempo-obj tempo-test
+
+tempo-obj:
+	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+      -c -o build/tempo.obj src/tempo.c
+	@echo "O objeto de 'tempo' foi compilado."
+
 tempo-test:
-	$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
+	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
 		-c -o build/tempo-test.obj src/tempo.c
-	$(CC) -I$(HEADER) -o bin/tests/ut_tempo.exe build/tempo-test.obj build/legivel.obj
+	@echo "O objeto dos testes unitários de 'tempo' compilado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_tempo.exe build/tempo-test.obj build/legivel.obj
+	@echo "Testes unitários de 'tempo' compilado."
+
+# === === ===  === === === === === === === === === === === === === === ====
+#										Módulo Terminal
+# === === ===  === === === === === === === === === === === === === === ====
+terminal-all: terminal-obj terminal-test
+
+terminal-obj:
+	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+      -c -o build/terminal.obj src/terminal.c
+	@echo "O objeto de 'terminal' foi compilado."
+
+terminal-test:
+	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
+		-c -o build/terminal-test.obj src/terminal.c
+	@echo "O objeto dos testes de 'terminal' foram compilado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_terminal.exe build/terminal-test.obj
+	@echo "Os testes unitários de 'terminal' estão compilado."
+
+terminal-run:
+	bin/tests/ut_terminal.exe
