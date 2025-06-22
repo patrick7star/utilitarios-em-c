@@ -1,7 +1,6 @@
-/* Simples funcionalidade de pegar a dimensão do terminal/ ou emultador de 
- * terminal atual, então retorna-lô. Outras coisas serão colocados no
- * futuro, por enquanto é só isso.
- */
+// Cabeçalho das implementações abaixos:
+#include "terminal.h"
+// Biblioteca padrão do C:
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -9,8 +8,9 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "terminal.h"
-
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 
 int find(char* string, char pattern) 
@@ -106,7 +106,24 @@ struct TerminalSize obtem_dimensao(void) {
 }
 #endif
 
-#ifdef _UT_TERMINAL
+#ifdef _WIN32
+struct TerminalSize obtem_dimensao(void) {
+/* Apenas um 'wrapper' que acessar a biblioteca do Windows, então permite
+ * acessar a dimensão do 'console' que está executando. */
+   CONSOLE_SCREEN_BUFFER_INFO Out;
+   HANDLE In;
+   uint8_t altura, largura;
+
+   In = GetStdHandle(STD_OUTPUT_HANDLE);
+   GetConsoleScreenBufferInfo(In, &Out);
+   altura = Out.dwSize.Y;
+   largura = Out.dwSize.X;
+
+   return (struct TerminalSize){.linhas=altura, .colunas=largura};
+}
+#endif
+
+#if defined(__unit_tests__) && defined(__linux__)
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Testes Unitários
  * === === === === === === === === === === === === === === === === === ===*/
@@ -117,7 +134,7 @@ void o_teste_apenas_chama_e_mostra_os_resultados(void) {
    destroi_dimensao(A);
 }
 
-void obtem_dimensao_por_novo_metodo() {
+void obtem_dimensao_por_novo_metodo(void) {
    puts("O método não usa de alocaçã dinâmica.");
 
    struct TerminalSize result;
@@ -131,5 +148,41 @@ int main(void) {
    obtem_dimensao_por_novo_metodo();
 
    return 0;
+}
+#elif defined(__unit_tests__) && defined(_WIN32)
+#include <locale.h>
+#include <synchapi.h>
+
+void tentando_obter_dimensao_via_console_do_wsl(void) {
+   HANDLE a = GetStdHandle(STD_OUTPUT_HANDLE);
+   COORD b = GetLargestConsoleWindowSize(a); 
+   CONSOLE_SCREEN_BUFFER_INFO c;
+   GetConsoleScreenBufferInfo(a, &c);
+
+   printf("Primeiro método.\n\t\b\bx: %d\ty: %d\n", b.X, b.Y);
+   printf("Segundo método.\n\t\b\bx: %d\ty: %d\n", c.dwSize.X, c.dwSize.Y);
+}
+
+void funcao_em_acao(void) {
+   struct TerminalSize Out;
+   const int QUANTIA = 25;
+
+   puts("Por favor, fique redimensionando a janela ...");
+
+   for (int n = 1; n <= QUANTIA; n++) {
+      Out = obtem_dimensao();
+      printf("linhas: %u\t\b\bcolunas: %u\n", Out.linhas, Out.colunas);
+      Sleep(700);
+   }
+}
+
+int main(int total, char* args[], char* envs[])
+{
+   setlocale(LC_CTYPE, "en_US.UTF-8");
+
+   tentando_obter_dimensao_via_console_do_wsl();
+   funcao_em_acao();
+
+   return EXIT_SUCCESS;
 }
 #endif
