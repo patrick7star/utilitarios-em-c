@@ -1,135 +1,40 @@
+// Módulos do próprio projeto:
+#include "../macros.h"
+// Biblioteca padrão do C:
 #include <stddef.h>
-#include <libloaderapi.h>
-#include <sysinfoapi.h>
-#include "macros.h"
+// API do Windows.
+// #include <libloaderapi.h>
+// #include <sysinfoapi.h>
+#include <windows.h>
 
 /* === === === === === === === === === === === === === === === === === ===+
  *                      Dados Globais Referentes as
  *                   Implementações Abaixo
  * === === === === === === === === === === === === === === === === === ===*/
 /* contabilizando testes sem nomes/ ou mensagens passadas. */
-static uint8_t testes_contagem = 0;
-/* Contabiliza instâncias do 'executa_testes_a', isso para isolar do outro
- * tipo de 'executador de teste' descontinuado. */
-static uint16_t contagem_de_testes = 0;
-/* Endereço de memória da função a executar; e sua definação,... se é para
- * executa-la?! */
-struct TesteConfig { Fn rotina; bool ativado; };
+static uint16_t CONTAGEM_DE_TESTES = 0;
 
 /* === === === === === === === === === === === === === === === === === ===+
  *                   Funções auxiliares, e Funções
  *                Concretas em sí, Declaradas no Cabeçalho
  * === === === === === === === === === === === === === === === === === ===*/
-static void nome_do_teste(char *nome) 
+static void cabecalho_do_teste(char *nome) 
 {
 /* Imprime o separador entre os testes executados. Contém o nome dado 
  * no canto esquerdo deste rótulo. */
-   int C = strlen(nome);
-   // Dimensao dim = dimensao_terminal();
-   struct TerminalSize dim = obtem_dimensao(); 
-   int largura = dim.colunas - 3;
+   const int MARGEM = 5;
+   struct TerminalSize DIM = obtem_dimensao(); 
+   int largura = DIM.colunas - MARGEM;
    char barra[largura];
+   char rotulo[DIM.colunas];
 
-   // Fazendo separador...
-   memset(barra, '\0', largura);
-   memset(barra, '-', largura - 1);
+   // Fazendo separador e formatando seu título ...
+   memset(barra, '\0', DIM.colunas);
+   memset(barra, '-', DIM.colunas - 1);
+   sprintf(rotulo, "%s::[%d]", nome, CONTAGEM_DE_TESTES);
+   memmove(barra + MARGEM, rotulo, strlen(rotulo));
 
-   // margens do texto.
-   barra[5] = ' ';
-   barra[5 + C + 1] = ' ';
-
-   // Colocando título no separador...
-   for (int k = 0; k < C; k++) {
-      if (k < C && nome[k] != '\0')
-         barra[k + 6] = nome[k]; 
-   }
-
-   printf("\n\n%s\n\n", barra);
-}
-
-static void executa_teste(char* nome, void (*funcao)()) {
-/* Executa o teste, dado a função que o faz; também é preciso do nome que 
- * ele tem, pode ser o nome da função, ou não. */
-   // imprime o nome do programa.
-   if (strlen(nome) == 0) { 
-      testes_contagem += 1;
-      char mensagem_padrao[100];
-      char* referencia = mensagem_padrao;
-      sprintf(
-         referencia, 
-         "%dº teste anônimo", 
-         testes_contagem
-      );
-      nome_do_teste(mensagem_padrao); 
-   } else 
-      { nome_do_teste(nome); }
-   // executa função passada.
-   funcao();
-   // espaço para outro possível teste, ou só o 'shell'.
-   puts("");
-}
-
-void executa_tst(char* descricacao, Fn call, bool acionado) 
-{
-/* O mesmo que o 'executa_teste', porém este pode ser facilmente desativado
- * se for preciso, apenas mudando o parâmetro. */
-   // não executa nada se for falso.
-   if (strlen(descricacao) == 0)
-   { 
-      testes_contagem += 1;
-      char mensagem_padrao[100];
-      char* referencia = mensagem_padrao;
-      sprintf(
-         referencia, 
-         "%dº teste anônimo", 
-         testes_contagem
-      );
-      nome_do_teste(mensagem_padrao); 
-         
-   } else 
-      nome_do_teste(descricacao);
-
-   if (acionado)
-      // quebra-de-linha no final.
-      { call(); puts(""); }
-   else
-      puts("DESATIVADO TEMPORIAMENTE!");
-}
-
-void executa_testes(int total, ...) {
-   Cronometro medicao = cria_cronometro();
-   va_list args;
-   size_t habilitados = 0;
-
-   // como também conta o valor lógico se é para executa-lá no momento.
-   va_start(args, total);
-
-   for (uint8_t t = 1; t <= 2 * total; t+=2) {
-      // primeiro pega a função.
-      Fn funcao = va_arg(args, Fn);
-      // a confirmação se é para executa-lá, ou não.
-      bool e_para_executar = va_arg(args, int);
-
-      if (e_para_executar) {
-         executa_teste("", funcao);
-         marca(medicao);
-         habilitados++;
-      }
-   }
-   va_end(args);
-
-   // Para não compilar no Windows, assim mantém compatibilidade
-   // Informando tempo total da execução.
-   double tempo_total = marca(medicao);
-
-   if (tempo_total <= 0)
-      puts("\nexecução \"instântanea\".");
-   else 
-      printf(
-         "\ntodos testem levaram %s\n", 
-         tempo_legivel(tempo_total)
-      );
-   printf ("há %zu testes desativados.\n", total - habilitados);
+   printf("\n%s\n\n", barra);
 }
 
 static void imprime_separador(int n) 
@@ -144,61 +49,24 @@ static void imprime_separador(int n)
    putchar('\n');
 }
 
-void executa_testes_a(bool execucao_do_suite, int total, ...) 
+// ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+static bool captura_testes_definidos
+  (struct TesteConfig* lista, const int TOTAL, va_list argumentos)
 {
-/* O mesmo que acima, entretanto, este tem um "interruptor" que desliga
- * todo o "suíte" de teste, indepedente de alguns foram configurados para 
- * executar, ou não. */
-   int habilitados = 0, quantidade=total;
-	SYSTEMTIME inicio, final;
-   struct TesteConfig testes[quantidade];
+   if (TOTAL == 0)
+      return false;
 
-   va_list args;
-   // como também conta o valor lógico se é para executa-lá no momento.
-   va_start(args, total);
+   struct TesteConfig aux;
 
-   // Capturando testes e sua configuração...
-   for (int t = 1; t <= quantidade; t++) 
-   {
-      testes[t - 1].rotina = va_arg(args, Fn);
-      testes[t - 1].ativado = va_arg(args, int);
+   for (int n = 1; n <= TOTAL; n++) {
+      aux = va_arg(argumentos, struct TesteConfig);
+      lista[n - 1] = aux;
+   } 
 
-      // Contabiliza os que foram dados como ativados.
-      if (testes[t - 1].ativado)
-         habilitados++;
-   }
-   va_end(args);
-
-	double decorrido = 0.0;
-   /* Executando os testes, pelo menos o que estão configurados para tal. */
-   // Começando a medição das execuções...
-   GetSystemTime(&inicio);
-   for (int t = 0; t < quantidade; t++) 
-   {
-      if (testes[t].ativado && execucao_do_suite)
-         executa_teste_a(SEM_MENSAGEM, testes[t].rotina); 
-   }
-	GetSystemTime(&final);
-	decorrido = diffsystemtime(inicio, final);
-
-   int desabilitados = quantidade - habilitados;
-   const char* suite_msg;
-
-   if (execucao_do_suite)
-      suite_msg = "execuções finalizadas"; 
-   else
-      suite_msg = "nada executado";
-
-   imprime_separador(57);
-   printf (
-      "Testes: %d on | %d off; Levou: %0.4lfseg; Final: '%s'\n\n", 
-      habilitados, desabilitados, decorrido, suite_msg
-   );
+   return true;
 }
 
-// ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
-void executa_testes_b
-  (bool execucao_do_suite, const int lista_off[], int total, ...)
+void executa_testes(bool execucao_do_suite, int total, ...)
 {
 /* Esta função acrescenta em relação a versão 'a', que agora pega também o
  * nome da função para diferênciar, e tem lista de desabilitação. O quê? Como
@@ -212,70 +80,65 @@ void executa_testes_b
  * a 'function poitner' dele e seu status, Isso tem que ser passado dentro
  * de uma tupla definida pelo macro 'unit'. Isso é o que permite a captura 
  * do nome da função em sí. */
+   struct TesteConfig testes[total];
+   va_list args;
+   char* nome_fn = NULL;
+
+   va_start(args, total);
+   captura_testes_definidos(testes, total, args);
+   va_end(args);
+
+   for (int q = 1; q <= total; q++) { 
+      nome_fn = (char*)testes[q - 1].nome;
+      cabecalho_do_teste(nome_fn); 
+      testes[q - 1].rotina(); 
+      CONTAGEM_DE_TESTES++;
+   }
+   imprime_separador(60);
 }
 
-#ifdef _UT_TESTE
+#ifdef __unit_tests__
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Testes Unitários
  * === === === === === === === === === === === === === === === === === ===*/
-#include "amostras.h"
+#include "../amostras.h"
 
-void primeira_versao_alternativa_de_executa_testes(void)
-{
-   puts(
-      "Testando a função 'executa_testes_a', configuração básica, "
-      "com um monte de testes(quase todos eles), porém ainda ativada"
-   );
-   executa_testes_a(
-      true, 5, 
-      capitaliza_palavras, true,
-      string_alternada, true,
-      carregando_ate_cem, false,
-      simples_mensagem_do_fortune, true,
-      executa_algo_mas_crash, false
-   );
+static void debug_teste_config(struct TesteConfig* obj) {
+   const char* const SEP = "\t\b\b";
+   bool ativado = (*obj).ativado;
+   void* address_fn = (void*)(*obj).rotina;
 
-   puts(
-      "\nCom apenas três testes, um bem \"perigoso\", porque ele "
-      "interrompe, entretanto, todo 'suíte' está desativado(off)."
-    );
-   executa_testes_a(
-      false, 3, 
-      capitaliza_palavras, true,
-      simples_mensagem_do_fortune, true,
-      executa_algo_mas_crash, true
-   );
-   puts(
-      "\nVerificando decorrer do tempo é realmente cronômetrado..."
-    );
-   executa_testes_a(
-      true, 4, 
-      simples_mensagem_do_fortune, false,
-      carregando_ate_cem, true,
-      executa_algo_mas_crash, false,
-      conta_ate_esgotar_valor, true
+   printf(
+      "TesteConfig [0x%p]\n%snome: '%s'\n%srotina: 0x%p\n%sativado: %s\n", 
+      (void*)obj, SEP, (*obj).nome, SEP, address_fn, SEP, 
+      bool_to_str(ativado)
    );
 }
 
-void teste_interruptor_renomeado(void)
+static void prototipo_da_funcao_executa_testes
+  (bool execucao_do_suite, int total, ...)
 {
-   puts(
-      "A função que executava tal testes simples foi renomeada, agora "
-      "ele é só chamada de 'executa_teste', recebe os mesmos parâmetros "
-      "que o antigo protótipo. Renomei na cara duro, pois, raramente, "
-      "utilizo tal função, logo a quebra-de-compatibilidade com algum "
-      "código antigo que ainda o uso é improvável."
-   );
-   executa_tst(
-      "Itera uma Simples String",
-      percorrendo_string, true
-   ); 
-   executa_tst(
-      "Transformação de Strings em Minúscula",
-      transforma_toda_string_em_minuscula, true
-   ); 
+   struct TesteConfig testes[total];
+   va_list args;
 
-   executa_tst(SEM_MENSAGEM, percorrendo_string, false);
+   va_start(args, total);
+   captura_testes_definidos(testes, total, args);
+
+   for (int i = 1; i <= total; i++)
+      { putchar('\n'); debug_teste_config(&testes[i - 1]); putchar('\n'); }
+   va_end(args);
+
+   for (int i = 1; i <= total; i++)
+      cabecalho_do_teste((char*)testes[i - 1].nome);
 }
+
+static void captura_de_todos_argumentos(void) {
+   prototipo_da_funcao_executa_testes (
+     true, 2,
+         Unit(percorrendo_string, false),
+         Unit(stringficacao_de_valores_primitivos, true)
+   );
+}
+
 #endif
 
