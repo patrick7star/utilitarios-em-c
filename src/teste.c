@@ -9,16 +9,16 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <assert.h>
-#include <tgmath.h>
 // Outros módulos do próprio projeto:
-#ifndef _WIN64
+#ifndef _WIN32
+#include <tgmath.h>
+#endif
 #include "tempo.h"
 #include "legivel.h"
-#endif
 #include "terminal.h"
-#include "macros.h"
 
 
+#ifdef __linux__
 /*   Primeiro suite de testes criados. Na verdade é um monte de funções, 
  * baseado em uma única funçõa base. Difícilmente pode se descontinuada,
  * porque foi amplamente utilizada, e ainda é enquanto escrevo isso, apesar
@@ -36,10 +36,19 @@
  *    Variável:
  *       - testes_contagem
  */
-#ifdef __linux__
-#include "teste/tester.c"
+  #include "teste/tester.c"
 #elif defined(_WIN32)
-#include "teste/windows/tester.c"
+/*   O único teste que tal módulo entrega é o 'executa_testes'. Bastante
+ * simples, e cuida dos demais subcasos. Este é o padrão do trabalho de 
+ * compatibilidade com o Windows, apenas descontinuo antigas versões muito
+ * rápido. Eles ficam mais minimalistas e  fáceis de arrumar. Claro, a 
+ * desvantagem é que não tem tantas features, tão rápido. E, enquanto não
+ * terminar de criar a versão para plataforma ele fica inutilizado, já que
+ * não tem nunca versões legadas desta.
+ * 
+ *       - executa_testes 
+ */
+  #include "teste/windows/tester.c"
 #endif
 
 // conta quantos usos a função abaixo tem.
@@ -64,10 +73,10 @@ void debug_aqui(void) {
 #include "teste/booleano.c"
 
 
-#ifdef __unit_tests__
+#if defined(__unit_tests__) && defined(__linux__)
 /* === === === === === === === === === === === === === === === === === ===+
- *
  *                         Testes Unitários
+ * 
  *   Testando todos estrutura, métodos e funções declarados e implementados
  * acima. Esta parte abaixo pode futuramente ser colocada em outra arquivo
  * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
@@ -138,6 +147,16 @@ int main(int qtd, char* argumentos[], char* env_vars[]) {
          processo_de_construcao_do_executa_testes_b, true
    );
 
+   return EXIT_SUCCESS;
+}
+#elif defined(__unit_tests__) && defined(_WIN32)
+#include <locale.h>
+
+int main(int qtd, char* args[], char* vars[]) {
+   setlocale(LC_CTYPE, "en_US.UTF-8");
+
+   puts("Ainda não portado os testes para Windows.");
+   captura_de_todos_argumentos();
    return EXIT_SUCCESS;
 }
 #endif 

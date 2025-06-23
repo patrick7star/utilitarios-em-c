@@ -9,8 +9,8 @@
 #include <math.h>
 #include <time.h>
 
-// Atributos do objeto.
-#ifdef _WIN64
+// Atributos do objeto. Alguns valores variam por plataforma.
+#ifdef _WIN32
 const char BARRA = '*';
 #elif defined(__linux__)
 const char BARRA = 'o';
@@ -18,13 +18,9 @@ const char BARRA = 'o';
 const char VACUO = '.';
 const size_t COMPRIMENTO = 45;
 
-/* == == == == == == == == == == == == == == == == == == == == == == == == == 
+/* == == == == == == == == == == == == == == == == == == == == == == == === 
  *                          Progresso Simples 
- * == == == == == == == == == == == == == == == == == == == == == == == == */
-#ifdef _IMPRESSAO_BPS
-static size_t qtd_de_chamadas_bps = 0;
-#endif
-
+ * == == == == == == == == == == == == == == == == == == == == == == === */
 // Apelido mais usado abaixo:
 typedef PS simple_progress_t; 
 
@@ -67,7 +63,7 @@ static void impressao_da_barra_bps (size_t a, size_t T, uint8_t c)
    float p = (float)a / (float) T;
    char * barra = cria_barra(p, c);
 
-   #ifdef _WIN64
+   #ifdef _WIN32
    printf("\r%9zu/%9zu [%s]%5.1f%%", a, T, barra, (p * 100.0));
    fflush(stdout);
    #elif defined(__linux__)
@@ -75,16 +71,7 @@ static void impressao_da_barra_bps (size_t a, size_t T, uint8_t c)
    fflush(stdout);
    #endif
    // quebra-de-linha pelo fim do progresso.
-   if (a == T) {
-      putchar ('\n');
-
-      #ifdef _IMPRESSAO_BPS
-      wprintf(L"Tal função foi chamada %zu vezes.\n", qtd_de_chamadas_bps);
-      #endif
-   }
-   #ifdef _IMPRESSAO_BPS
-   qtd_de_chamadas_bps++;
-   #endif
+   if (a == T) { putchar ('\n'); }
    // liberando a string criada da memória depois de impressa.
    free (barra);
 }
@@ -123,7 +110,7 @@ simple_progress_t cria_padrao_bps (size_t total)
  * superior'. */
    { return cria_bps (total, COMPRIMENTO); }
 
-/* == == == == == == == == == == == == == == == == == == == == == == == == == 
+/* == == == == == == == == == == == == == == == == == == == == == == == === 
  *                          Progresso Temporal
  * == == == == == == == == == == == == == == == == == == == == == == == == */
 // Apelido usado na implementação abaixo:
@@ -296,15 +283,15 @@ bool atualiza_e_visualiza_bp(RefPG a, size_t v)
    { return atualiza_bp(a, v); }
 
  void print_bp(RefPG a) 
-   { return visualiza_bp(a); }
+   { visualiza_bp(a); }
 
  bool update_e_print_bp(RefPG b, size_t v)
    { return atualiza_e_visualiza_bp(b, v); }
 
-/* == == == == == == == == == == == == == == == == == == == == == == == == == 
+/* == == == == == == == == == == == == == == == == == == == == == == == === 
  *                     Testes Unitários e seus Auxiliares
- * == == == == == == == == == == == == == == == == == == == == == == == == */
-#ifdef _UT_PROGRESSO
+ * = == == == == == == == == == == == == == == == == == == == == == == == */
+#ifdef __unit_tests__
 /* Testes, em suas respectivas plataformas, estão separados entre os 
  * definitivos macros. */
 void taxa_de_aumento(size_t* t) 
@@ -328,6 +315,7 @@ void taxa_de_aumento(size_t* t)
 #include <assert.h>
 #include <time.h>
 #include <unistd.h>
+/* Testes que foram definidos espeicificamente para plataformas Unix. */
 
 /* Converte um total de megabytes in bytes. */
 const uint64_t L = 30;
@@ -397,12 +385,13 @@ void duas_chamadas_ao_mesmo_tempo_pg(void)
    } while (i < T);
 }
 
-#elif defined(_WIN64)
+#elif defined(_WIN32)
+/* Série de testes definidas especificamente para o Windows. Nas demais
+ * plataformas, ele basicamente não serão compilados. */
 #include <windows.h>
 
 size_t units_MiB (uint8_t n) 
    { return n * pow(2, 20); }
-
 
 void novos_metodos_do_progresso_temporal (void) {
    size_t T = units_MiB(25);
@@ -454,32 +443,33 @@ void uso_simples_da_barra_generica(void) {
       Sleep(ms);
    } while (i < T);
 }
-
 #endif
 
+#ifdef __unit_tests__
 int main (void) {
-#ifdef _WIN64
-   // Configuração apenas para o terminal do Windows.
+   #ifdef _WIN64
    #include <locale.h>
-   setlocale(LC_CTYPE, "en_US.UTF-8");
+      // Configuração apenas para o terminal do Windows.
+      setlocale(LC_CTYPE, "en_US.UTF-8");
 
-   novos_metodos_do_progresso_temporal();
-   reevendo_bps();
-   teste_de_conversao_estatica();
-   uso_simples_da_barra_generica();
+      novos_metodos_do_progresso_temporal();
+      reevendo_bps();
+      teste_de_conversao_estatica();
+      uso_simples_da_barra_generica();
 
-#elif defined(__linux__)
-   puts("Śérie de testes no Linux.\n");
+   #elif defined(__linux__)
+      puts("Śérie de testes no Linux.\n");
 
-   executa_testes (
-      4, progresso_simples, true,
-         progresso_simples_varios_tamanhos, true,
-         progresso_temporal, true,
-         // Desativado, pois consome muito tempo:
-         duas_chamadas_ao_mesmo_tempo_pg, false
-   );
-#endif
+      executa_testes (
+         4, progresso_simples, true,
+            progresso_simples_varios_tamanhos, true,
+            progresso_temporal, true,
+            // Desativado, pois consome muito tempo:
+            duas_chamadas_ao_mesmo_tempo_pg, false
+      );
+   #endif
 
    return EXIT_SUCCESS;
 }
+#endif
 #endif
