@@ -60,3 +60,43 @@ terminal-test:
 
 terminal-run:
 	bin/tests/ut_terminal.exe
+
+# === === ===  === === === === === === === === === === === === === === ====
+#										Módulo Progresso
+# === === ===  === === === === === === === === === === === === === === ====
+progresso-all: terminal-obj terminal-test
+
+progresso-obj:
+	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+      -c -o build/progresso.obj src/progresso.c
+	@echo "O objeto de 'progresso' foi compilado."
+
+progresso-test:
+	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
+		-c -o build/terminal-test.obj src/terminal.c
+	@echo "O objeto dos testes de 'terminal' foram compilado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_terminal.exe build/terminal-test.obj
+	@echo "Os testes unitários de 'terminal' estão compilado."
+
+progresso-run:
+	bin/tests/ut_terminal.exe
+
+# === === ===  === === === === === === === === === === === === === === ====
+#										Módulo Teste
+# === === ===  === === === === === === === === === === === === === === ====
+teste-all: teste-obj teste-test
+
+teste-obj:
+	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+      -c -o build/teste.obj src/teste.c
+	@echo "O objeto de 'teste' foi compilado."
+
+teste-test: progresso-obj
+	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0 \
+      -D__unit_tests__ -Wno-strict-prototypes \
+		-c -o build/teste-test.obj src/teste.c
+	@echo "Objeto dos testes de 'teste' foram compilado."
+	@$(CC) -I$(HEADER) -c -o build/amostras.obj src/teste/amostras.c
+	@echo "Objeto das funções em 'amostras' gerado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_teste.exe build/teste-test.obj build/legivel.obj build/tempo.obj build/terminal.obj build/amostras.obj build/progresso.obj
+	@echo "Unitários de 'teste' estão compilado."
