@@ -3,9 +3,9 @@
 #define _AMOSTRAS_DE_FUNCOES_H
 
 // Antigas funções-teste para os testadores antigos:
-void verificando_obtendo_de_potencias_de_dois(); 
+// void verificando_obtendo_de_potencias_de_dois(); 
 void stringficacao_de_valores_primitivos();
-void converte_strings_de_valores_logicos();
+// void converte_strings_de_valores_logicos();
 void percorrendo_string(); 
 void transforma_toda_string_em_minuscula(); 
 
