@@ -6,7 +6,8 @@
 
  /* Dado uma lista contento itens que podem ser impressos pela função 'f',
   * então será arranjados na tela de modo a otimizar o espaço. */
- void listar (vetor_t* lista, ToString f); 
+ void listar   (vetor_t* lista, ToString f); 
+ void listar_i (char* lista[], int n); 
 
 /* === === === === === === === === === === === === === === === === === === =
  *                   Impressão de Arrays de Primitivos
