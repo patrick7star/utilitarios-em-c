@@ -66,18 +66,18 @@ static char* ajusta_entrada(generico_t dt, ToString f, size_t c) {
 }
 
 void listar(vetor_t* lista, ToString f) {
-/* Lista uma lista de qualquer coisa, dado seu tal lista, e seu modo de 
+/*   Lista uma lista de qualquer coisa, dado seu tal lista, e seu modo de 
  * transformar o dado interno que ela porta numa string. */
-   Dimensao dim = dimensao_terminal();
+   struct TerminalSize dim = obtem_dimensao();
    size_t M = maior_string(lista, f);
-   size_t C = dim[1] / M;
+   size_t C = dim.colunas / M;
    size_t total = tamanho_al(lista);
    generico_t dado;
    size_t contagem = 0;
 
    #ifdef __debug__
    printf("\nMaior comprimento de string: %lu\n", M);
-   printf("linhas=%u colunas=%u\n\n", dim[0], dim[1]);
+   printf("linhas=%u colunas=%u\n\n", dim.linhas, dim.colunas);
    #endif
 
    while (total-- > 0) {
@@ -86,6 +86,62 @@ void listar(vetor_t* lista, ToString f) {
       printf("%s", entrada);
       free(entrada);
       if (contagem % C == 0)
+         putchar('\n');
+   }
+   // Para garantiar quebra de linha.
+   putchar('\n');
+}
+
+static void ajusta_celula(const char* In, int max, char* Out) {
+/* Cria uma 'célula' que será anexada ao lado de outras, ao longo de uma 
+ * linha. Este é o processo de formatação. Aqui, seu comprimento é baseado
+ * no comprimento 'c' da célula. A diferença deste, para o outro é, 
+ * obviamente o tratamento, este cuida apenas de string, o outro é genérico,
+ * más também, este usa uma array passada com argumento de saída, ao invés
+ * de retornar. Sem falar que, este não precisa liberar memória posterior ao
+ * uso, porque não retorna memória alocada dinâmicamente, justamente devido
+ * ao buffer a ser usado ser passado por parâmetro, isso permite tal
+ * alocação ser opcional. */
+   // Comprimento da formatação do dado.
+   const char BRANCO = ' ';
+
+   memset(Out, BRANCO, max);
+   memcpy(Out, In, strlen(In));
+   Out[max] = '\0';
+}
+
+int maxima_string(char** list, int m) {
+// Computa a maior string da lista de strings que foi passada.
+   int maximo = 0, length;
+
+   for (int n = 1; n <= m; n++) {
+      length = strlen(list[n - 1]); 
+
+      if (length > maximo)
+         maximo = length;
+   }
+   // Mais dois são adicionados, assim, dá uma margem entre o item alinhado
+   // com ele na formatação geral.
+   return maximo + 2;
+}
+
+void listar_i(char* lista[], int n) {
+/* Realiza o mesmo que a função acima, porém este é específico para 'narrow
+ * strings'. Claro, que seu tamanho tem que ser informado também. */
+   struct TerminalSize dim = obtem_dimensao();
+   size_t MAX = maxima_string((char**)lista, n);
+   // Quantidade de 'células' que cabem numa única linha.
+   size_t COL = dim.colunas / MAX;
+   char* dado, entrada[2 * MAX];
+   size_t contagem = 1;
+
+   for (int q = 1; q <= n; q++, contagem++) {
+      dado = (char*)lista[q - 1];
+
+      ajusta_celula(dado, MAX, entrada);
+      printf("%s", entrada);
+
+      if (contagem % COL == 0)
          putchar('\n');
    }
    // Para garantiar quebra de linha.
@@ -1105,23 +1161,75 @@ void listagem_paralela_de_strings_formatadas(void) {
    destroi_interno_al(input, drop);
 }
 
+void impressao_formatada_das_strings_transformadas(void) {
+   Vetor input = cria_al();
+   char* item = NULL, *result = NULL;
+   enum Formatacao cor;
+
+   for (int i = 1; i <= OBJETOS; i++) {
+      item = (char*)objetos[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   for (int i = 1; i <= FRUITS; i++) {
+      item = (char*)fruits[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   for (int i = 1; i <= FRUTAS; i++) {
+      item = (char*)frutas[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   for (int i = 1; i <= VEICULOS; i++) {
+      item = (char*)veiculos[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   printf("Itens inseridos: %zu\n", tamanho_al(input));
+   listar(input, display);
+   destroi_interno_al(input, drop);
+}
+
+void novo_tipo_de_listagem_apenas_de_strings(void) {
+   puts("\nImpressão das 'frutas':\n");
+   listar_i((char**)girls_names, GIRLS_NAMES); 
+   puts("\n\nImpressão dos 'objetos':\n");
+   listar_i((char**)objetos, OBJETOS); 
+   puts("\n\nImpressão dos 'veículos':\n");
+   listar_i((char**)veiculos, VEICULOS); 
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
 
    executa_testes_a(
-     true, 7,
+     true, 8,
          primeiro_exemplo_da_funcao_de_listagem, true,
          checando_um_caractere_multibyte, false,
          impressao_de_varios_tipos_de_array, true,
          impressao_de_array_gigante_de_strings, true,
          impressao_de_outros_tipos_de_inteiros, true,
          impressao_de_strings_e_caracteres_unicode, true,
-         listagem_paralela_de_strings_formatadas, true
+         impressao_formatada_das_strings_transformadas, true,
+         novo_tipo_de_listagem_apenas_de_strings, true
    );
 
    executa_testes_b(
-     false, 9,
+     false, 10,
          Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true),
 			Unit(coloracao_de_caracteres_checadores_unicode, true),
          Unit(listagem_generica_de_checagens, true),
@@ -1129,6 +1237,7 @@ int main(void)
          Unit(atributos_de_formatacao_com_cor, true),
          Unit(impressao_e_formatacao_dos_enums, true),
          Unit(formatacao_com_saida_diferente, true),
+         Unit(impressao_e_formatacao_dos_enums, true),
          Unit(formatacao_e_coloracao_com_mudanca_de_input, true),
          Unit(listagem_paralela_de_strings_formatadas, true)
    );
@@ -1140,9 +1249,6 @@ int main(void)
          Unit(stringficacao_usando_macro_geral, true)
    );
 
-   executa_testes_b(
-     false, 1,
-         Unit(impressao_e_formatacao_dos_enums, true)
-   );
+   return EXIT_SUCCESS;
 }
 #endif
