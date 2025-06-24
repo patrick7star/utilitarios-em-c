@@ -19,6 +19,10 @@ tabela.
 // Biblioteca deste próprio repositório:
 #include "terminal.h"
 
+
+/* === === === === === === === === === === === === === === === === === ===+
+ *                         Listagem de Strings 
+ * === === === === === === === === === === === === === === === === === ===*/
 static size_t maior_string(vetor_t* L, ToString F) {
    size_t t = tamanho_al(L);
    size_t maximo = 0;
@@ -377,108 +381,49 @@ void imprime_array_u64(uint64_t* array, int length)
 /* === === === === === === === === === === === === === === === === === ===+
  *                      Coloração de Resultados
  * === === === === === === === === === === === === === === === === === ===*/
-#define ANSI_VERMELHO   "\x1b[031m"
-#define ANSI_VERDE      "\x1b[032m"
-#define ANSI_AMARELO    "\x1b[033m"
-#define ANSI_AZUL       "\x1b[034m"
-#define ANSI_VIOLETA    "\x1b[035m"
-#define ANSI_MARINHO    "\x1b[036m"
-#define ANSI_DESLIGADO  "\x1b[00m"
+#define ANSI_DESLIGADO "\x1b[0m"
 
-// Buffer para copia temporaria de string.
-static char TEXTO[UCHAR_MAX];
-
-static char* const cor_selecionada(enum Cores cor) {
-   switch(cor) {
-      case Vermelho:
-         return ANSI_VERMELHO;
-      case Violeta:
-         return ANSI_VIOLETA;
-         break;
-      case AzulMarinho:
-         return ANSI_MARINHO;
-         break;
-      case Azul:
-         return ANSI_AZUL;
-      case Amarelo:
-         return ANSI_AMARELO;
-      case Verde:
-         return ANSI_VERDE;
-      default:
-         perror("Tipo de cor não definida aidna.");
-         abort();
-   }
+static char* cor_selecionada(enum Formatacao cor) {
+/*   Cria a formatação ansi para ser concatenada na string que se deseja 
+ * colorir.
+ * Lembrete: A string é alocada dinamicamente, então é preciso liberar-la
+ *          após o uso. 
+ */
+   const int BUFFER_MAX = 20;
+   const int sz = sizeof(char);
+   char* trecho = calloc(BUFFER_MAX, sz);
+   
+   sprintf(trecho, "\x1b[%03dm", (int)cor);
+   return trecho;
 }
 
-StrColorida colori_string(char* In_a, enum Cores In_b) {
+StrColorida colori_string(char* In_a, enum Formatacao In_b) {
 /*   Aplica protocolo ANSI numa cópia da string, que será posteriormente
  * retornada. A string retornada foi antes alocada dinâmicamente na memória.
  */
-   int m = strlen(ANSI_VIOLETA);
+   char* selecao = cor_selecionada(In_b);
+   int m = strlen(selecao);
    int n = strlen(In_a);
    int sz = n + 2*m + 1;
    StrColorida Out = malloc(sz);
-   char* selecao = cor_selecionada(In_b);
    char* off = ANSI_DESLIGADO;
 
    sprintf(Out, "%s%s%s", selecao, In_a, off);
+   free(selecao);
    return Out;
 }
 
-StrColorida muda_cor_da_string(char* In_a, enum Cores In_b) {
-/* Faz o mesmo que acima, porém sem alocação dinâmica. A desvantagem aqui
- * é que é uma função 'thread-unsafe', e que tem limitação da quantia 
- * de caractéres que podem ser usadas. A função confrotado com o tamanho
- * superior de caractéres que ela permite, simplesmente interromperá o
- * programa. */
-   int m = strlen(ANSI_VERDE);
-   int comprimento = strlen(In_a);
 
-   if (comprimento + 2*m >= UCHAR_MAX) {
-      perror
-         ("string passada é muito comprida para o buffer que a função usa.");
-      abort();
-   }
-
-   char* selecao = cor_selecionada(In_b); 
-   char* off = ANSI_DESLIGADO;
-   char* Out = TEXTO;
-
-   sprintf(Out, "%s%s%s", selecao, In_a, off);
-   return Out;
-}
-
-static int codigo_efeito(enum Efeitos escolha) {
-   switch (escolha) {
-      case Negrito:     return 1;
-      case Frio:        return 2;
-      case Italico:     return 3;
-      case Sublinhado:  return 4;
-      case Pisca:       return 5;
-      case Riscado:     return 9;
-      default:          return 0;
-   }
-}
-
-static int codigo_cor(enum Cores escolha) {
-   switch (escolha) {
-      case Vermelho:    return 31;
-      case Verde:       return 32;
-      case Amarelo:     return 33;
-      case Azul:        return 34;
-      case Violeta:     return 35;
-      case AzulMarinho: return 36;
-      case Cinza:       return 37;
-      case SemCor:      return 38;
-      default:          return 38;
-   }
-}
-
-StrColorida aplica_formatacao(char* In, enum Cores In_a, enum Efeitos In_b)
+StrColorida aplica_formatacao
+  (char* In, enum Formatacao In_a, enum Formatacao In_b)
 {
+/* Realização a formatação completa, não apenas colore, coloca outras 
+ * efeitos também. O retorno é uma string com o código de formatação ANSI
+ * anexado a ela, porém num novo buffer, que é ainda maior do que o da 
+ * original, porque tal código ocupa espaço. */
    char fmt[strlen(In) + CHAR_MAX];
-   int efeito = codigo_efeito(In_b);
-   int cor = codigo_cor(In_a);
+   int efeito = (int)In_b;
+   int cor = In_a; 
    char* Out;
    const int sz = sizeof(char);
 
@@ -489,6 +434,71 @@ StrColorida aplica_formatacao(char* In, enum Cores In_a, enum Efeitos In_b)
 
    return Out;
 }
+
+bool aplica_formatacao_i
+  (const char* In, enum Formatacao In_c, enum Formatacao In_e, char* Out)
+{
+/* Aplica a formatação completa, porém não retorna uma string com tal. Ele
+ * 'escreve' o resultado no ponteiro dado como argumento. Bom método que 
+ * permite a alocação dinâmica de memória. Claro que isso depedente se você
+ * sabe os tamanhos exatos, ou estimativas, em tempo de compilação.
+ * Sim, é esperado que o buffer desta saída tenha espaço o suficiente, ou 
+ * seja, fica em cargo do chamador da função dimensionar o necessário. A 
+ * recomendação é sempre alocar o valor máximo de inteiros(256 bytes) mais 
+ * o tamanho da sua string(In). Sim, isso ocupa muito espaço, mas não tanto 
+ * para esgotar qualquer computador com baixa memória. */
+   if (In == NULL || Out == NULL)
+      return false;
+
+   int efeito = (int)In_e;
+   int cor = In_c; 
+
+   // Já formata diretamente na raw array que foi passada(saída).
+   sprintf(Out, "\033[%d;%dm%s\033[0m", efeito, cor, In);
+   return true;
+}
+
+bool colori_string_i
+  (const char* In, enum Formatacao In_cor, char* Out)
+/* O mesmo que a original, porém o resultado será colocado no buffer de uma
+ * array de caractéres passada como argumento. A dimesão exata de tal, 
+ * fica inteiramente a cargo do chamador da função. 
+ *   Como a 'aplicação de formatação' é um caso geral da coloração, e já 
+ * está feita. Fico apenas com a função de aplicar-la como um embrulho(digo
+ * a versão dela como o mesmp tipo de 'output' desta função). */
+   { return aplica_formatacao_i(In, In_cor, Normal, Out); }
+
+StrColorida aplica_formatacao_ii
+  (char* IO_str, enum Formatacao In_cor, enum Formatacao In_efeito) 
+{
+/*   Também aplica o processo simples de formatação, entrentanto, ele aplica
+ * na própria string que foi passada. O retorno é o ponteiro passado, mas
+ * pode ser ignorado se quiser, porque ele literalmente modificou no 
+ * primeiro argumento da lista de parâmetros.
+ *   O problema de tal função, fica intrisicamente na maneira do seu
+ * algoritmo. O modo de fazer tal alteração é a alocação de uma raw-array,
+ * que computa o comprimento da string passada, ou seja, é alocada na 
+ * stack, então fica a mercer das suas restrições. */
+   int efeito = (int)In_efeito;
+   int cor = (int)In_cor; 
+   int LEN = strlen(IO_str);
+   char Aux[LEN];
+
+   memset(Aux, '\0', LEN);
+   // Já formata diretamente na raw array que foi passada(saída).
+   sprintf(Aux, "\033[%d;%dm%s\033[0m", efeito, cor, IO_str);
+   /* Copia a alteração de volta para string passada, a modificando, então
+    * a modifica obviamente. */
+   strcpy(IO_str, Aux);
+   return IO_str;
+}
+
+StrColorida colori_string_ii(char* IO_str, enum Formatacao In_cor)
+/* Versão que altera o argumento dado. O algoritmo apenas consiste num 
+ * 'embrulho' da função de formatação, que é algo mais geral. 
+ */
+   { return aplica_formatacao_ii(IO_str, In_cor, Normal); }
+
 
 /* === === === === === === === === === === === === === === === === === ===+
  *             Converte arrays de qualquer tipo numa string 
@@ -676,9 +686,10 @@ void visualiza_ldc(struct ListaDeChecagem* list)
  * .......................................................................&
  * === === === === === === === === === === === === === === === === === ===*/
 #ifdef __unit_tests__
+#include <locale.h>
 #include "dados_testes.h"
 #include "teste.h"
-#include <locale.h>
+#include "macros.h"
 
 char* constchar_to_str(generico_t dt) {
    char* pointer = (char*)dt;
@@ -807,15 +818,15 @@ void impressao_de_strings_e_caracteres_unicode(void)
 
 void aplicacao_randomica_de_cores_em_pequenas_strings(void)
 {
-   enum Cores colors[] = {
-      Azul, Violeta, Verde, AzulMarinho, Amarelo, 
-      Vermelho
-   };
-   const int N = sizeof(colors) / sizeof(enum Cores);
+   const enum Formatacao* colors = TODAS_CORES;
+   const int T = sizeof(TODAS_CORES);
+   const int sz = sizeof(enum Formatacao);
+   const int N = T / sz;
+   char out[UCHAR_MAX];
 
-   for (int i = 0; i < FRUTAS; i++) {
+   for (int i = 0; i < N; i++) {
       char* in = (char*)frutas[i];
-      enum Cores cor = colors[i % N];
+      enum Formatacao cor = TODAS_CORES[i];
       char* out = colori_string(in, cor);
 
       printf(" - %-30s~ %s\n", out, frases_i[i]);
@@ -823,10 +834,10 @@ void aplicacao_randomica_de_cores_em_pequenas_strings(void)
    }
 
    puts("\nOutro método de coloração aplicado(há um trade-off).");
-   for (int i = 0; i < OBJETOS; i++) {
+   for (int i = 0; i < N; i++) {
       char* in = (char*)objetos[i];
-      enum Cores cor = colors[i % N];
-      char* out = muda_cor_da_string(in, cor);
+      enum Formatacao cor = colors[i % N];
+      assert(colori_string_i(in, cor, out));
 
       printf(" - %-30s~ %s\n", out, frases_i[i]);
    }
@@ -898,6 +909,9 @@ void coloracao_de_caracteres_checadores_unicode(void)
 	sprintf(texto, "Avaliação positiva: %s\nAvaliação negativa: %s\n",
 		positivo, negativo);
 	puts(texto);
+
+   free(positivo);
+   free(negativo);
 }
 
 void listagem_generica_de_checagens(void) {
@@ -918,15 +932,70 @@ void listagem_generica_de_checagens(void) {
    visualiza_ldc(&lista);
 }
 
+static bool JA_ALIMENTADO = false;
+
+static void talvez_adiciona_entropia(void) {
+   if (!JA_ALIMENTADO) {
+      FILE* device = fopen("/dev/urandom", "rb");
+      const int  SEMENTE = fgetc(device);
+
+      srand(SEMENTE);
+      fclose(device);
+      JA_ALIMENTADO = true;
+   }
+}
+
+static enum Formatacao efeito_aleatorio(void) {
+   int N = sizeof(TODOS_EFEITOS) / sizeof(enum Formatacao);
+
+   talvez_adiciona_entropia();
+   return TODOS_EFEITOS[rand() % N];
+}
+
+static enum Formatacao cor_aleatoria(void) {
+   int M = sizeof(TODAS_CORES) / sizeof(enum Formatacao);
+
+   talvez_adiciona_entropia();
+   return TODAS_CORES[rand() % M];
+}
+
+
+const char* const formatacao_to_str(enum Formatacao selecao) {
+   switch (selecao) {
+      case Amarelo:        return stringfy(Amarelo);
+      case Azul:           return "Azul";
+      case AzulMarinho:    return "Azul Marinho";
+      case Vermelho:       return "Vermelho";
+      case Verde:          return "Verde";
+      case Violeta:        return "Violeta";
+      case Branco:         return "Branco";
+      case Preto:          return "Preto";
+      case SemCor:         return "SemCor";
+
+      // Outras efeitos sem relação a cor:
+      case Negrito:     return stringfy(Negrito);
+      case Sublinhado:  return stringfy(Sublinhado);
+      case Riscado:     return stringfy(Riscado);
+      case Italico:     return stringfy(Italico);
+      case Piscante:    return stringfy(Piscante);
+      case Frio:        return stringfy(Frio);
+      case Normal:      return stringfy(Normal);
+      // Casos que não existe, ou não foram implementados.
+      default:
+         perror("tipo de formatação não existente!");
+         abort();
+   }
+}
+
 void atributos_de_formatacao_sem_ser_cor(void) {
-   int efeitos[] = {Negrito, Riscado, Frio, Pisca, Italico, Sublinhado };
-   const int N = sizeof(efeitos) / sizeof(enum Efeitos);
+   int efeitos[] = {Negrito, Riscado, Frio, Piscante, Italico, Sublinhado };
+   const int N = sizeof(efeitos) / sizeof(enum Formatacao);
    const char* const TEXTO = "O sol já começou a subir!";
 
    puts("Várias formartações do texto abaixo:");
 
    for (int i = 0; i < N; i++) {
-      enum Efeitos e = efeitos[i];
+      enum Formatacao e = efeitos[i];
       char * formatado = aplica_formatacao((char*)TEXTO, SemCor, e);
 
       printf("\t\b\b\"%s\"\n", formatado);
@@ -934,26 +1003,134 @@ void atributos_de_formatacao_sem_ser_cor(void) {
    }
 }
 
+void atributos_de_formatacao_com_cor(void) {
+   int efeitos[] = {Negrito, Riscado, Frio, Piscante, Italico, Sublinhado };
+   int cores[] = { Amarelo, AzulMarinho, Vermelho, Verde, Branco };
+   const int N = sizeof(efeitos) / sizeof(enum Formatacao);
+   const char* const TEXTO = "O sol já começou a subir!";
+
+   puts("Várias formartações do texto abaixo:");
+
+   for (int i = 0; i < N; i++) {
+      enum Formatacao e = efeitos[i];
+      enum Formatacao c = cores[i];
+      char * formatado = aplica_formatacao((char*)TEXTO, c, e);
+
+      printf("\t\b\b\"%s\"\n", formatado);
+      free(formatado);
+   }
+}
+
+void impressao_e_formatacao_dos_enums(void) {
+   for (int n = 1; n <= 10; n++)
+      printf(
+         "Selecionado: %s, %s\n", 
+         formatacao_to_str(efeito_aleatorio()), 
+         formatacao_to_str(cor_aleatoria())
+      );
+}
+
+void formatacao_com_saida_diferente(void) {
+   char Out[2 * UCHAR_MAX];
+   const int sz = sizeof(EnumFmt);
+   const int N = sizeof(TODAS_CORES) / sz;
+   const int M = sizeof(TODOS_EFEITOS) / sz;
+
+   puts("Coloração e efeitos aplicadas de forma arbitrária:");
+   for (int n = 1; n <= LEGUMES; n++)
+   {
+      EnumFmt cor = TODAS_CORES[(n - 1) % N];
+      EnumFmt efeito = TODOS_EFEITOS[(n - 1) % M];
+      const char* In = legumes[n - 1];
+
+      assert(aplica_formatacao_i(In, cor, efeito, Out));
+      puts(Out);
+   }
+
+   puts("\nApenas processo de coloração:");
+   printf("Total de objetos: %lu\n", OBJETOS);
+   for (int n = 1; n <= OBJETOS; n++)
+   {
+      EnumFmt cor = TODAS_CORES[(n - 1) % N];
+      const char* In = objetos[n - 1];
+
+      assert(colori_string_i(In, cor, Out));
+      puts(Out);
+   }
+}
+
+void formatacao_e_coloracao_com_mudanca_de_input(void)
+{
+   char input[UCHAR_MAX];
+   enum Formatacao cor, efeito;
+
+   cor = cor_aleatoria();
+   efeito = efeito_aleatorio();
+   strcpy(input, phrase_ii);
+   printf("Dado original: '%s'\n", input);
+   aplica_formatacao_ii(input, cor, efeito);
+   printf(
+      "Dado após transformação:\n\t%s\n\t%s\n\t\t'%s'\n", 
+      formatacao_to_str(cor), formatacao_to_str(efeito), input
+   );
+}
+
+static char* display(Generico e) { return (char*)e; }
+static bool drop(Generico e) { free(e); return true; }
+
+void listagem_paralela_de_strings_formatadas(void) {
+   Vetor input = cria_al();
+   char* item = NULL, *result = NULL;
+   enum Formatacao cor;
+
+   for (int i = 1; i <= OBJETOS; i++) {
+      item = (char*)objetos[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   for (int i = 1; i <= FRUITS; i++) {
+      item = (char*)fruits[i - 1];
+      cor = cor_aleatoria();
+      result = colori_string(item, cor);
+
+      insere_al(input, result);
+   }
+
+   printf("Itens inseridos: %zu\n", tamanho_al(input));
+   // listar(input, display);
+   imprime_lista_al(input, display); 
+   destroi_interno_al(input, drop);
+}
+
 int main(void) 
 {
    setlocale(LC_CTYPE, "en_US.UTF-8");
 
    executa_testes_a(
-     false, 6,
+     true, 7,
          primeiro_exemplo_da_funcao_de_listagem, true,
          checando_um_caractere_multibyte, false,
          impressao_de_varios_tipos_de_array, true,
          impressao_de_array_gigante_de_strings, true,
          impressao_de_outros_tipos_de_inteiros, true,
-         impressao_de_strings_e_caracteres_unicode, true
+         impressao_de_strings_e_caracteres_unicode, true,
+         listagem_paralela_de_strings_formatadas, true
    );
 
    executa_testes_b(
-     true, 4,
+     false, 9,
          Unit(aplicacao_randomica_de_cores_em_pequenas_strings, true),
 			Unit(coloracao_de_caracteres_checadores_unicode, true),
          Unit(listagem_generica_de_checagens, true),
-         Unit(atributos_de_formatacao_sem_ser_cor, true)
+         Unit(atributos_de_formatacao_sem_ser_cor, true),
+         Unit(atributos_de_formatacao_com_cor, true),
+         Unit(impressao_e_formatacao_dos_enums, true),
+         Unit(formatacao_com_saida_diferente, true),
+         Unit(formatacao_e_coloracao_com_mudanca_de_input, true),
+         Unit(listagem_paralela_de_strings_formatadas, true)
    );
 
    executa_testes_b(
@@ -961,6 +1138,11 @@ int main(void)
          Unit(transformacao_de_array_int_em_string_via_pipes, true),
          Unit(conversao_de_arrays_genericas_em_string_por_pipes, true),
          Unit(stringficacao_usando_macro_geral, true)
+   );
+
+   executa_testes_b(
+     false, 1,
+         Unit(impressao_e_formatacao_dos_enums, true)
    );
 }
 #endif
