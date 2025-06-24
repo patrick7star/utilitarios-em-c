@@ -8,6 +8,9 @@
   * então será arranjados na tela de modo a otimizar o espaço. */
  void listar (vetor_t* lista, ToString f); 
 
+/* === === === === === === === === === === === === === === === === === === =
+ *                   Impressão de Arrays de Primitivos
+ * === === === === === === === === === === === === === === === === === === */
  /* Impressão de arrays dos tipos mais básicos da linguagem, dado o seu
   * comprimento. */
  void imprime_array_int    (int*    array, int length);
@@ -50,22 +53,38 @@
  // Mesmo macro acima, porém com um nome diferente, em inglês.
 #define print_array(A, N) imprime_array(A, N)
 
- // Cores disponíveis:
- enum Cores { 
-    Vermelho = 0x0000001, Verde   = 0x0000010, Amarelo     = 0x0000100, 
-    Azul     = 0x0001000, Violeta = 0x0010000, AzulMarinho = 0x0100000, 
-    Cinza    = 0x1100000, SemCor  = 0x1000000
+/* === === === === === === === === === === === === === === === === === === =
+ *                   Coloração e Formatação de Strings
+ * 
+ * Nota: os códigos são os equivalentes hexadecimais daqueles dado na tabela
+ *       ANSI de cores e efeitos.
+ * === === === === === === === === === === === === === === === === === === */
+ enum Formatacao { 
+    // Todas cores disponíveis:
+    Preto = 0x1e, Vermelho = 0x1f, Verde       = 0x20, Amarelo = 0x21, 
+    Azul  = 0x22, Violeta  = 0x23, AzulMarinho = 0x24, Branco  = 0x25,
+    SemCor = 0x26,
+    // Efeitos disponíveis:
+    Negrito = 1, Italico = 3, Piscante = 5, Frio = 2, Sublinhado = 4, 
+    Riscado = 9, Normal = 22
  };
- // Tipos de efeitos aplicados:
- enum Efeitos { 
-   Negrito, Italico, Pisca, Frio, Sublinhado, Riscado, 
-   Normal 
+
+ /* O proposito de tais arrays é somente para iteração das definições acima.
+  * Isso é útil tanto para testes unitários, quanto aplicações. */
+ const enum Formatacao TODAS_CORES[] = {
+   Preto, Vermelho, Verde, Amarelo, Azul, 
+   Violeta, AzulMarinho, Branco
  };
+ const enum Formatacao TODOS_EFEITOS[] = {
+   Negrito, Italico, Piscante, Frio, Sublinhado,
+   Riscado, Normal
+ };
+
  /* Vários apelidos para diferência strings coloridas das normais. Na raíz,
   * elas são as mesmas coisas, entranto, as coloridas são mais cumpridas 
   * para acomodar o protocolo ANSI. */
  typedef char* StringColorido, *StringColorida, *StrColorida, *SC;
- 
+ typedef enum Formatacao EnumFmt;
 
  /*   Faz uma copia da string com os devidos protocolos ANSI para que fique
   * com a pigmentação escolhida. Por fazer uma cópia, é preciso liberar
@@ -73,16 +92,38 @@
   *   Cores inválidas faram o programa ser interrompido. Também note que,
   * por causa da inserção do protocolo, a versão colorida é sempre maior
   * que a original. */
- StrColorida colori_string (char* s, enum Cores c);
+ StrColorida colori_string    (char* s, enum Formatacao c);
  /* Também muda a cor do texto, e sem precisar alocar um mero byte de memória
   * na heap. Entretanto, existe um limite para o tamanho da string, assim,
   * como também não é thread-safe(TS). */
- StrColorida muda_cor_da_string (char* s, enum Cores c);
- StrColorida aplica_formatacao(char* In, enum Cores, enum Efeitos);
+ StrColorida muda_cor_da_string (char* s, enum Formatacao c);
 
- /*   Transforma as arrays dos seguintes tipos numa string(aquele famoso 
-  * 'stringfy'). 
-  *   E claro, abaixo tem um macro que reune todas as chamadas de forma
+ /* Duas versões da mesma coisa. A primeira, retorna uma string alocada 
+  * dinamicamente, com o mesmo conteúdo do que a anterior, porém com o 
+  * código ANSI acrescentada pra se parecer formatada. */
+ StrColorida aplica_formatacao (char* In, EnumFmt In_c, EnumFmt In_e);
+
+ /*   Várias funções acimas com um 'output' dado via argumento. O retorno é 
+  * apenas um valor lógico dizendo que foi feito algo ou não. 
+  *   A recursa em alteração pode ser por causa de algum argumento inválido,
+  * seja o enum, ou os ponteiros para os respectivos buffers. 
+  */
+ bool colori_string_i (const char* In, enum Formatacao c, char* Out);
+ bool aplica_formatacao_i
+   (const char* In_s, EnumFmt In_c, EnumFmt In_e, char* Out);
+
+ /* Aplica os efeitos acima nas próprias strings de entradas. As próprias 
+  * referencias dadas são novamente retornadas, porém, se você tem controle
+  * do 'argumento' dado, isso é despresível. */
+ StrColorida aplica_formatacao_ii (char* IO_str, EnumFmt In_c, EnumFmt In_e);
+ StrColorida colori_string_ii(char* IO_str, enum Formatacao In_cor);
+
+
+/* === === === === === === === === === === === === === === === === === === =
+ *                  Stringficação de Arrays de Todos Tipos
+ *                         Inteiros que Existem
+ * === === === === === === === === === === === === === === === === === === */
+ /*   E claro, abaixo tem um macro que reune todas as chamadas de forma
   * automática, com um nome mais curto e genérico.
   */
  char*  array_i8_to_str  (signed char* array, int n);
@@ -111,9 +152,13 @@
  // Já está em inglês, porém outro nome bom seria este:
  #define stringfy_array(A, L) array_to_string(A, L)
 
- /*   Criação de checklist pra visualização. Um modo bem interessante de você
-  * organizar qualquer coisa que está, tem, possui e etc; e seu estado oposto
-  * antagonico. */
+/* === === === === === === === === === === === === === === === === === === =
+ *                         Lista de Checagem  
+
+ *   Criação de checklist pra visualização. Um modo bem interessante de você
+ * organizar qualquer coisa que está, tem, possui e etc; e seu estado oposto
+ * antagonico. 
+ * === === === === === === === === === === === === === === === === === === */
  typedef struct ListaDeChecagem CheckList;
  typedef struct Checagem Check;
 
