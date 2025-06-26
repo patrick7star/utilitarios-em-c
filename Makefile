@@ -323,9 +323,9 @@ lib-estringue:
 	@echo "Biblioteca estática 'libestringue.a' compilada."
 
 test-estringue:
-	@gcc -Iinclude $(COMPILAR_STR) -c -o $(BUILD_STR_I) $(SRC_STR)
-	@gcc -O0 -g -Wall -I ./include \
-		-o $(EXE_STR) $(BUILD_STR_I) $(DEPS_STR) $(TESTADOR)
+	@gcc -Iinclude -ggdb -O0 -Wall $(COMPILAR_STR) \
+      -c -o $(BUILD_STR_I) $(SRC_STR)
+	@gcc -I ./include -o $(EXE_STR) $(BUILD_STR_I) $(DEPS_STR) $(TESTADOR)
 	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
 
 run-estringue:
