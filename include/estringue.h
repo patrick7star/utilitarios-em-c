@@ -1,3 +1,14 @@
+/*   A linguagem C dá um número limitado de métodos para trabalhar com
+ * strings quando comparado a outras linguagens. Aqui irei implementar
+ * todas elas.
+ *
+ * Observação: os métodos estãos em inglês, porque estou implementando uma
+ *             por uma, usando como parâmetros os métodos do Rust, e as que
+ *             não tem dele uso a do Python. Também um pouco por falta de 
+ *             criatividade. Alguns, a tradução literal é extremente simples,
+ *             outras, quase impossível. Sendo assim, optei por apenas pelo
+ *             uso da equivalente em inglẽs.
+ */
 
 #ifndef ESTRINGUE_H
 #define ESTRINGUE_H
@@ -25,6 +36,11 @@
  ListaStrings palavras(char*); 
  // retorna tupla com strings entre quebra-de-linhas.
  ListaStrings split_linhas(char*);
+ ListaStrings split_at(char*, const char PADRAO);
+ /* Atenção: veja se a lista que você quer liberar, todos itens são alocação
+  * dinâmica, caso contrário, o programa será interrompido por corrupção
+  * de memória. */
+ void free_lista_strings(ListaStrings*); 
 
 
  /* Operações em cima da estrutura String, sendo que elas podem ou não,
