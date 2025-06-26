@@ -1,10 +1,3 @@
-
-
-/* A linguagem C dá um número limitado de métodos para trabalhar com
- * strings quando comparado a outras linguagens. Aqui irei implementar
- * todas elas.
- */
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -28,17 +21,6 @@ const int64_t TODOS = -1;
 typedef struct posicoes_dos_padroes { ptrdiff_t* array; int size; } 
    Posicoes;
 
-#ifdef _UT_STRING
-static void visualiza_array(size_t* array, size_t t) {
-   printf ("[");
-   for (size_t p = 1; p <= t; p++)
-      printf ("%lu, ", array[p - 1]);
-   if (t == 0)
-      puts("]");
-   else
-      puts("\b\b]");
-}
-#endif
 
 static char* copia_trecho (char* string, size_t i, size_t f) {
    if (f < i) {
@@ -60,8 +42,11 @@ static char* copia_trecho (char* string, size_t i, size_t f) {
 
 static ListaStrings reparte_string_by_char(char* string, const char sep) 
 {
-/* Separa em string à partir de qualquer caractére dado, seja ele 
- * 'imprimível' ou não.
+/*   Separa em string à partir de qualquer caractére dado, seja ele algum
+ * caractére 'imprimível' ou não.
+ *   É preciso liberar todo conteúdo alocado, já que, inserir tal substring
+ * na lista estática, copia-se o trecho que representa-a, então aloca
+ * memória dinamicamente.
  */
    const char SEPARADOR = sep;
    char* ptr_string = string;
@@ -79,10 +64,6 @@ static ListaStrings reparte_string_by_char(char* string, const char sep)
       // indo a próximo caractére...
       ptr_string++;
    }
-   #ifdef _PALAVRAS
-   printf ("quantidade: %lu\nposições na string:", contagem);
-   visualiza_array(posicoes, contagem);
-   #endif
 
    // repartindo ela em palavras e axexando na lista.
    size_t size_ptr_char =  sizeof (char*);
@@ -104,11 +85,6 @@ static ListaStrings reparte_string_by_char(char* string, const char sep)
          strlen(string)
       );
       lista[total - 1] = last_word;
-
-      #ifdef _PALAVRAS
-      printf ("\tprimeira palavra: '%s'\n", first_word);
-      printf ("\túltima palavra: '%s'\n", last_word);
-      #endif
    }
 
    for (size_t i = 1; i < contagem; i++) {
@@ -117,10 +93,6 @@ static ListaStrings reparte_string_by_char(char* string, const char sep)
       size_t final = posicoes[i] - 1;
       char* word = copia_trecho (string, inicio, final);
       lista[i] = word;
-
-      #ifdef _PALAVRAS
-      printf ("\tpalavra: '%s'\n", word);
-      #endif
    }
    return (ListaStrings) {lista, total};
 }
@@ -138,6 +110,16 @@ ListaStrings split_linhas(char* conteudo) {
  * provavalmente vindo de algum arquivo). */
    const char ESPACO_SEPARADOR = '\n';
    return reparte_string_by_char (conteudo, ESPACO_SEPARADOR);
+}
+
+ListaStrings split_at(char* string, const char caractere) 
+ { return reparte_string_by_char(string, caractere); }
+
+void free_lista_strings(ListaStrings* In) {
+   // As strings provavelmente são as únicas coisas alocadas dinâmicamente.
+   // Às vezes, nem todas listas do tipos tem itens com alocação dinâmica.
+   for (int n = 0; n < (*In).total; n++)
+      free((*In).lista[n]);
 }
 
 char* concatena_strings(int quantia, ...) 
@@ -1104,6 +1086,16 @@ void reparticao_da_strings_dado_padrao(void)
    }
 }
 
+void reparticao_de_partes_do_ls_colors(void) {
+   char* In = (char*)getenv("LS_COLORS");
+   const char PADRAO = ':';
+   ListaStrings Out = split_at(In, PADRAO);
+
+   for (int n = 1; n <= Out.total; n++)
+      printf("\t\b\b- %s\n", Out.lista[n - 1]);
+   free_lista_strings(&Out);
+}
+
 int main(int qtd, char* args[], char* vars[]) 
 {
    executa_testes_a(
@@ -1119,7 +1111,7 @@ int main(int qtd, char* args[], char* vars[])
    );
 
    executa_testes_a(
-     true, 8,
+     true, 9,
       fazendo_strings_maiusculas_e_minusculas, false,
       capitalizacao_das_strings, false,
       metodos_de_extracao, true,
@@ -1127,7 +1119,8 @@ int main(int qtd, char* args[], char* vars[])
       buscando_por_padroes_na_estringue, true,
       metodo_de_substituicao_de_string, true,
       reparticao_da_strings_dado_padrao, true,
-      experimento_concatenacao_de_multiplas_strings, true
+      experimento_concatenacao_de_multiplas_strings, true,
+      reparticao_de_partes_do_ls_colors, true
    );
 
    return EXIT_SUCCESS;
