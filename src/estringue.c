@@ -21,7 +21,28 @@ const int64_t TODOS = -1;
 typedef struct posicoes_dos_padroes { ptrdiff_t* array; int size; } 
    Posicoes;
 
+/* == == == == == == == == == == == == == == == == == == == == == == == ===
+ *                      Métodos do Tipo Lista String
+ * == == == == == == == == == == == == == == == == == == == == == == == ==*/
+void debug_lista_strings(ListaStrings* In) {
+   const char* const SEP = "\t\b\b\b\b";
 
+   printf(
+      "Lista Strings (%zu) {\n%s- '%s'\n%s- '%s'\n}\n",
+      (*In).total, SEP, (*In).lista[0], SEP, (*In).lista[1]
+   );
+}
+
+void free_lista_strings(ListaStrings* In) {
+   // As strings provavelmente são as únicas coisas alocadas dinâmicamente.
+   // Às vezes, nem todas listas do tipos tem itens com alocação dinâmica.
+   for (int n = 0; n < (*In).total; n++)
+      free((*In).lista[n]);
+}
+
+/* == == == == == == == == == == == == == == == == == == == == == == == ===
+ *                      Repartição(Split) de Strings 
+ * == == == == == == == == == == == == == == == == == == == == == == == ==*/
 static char* copia_trecho (char* string, size_t i, size_t f) {
    if (f < i) {
       perror ("confusão nos marcos dados!");
@@ -98,29 +119,58 @@ static ListaStrings reparte_string_by_char(char* string, const char sep)
 }
 
 ListaStrings palavras(char* string) {
-   /* Pega todos trechos entre espaços em branco, sejam eles palavras 
-    * legítimas ou não. */
+/* Pega todos trechos entre espaços em branco, sejam eles palavras legítimas
+ * ou não. Também é um tipo de 'split' de espaços em brancos. */
    const char ESPACO_SEPARADOR = ' ';
    return reparte_string_by_char (string, ESPACO_SEPARADOR);
 }
 
-ListaStrings split_linhas(char* conteudo) {
+ListaStrings split_lines(const char* conteudo) {
 /* Dado uma grande string, está separada com quebras-de-linhas, aqui
  * será retornado uma cópia de todas linhas do conteúdo(sendo este 
  * provavalmente vindo de algum arquivo). */
    const char ESPACO_SEPARADOR = '\n';
-   return reparte_string_by_char (conteudo, ESPACO_SEPARADOR);
+   char* input = (char*)conteudo;
+
+   return reparte_string_by_char (input, ESPACO_SEPARADOR);
 }
 
-ListaStrings split_at(char* string, const char caractere) 
- { return reparte_string_by_char(string, caractere); }
+ListaStrings split_at(const char* string, const char caractere) 
+ { return reparte_string_by_char((char*)string, caractere); }
 
-void free_lista_strings(ListaStrings* In) {
-   // As strings provavelmente são as únicas coisas alocadas dinâmicamente.
-   // Às vezes, nem todas listas do tipos tem itens com alocação dinâmica.
-   for (int n = 0; n < (*In).total; n++)
-      free((*In).lista[n]);
+ListaStrings split_ascii_whitespace(const char* string)
+/* O mesmo que o método 'palavras', porém com o mesmo nome em Rust. Sendo,
+ * a função é apenas um 'wrap' da outra. */
+   { return palavras((char*)string); }
+
+ListaStrings split_once(const char* string, const char PADRAO) {
+/* Retorna uma tupla, com tamanho dois, que contém as duas únicas partes
+ * que ocorrem na primeira ocorrência de busca neste 'spliting'. */ 
+   const int sz = sizeof(char*), szChar = sizeof(char);
+   ListaStrings Out;
+   char* cursor = strchr(string, PADRAO);
+   ptrdiff_t m, n;
+
+   if (cursor == NULL)
+      return (ListStr) {NULL, 0};
+
+   // Já define o resultado que é bem determinado.
+   Out.lista = (char**)calloc(2, sz);
+   Out.total = 2;
+   // Computando comprimento da string da primeira e segunda parte.
+   m = cursor - string;
+   n = strlen(string) - m;
+   // Alocando memória necessária para cada cópia, com locais já zerados.
+   // Isso evita falta de caractéres nulos.
+   Out.lista[0] = (char*)calloc(m + 1, szChar);
+   Out.lista[1] = (char*)calloc(n + 1, szChar);
+   // Aplicando cópias dos respectivos trechos.
+   memcpy(Out.lista[0], string, m);
+   memcpy(Out.lista[1], cursor + 1, n);
+
+   return Out;
 }
+
 
 char* concatena_strings(int quantia, ...) 
 {
@@ -182,6 +232,9 @@ static wchar_t* clona_static_string_slice(const char* s) {
    return nova_str;
 }
 
+/* == == == == == == == == == == == == == == == == == == == == == == == ===
+ *                   Construção da String Mutável 
+ * == == == == == == == == == == == == == == == == == == == == == == == ==*/
 String from_str(const char* s) {
 /* Cria uma string dado uma literal string. Ele literalmente clona ela, ou
  * seja, o ponteiro 'char*' segurado por ela não é a literal escrita em 
@@ -1096,10 +1149,21 @@ void reparticao_de_partes_do_ls_colors(void) {
    free_lista_strings(&Out);
 }
 
+void unica_reparticao_ocorrendo(void) {
+   const char* input = "Única frase junta#o sol raiou cedo#   nunca mais";
+   ListStr output = split_once(input, '#');
+
+   debug_lista_strings(&output);
+   assert(output.total == 2);
+   assert(strcmp(output.lista[0], "Única frase junta") == 0);
+   assert(strcmp(output.lista[1], "o sol raiou cedo#   nunca mais") == 0);
+   free_lista_strings(&output);
+}
+
 int main(int qtd, char* args[], char* vars[]) 
 {
    executa_testes_a(
-     false, 7, 
+     true, 7, 
 			testes_basico_da_reparticao_em_palavras, true,
          visualizacao_da_reparticao_em_palavras, true,
          experimento_concatenacao_de_multiplas_strings, true,
@@ -1111,16 +1175,21 @@ int main(int qtd, char* args[], char* vars[])
    );
 
    executa_testes_a(
-     true, 9,
+     true, 7,
       fazendo_strings_maiusculas_e_minusculas, false,
       capitalizacao_das_strings, false,
       metodos_de_extracao, true,
       criacao_de_string_homogenea, true,
       buscando_por_padroes_na_estringue, true,
       metodo_de_substituicao_de_string, true,
-      reparticao_da_strings_dado_padrao, true,
-      experimento_concatenacao_de_multiplas_strings, true,
-      reparticao_de_partes_do_ls_colors, true
+      experimento_concatenacao_de_multiplas_strings, true
+   );
+
+   executa_testes_b (
+     true, 3,
+         Unit(reparticao_da_strings_dado_padrao, true),
+         Unit(reparticao_de_partes_do_ls_colors, true),
+         Unit(unica_reparticao_ocorrendo, true)
    );
 
    return EXIT_SUCCESS;
