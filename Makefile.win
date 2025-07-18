@@ -7,6 +7,11 @@ cria-raiz:
 	@mkdir --parents bin/tests/ bin/shared/ bin/static/ build/
 	@echo "Todos diretórios e seus subdir., 'bin' e 'build', criados."
 
+compila-tudo: cria-raiz \
+	legivel-all tempo-all terminal-all progresso-all teste-all
+
+clean:
+	@rm -rv bin/ build/
 
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Legível
@@ -14,15 +19,20 @@ cria-raiz:
 legivel-all: legivel-obj legivel-test
 
 legivel-obj:
-	$(CC) -I$(HEADER) -c -o build/legivel.obj src/legivel.c
+	@$(CC) -I$(HEADER) -O3 -c -o build/legivel.obj src/legivel.c
+	@echo "Objeto otimizado de 'legivel' compilado."
 
 legivel-test:
-	$(CC) -I$(HEADER) -g3 -O0 -D__unit_tests__ \
+	@$(CC) -I$(HEADER) -Wall -g3 -O0 -D__unit_tests__ \
 		-c -o build/legivel-test.obj src/legivel.c
-	$(CC) -I$(HEADER) -Wall -o bin/tests/ut_legivel.exe build/legivel-test.obj
+	@echo "Objeto do 'legivel-test' gerado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_legivel.exe build/legivel-test.obj
+	@echo "Testes unitários de 'legivel' compilados."
 
 legivel-run:
 	bin/tests/ut_legivel.exe
+legivel-clean:
+	@rm -v build/legivel* bin/tests/ut_legivel.exe
 
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Tempo
@@ -64,7 +74,7 @@ terminal-run:
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Progresso
 # === === ===  === === === === === === === === === === === === === === ====
-progresso-all: terminal-obj terminal-test
+progresso-all: progresso-obj progresso-test
 
 progresso-obj:
 	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
@@ -73,13 +83,13 @@ progresso-obj:
 
 progresso-test:
 	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
-		-c -o build/terminal-test.obj src/terminal.c
-	@echo "O objeto dos testes de 'terminal' foram compilado."
-	@$(CC) -I$(HEADER) -o bin/tests/ut_terminal.exe build/terminal-test.obj
-	@echo "Os testes unitários de 'terminal' estão compilado."
+		-c -o build/progresso-test.obj src/progresso.c
+	@echo "O objeto dos testes de 'progresso' foram compilado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_progresso.exe build/progresso-test.obj
+	@echo "Os testes unitários de 'progresso' estão compilado."
 
 progresso-run:
-	bin/tests/ut_terminal.exe
+	bin/tests/ut_progresso.exe
 
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Teste
@@ -92,11 +102,17 @@ teste-obj:
 	@echo "O objeto de 'teste' foi compilado."
 
 teste-test: progresso-obj
-	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0 \
-      -D__unit_tests__ -Wno-strict-prototypes \
+	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0	\
+      -D__unit_tests__ -Wno-strict-prototypes				\
 		-c -o build/teste-test.obj src/teste.c
 	@echo "Objeto dos testes de 'teste' foram compilado."
 	@$(CC) -I$(HEADER) -c -o build/amostras.obj src/teste/amostras.c
 	@echo "Objeto das funções em 'amostras' gerado."
-	@$(CC) -I$(HEADER) -o bin/tests/ut_teste.exe build/teste-test.obj build/legivel.obj build/tempo.obj build/terminal.obj build/amostras.obj build/progresso.obj
+	@$(CC) -I$(HEADER) -o bin/tests/ut_teste.exe build/teste-test.obj \
+			build/legivel.obj build/tempo.obj build/terminal.obj			\
+			build/amostras.obj build/progresso.obj
 	@echo "Unitários de 'teste' estão compilado."
+
+teste-clean:
+	@rm -v build/teste-obj.obj build/teste-test.obj build/teste.obj \
+			bin/tests/ut_teste*
