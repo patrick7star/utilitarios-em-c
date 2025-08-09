@@ -116,3 +116,19 @@ teste-test: progresso-obj
 teste-clean:
 	@rm -v build/teste-obj.obj build/teste-test.obj build/teste.obj \
 			bin/tests/ut_teste*
+# === === ===  === === === === === === === === === === === === === === ====
+#										Módulo Memória
+# === === ===  === === === === === === === === === === === === === === ====
+memoria-all: memoria-obj memoria-test
+
+memoria-obj:
+	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+      -c -o build/memoria.obj src/memoria.c
+	@echo "O objeto de 'memória' foi compilado."
+
+memoria-test:
+	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0 -D__unit_tests__   \
+		-c -o build/memoria-test.obj src/memoria.c
+	@echo "Objeto dos testes de 'memória' foram compilado."
+	@$(CC) -I$(HEADER) -o bin/tests/ut_memoria.exe build/memoria-test.obj
+	@echo "Unitários de 'memória' estão compilado."
