@@ -82,7 +82,12 @@ char* box_str(char* str) {
    const int sz = sizeof(char);
    char* obj = malloc(n * sz);
 
+   #ifdef __linux__
    strcpy(obj, str);
+   #elif defined(_WIN32)
+   strcpy_s(obj, n * sz, str);
+   #endif
+
    obj[n - 1] = '\0';
    return obj;
 }
@@ -92,7 +97,12 @@ wchar_t* box_wcs(wchar_t* str) {
    const int sz = sizeof(wchar_t);
    wchar_t* obj = malloc(n * sz);
 
+   #ifdef __linux__
    wcscpy(obj, str);
+   #elif defined(_WIN32)
+   wcscpy_s(obj, n * sz, str);
+   #endif
+
    obj[n - 1] = L'\0';
    return obj;
 }
@@ -129,6 +139,7 @@ uint32_t* box_uint32t (unsigned int valor) {
    return obj;
 }
 
+#ifdef __linux__
 int64_t* box_int64t (signed long valor) {
    const int sz = sizeof(long int);
    long* obj = malloc(sz);
@@ -136,6 +147,15 @@ int64_t* box_int64t (signed long valor) {
    *obj = valor;
    return obj;
 }
+#elif defined(_WIN32)
+int64_t* box_int64t (signed long long valor) {
+   const int sz = sizeof(long int);
+   long long* obj = malloc(sz);
+
+   *obj = valor;
+   return obj;
+}
+#endif
 
 void tipo_nao_suportado(void* type)
    { perror("tipo não suportado"); abort(); }
@@ -184,11 +204,16 @@ int main(int qtd, char* args[], char* vars[])
    uint8_t* b = nova_box((uint8_t)UCHAR_MAX);
    wchar_t* c = nova_box(L'ê');
    bool* d = nova_box(D);
+   #ifdef __linux__
    int64_t* e = nova_box(LONG_MIN / 2);
+   #elif defined(_WIN32)
+   int64_t* e = nova_box(LLONG_MIN / 2);
+   #endif
    wchar_t* f = nova_box(F);
    char* g = nova_box("queijo");
    int8_t* h = box_i8(CHAR_MIN + 1);
 
+   #ifdef __linux__
    printf("a: %c\t\t~ %ld bytes\n", *a, sizeof(*a));
    printf("b: %u\t\t~ %ld bytes\n", *b, sizeof(*b));
    printf("c: %lc\t\t~ %ld bytes\n", *c, sizeof(*c));
@@ -197,6 +222,16 @@ int main(int qtd, char* args[], char* vars[])
    printf("f: %ls\t\t~ %ld bytes\n", f, sizeof(f));
    printf("g: %s\t\t~ %ld bytes\n", g, sizeof(g));
    printf("h: %d\t\t~ %ld bytes\n", *h, sizeof(*h));
+   #elif defined(_WIN32)
+   printf("a: %c\t\t~ %llu bytes\n", *a, sizeof(*a));
+   printf("b: %u\t\t~ %llu bytes\n", *b, sizeof(*b));
+   printf("c: %lc\t\t~ %llu bytes\n", *c, sizeof(*c));
+   printf("d: %s\t\t~ %llu bytes\n", bool_to_str(*d), sizeof(*d));
+   printf("e: %llu\t\t~ %llu bytes\n", *e, sizeof(*e));
+   printf("f: %ls\t\t~ %llu bytes\n", f, sizeof(f));
+   printf("g: %s\t\t~ %llu bytes\n", g, sizeof(g));
+   printf("h: %d\t\t~ %llu bytes\n", *h, sizeof(*h));
+   #endif
 
    return EXIT_SUCCESS;
 }
