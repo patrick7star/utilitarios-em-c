@@ -1,15 +1,10 @@
-// Importantes definições para funcionar no Windows.
-#ifdef _WIN32
-#define _USE_MATH_DEFINES
-#endif
-
 // Cabeçalho com definições da funções:
 #include "legivel.h"
 // Biblioteca padrão do C:
 #include <stdio.h>
-#include <math.h>
 #include <string.h>
 #include <iso646.h>
+#include <math.h>
 
 // Pesos que ajudam na conversão:
 const size_t MILHAR     = 1e3;
@@ -34,7 +29,10 @@ const double MILENIO    = 1000 * ANO;
 
 static char* nova_str(int n)
 // Aloca string do tamanho que você desejar.
-   { return (char*)malloc(n * sizeof(char)); }
+   /* NOTA: no Windows, n é convertido implicitamente prá um uint64_t. Por
+    * motivos de compatibilidade, colocarei nesta fonte, já que GCC não
+    * reclama de tal conversão implicita na função de alocação de memória. */
+   { return (char*)malloc((uint64_t)n * sizeof(char)); }
 
 static void elimina_digitos_insignificantes
   (char* output, double valor, const char* peso)
@@ -56,7 +54,7 @@ static void elimina_digitos_insignificantes
 /* === === === === === === === === === === === === === === === === === ==
  *                Legibilidade do Tamanho
  * === === === === === === === === === === === === === === === === === ==*/
-char* tamanho_legivel(size_t bytes) { 
+CROSSLIB char* tamanho_legivel(size_t bytes) { 
    char* resultado_str = nova_str(30);
    char peso_str[5];
    float valor = 0.0;
@@ -93,7 +91,7 @@ char* tamanho_legivel(size_t bytes) {
 /* === === === === === === === === === === === === === === === === === ==
  *                Legibilidade do Valor Absoluto
  * === === === === === === === === === === === === === === === === === ==*/
-char* valor_legivel_isize(int64_t unidades) 
+CROSSLIB char* valor_legivel_isize(int64_t unidades) 
 {
    char* formatacao = nova_str(15);
    // Apenas a magnitude do valor.
@@ -141,7 +139,7 @@ char* valor_legivel_isize(int64_t unidades)
    return formatacao;
 }
 
-char* valor_legivel_usize(size_t unidades) {
+CROSSLIB char* valor_legivel_usize(size_t unidades) {
    char* peso;
    double potencia, decimal;
    char* resultado_str = nova_str(15);
@@ -173,16 +171,16 @@ char* valor_legivel_usize(size_t unidades) {
    return resultado_str;
 }
 
-char* valor_legivel_f32 (float decimal) 
+CROSSLIB char* valor_legivel_f32 (float decimal) 
    { return valor_legivel_isize((int64_t)decimal); }
 
-char* valor_legivel_f64 (double decimal)
+CROSSLIB char* valor_legivel_f64 (double decimal)
    { return valor_legivel_isize((int64_t)decimal); }
 
 /* === === === === === === === === === === === === === === === === === ==
  *                   Legibilidade do Tempo
  * === === === === === === === === === === === === === === === === === ==*/
-char* tempo_legivel_double(double segundos) 
+CROSSLIB char* tempo_legivel_double(double segundos) 
 {
    // variável com uma letra para agilizar codificação.
    double s = segundos;
@@ -248,7 +246,7 @@ char* tempo_legivel_double(double segundos)
    return resultado;
 }
 
-char* tempo_legivel_usize(size_t seg) 
+CROSSLIB char* tempo_legivel_usize(size_t seg) 
    { return tempo_legivel_double((double)seg); }
 
 #ifdef __linux__
@@ -435,20 +433,21 @@ int main(void) {
 #include <limits.h>
 #include <float.h>
 #include <locale.h>
-#define _CRT_NONSTDC_NO_DEPRECATE
+// #define _CRT_NONSTDC_NO_DEPRECATE
+#define TESTE void static
 
-uint64_t entradas[] = {
+static uint64_t entradas[] = {
    382, 12832, 3842394, 7712340981,
    111931512, 50123812341, 100030231892377
 };
 
-double segundos[] = {
+static double segundos[] = {
    51.3232, 12832.15, 8328.0,
    38832.312, 0.001, 0.038,
    0.000851, 0.000000701, 190.5321
 };
 
-void legibilidade_do_tempo(void) {
+TESTE legibilidade_do_tempo(void) {
    double inputs[] = { 
       5 * DIA + 30 * HORA, 8000 * MES, 165 * MES + 4e10, 14 * ANO + 30 * MES,
       1500 * DECADA, 14 * DECADA + 80 * ANO, 400 * DIA, 100 * DIA
@@ -469,7 +468,7 @@ void legibilidade_do_tempo(void) {
    // de avaliação manual?
 }
 
-void legibilidade_de_tamanhos(void) {
+TESTE legibilidade_de_tamanhos(void) {
    for(size_t p = 1; p <= 7; p++) {
 		uint64_t valor = entradas[p - 1];
 		char* traducao = tamanho_legivel(valor);
@@ -478,19 +477,19 @@ void legibilidade_de_tamanhos(void) {
 	}
 }
 
-void o_grosso_de_grande_valores(void) {
-   for(int p = 0; p < 7; p++)
-      printf("%16llu ===> %s\n", entradas[p], valor_legivel(entradas[p]));
-
+TESTE o_grosso_de_grande_valores(void) {
    float inputs_a[] = {3000531.14159, 12345.6789, 1.71001e4, 3.14159e9};
    const int na = sizeof(inputs_a) / sizeof(float);
+
+   for(int p = 0; p < 7; p++)
+      printf("%16llu ===> %s\n", entradas[p], valor_legivel(entradas[p]));
    
    puts("\nAgora valores decimais(float/double):");
    for (int k = 0; k < na; k++)
       printf("%21f ===> %s\n", inputs_a[k], valor_legivel(inputs_a[k]));
 }
 
-void valor_legivel_de_todos_limites(void)
+TESTE valor_legivel_de_todos_limites(void)
 {
    struct ParES { 
       // Formatação da decisão dos dígitos.
@@ -538,7 +537,7 @@ void valor_legivel_de_todos_limites(void)
       free(results[i].Out);
 }
 
-void eliminando_digitos_insignificantes(void)
+TESTE eliminando_digitos_insignificantes(void)
 {
    double input[] = { 
       3.153, 352.001, 0.1234, 153.7, 12.07, 3.915, 19.94,
