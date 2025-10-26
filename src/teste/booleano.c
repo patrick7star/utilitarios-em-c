@@ -27,7 +27,7 @@ static char* string_minuscula(char* original) {
    return lowercase;
 }
 
-bool str_to_bool(char* s) {
+CROSSLIB bool str_to_bool(char* s) {
    char* nova_str;
 
    if (!string_esta_minuscula(s)) {
