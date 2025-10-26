@@ -351,10 +351,10 @@ obj-legivel:
 	@echo "Gerou o arquivo objeto 'legivel.o' em 'build'."
 
 test-legivel:
-	@gcc -I$(HEADERS) -std=gnu2x -O0 -o -Wall -Werror -c -o \
-		build/legivel-teste.o src/legivel.c
-	@gcc -I$(HEADERS) -D_UT_LEGIVEL \
-		-o $(EXE_LEGIVEL) src/legivel.c $(DEPS_LEGIVEL)
+	@gcc -I$(HEADERS) -D_UT_LEGIVEL -D__unit_tests__ \
+		-std=gnu2x -O0 -Wall -Werror \
+		-c -o build/legivel-teste.o src/legivel.c
+	@gcc -I$(HEADERS) -o $(EXE_LEGIVEL) build/legivel-teste.o $(DEPS_LEGIVEL)
 	@echo "Compilado os testes-unitários de 'legivel' em bin/tests."
 
 lib-legivel:
