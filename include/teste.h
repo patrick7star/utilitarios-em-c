@@ -1,7 +1,7 @@
 /**/
 
-#ifndef TESTE_H
-#define TESTE_H
+#ifndef TESTE_HEADER_FILE
+#define TESTE_HEADER_FILE
 #include <stdbool.h>
 #include <stdint.h>
 
