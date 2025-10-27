@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #ifdef _WIN32
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 
@@ -74,7 +74,7 @@ Dimensao dimensao_terminal(void) {
    return tupla;
 }
 
-struct TerminalSize obtem_dimensao(void) {
+CROSSLIB struct TerminalSize obtem_dimensao(void) {
    const char* CMD   = "tput cols lines";
    const int N       = 8;
    const char SEP    = '\n';
@@ -107,7 +107,7 @@ struct TerminalSize obtem_dimensao(void) {
 #endif
 
 #ifdef _WIN32
-struct TerminalSize obtem_dimensao(void) {
+CROSSLIB struct TerminalSize obtem_dimensao(void) {
 /* Apenas um 'wrapper' que acessar a biblioteca do Windows, então permite
  * acessar a dimensão do 'console' que está executando. */
    CONSOLE_SCREEN_BUFFER_INFO Out;
