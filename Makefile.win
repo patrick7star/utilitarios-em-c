@@ -1,6 +1,8 @@
 AR            = llvm-ar.exe
-CC	           = clang.exe
-HEADER        = ./include/windows
+CC	           = clang-cl.exe
+CLANG         = clang.exe
+#HEADER        = ./include/windows
+HEADER        = ./include
 TESTER_ST_LIB = -Lbin/static -ltempo -legivel -lterminal -lteste
 
 cria-raiz:
@@ -16,18 +18,25 @@ clean:
 # === === ===  === === === === === === === === === === === === === === ====
 #										Módulo Legível
 # === === ===  === === === === === === === === === === === === === === ====
-legivel-all: legivel-obj legivel-test
+legivel-all: legivel-obj legivel-lib legivel-test
 
 legivel-obj:
-	@$(CC) -I$(HEADER) -O3 -c -o build/legivel.obj src/legivel.c
+	@$(CC) -I$(HEADER) /Ot /c src/legivel.c /Fobuild/legivel.obj 
 	@echo "Objeto otimizado de 'legivel' compilado."
 
 legivel-test:
-	@$(CC) -I$(HEADER) -Wall -g3 -O0 -D__unit_tests__ \
-		-c -o build/legivel-test.obj src/legivel.c
+	@$(CLANG) -I$(HEADER) -D__unit_tests__ -g3 -O0 -Wall \
+		-c -o build/legivel-test.obj src/legivel.c 
 	@echo "Objeto do 'legivel-test' gerado."
-	@$(CC) -I$(HEADER) -o bin/tests/ut_legivel.exe build/legivel-test.obj
+	@$(CLANG) -I$(HEADER) -o bin/tests/ut_legivel.exe build/legivel-test.obj
 	@echo "Testes unitários de 'legivel' compilados."
+
+legivel-lib:
+	$(AR) crs bin/static/liblegivel.a build/legivel.obj
+	@echo "Biblioteca estática 'legível' criada."
+	$(CC) /I ./include/ /D __LIB_DLL__ /LD \
+		/Fe:bin/shared/legivel.dll src/legivel.c
+	@echo "Biblioteca dinâmica 'legível' criada."
 
 legivel-run:
 	bin/tests/ut_legivel.exe
