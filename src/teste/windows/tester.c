@@ -1,11 +1,12 @@
 // Módulos do próprio projeto:
-#include "../macros.h"
+#include "macros.h"
+#include "terminal.h"
 // Biblioteca padrão do C:
 #include <stddef.h>
 // API do Windows.
 // #include <libloaderapi.h>
 // #include <sysinfoapi.h>
-#include <windows.h>
+#include <Windows.h>
 
 /* === === === === === === === === === === === === === === === === === ===+
  *                      Dados Globais Referentes as
@@ -25,8 +26,13 @@ static void cabecalho_do_teste(char *nome)
    const int MARGEM = 5;
    struct TerminalSize DIM = obtem_dimensao();
    int largura = DIM.colunas - MARGEM;
-   char barra[largura];
-   char rotulo[DIM.colunas];
+   /* Nota: tal coisa é importante, já que o Windows C Compiler(MSVC), não
+    * suporta tal feature. Logo é preciso alocar memória dinâmica manualmente
+    * usando o 'memory allocation(malloc)'. 
+    */
+   const int sz = sizeof(char);
+   char* barra = malloc((uint64_t)largura * sz);
+   char* rotulo = malloc((uint64_t)DIM.colunas * sz);
 
    // Fazendo separador e formatando seu título ...
    memset(barra, '\0', DIM.colunas);
@@ -35,6 +41,8 @@ static void cabecalho_do_teste(char *nome)
    memmove(barra + MARGEM, rotulo, strlen(rotulo));
 
    printf("\n%s\n\n", barra);
+   // Liberação não automática na plataforma Windows(sem VLA).
+   free(barra);
 }
 
 static void imprime_separador(int n)
@@ -53,10 +61,10 @@ static void imprime_separador(int n)
 static bool captura_testes_definidos
   (struct TesteConfig* lista, const int TOTAL, va_list argumentos)
 {
+   struct TesteConfig aux;
+
    if (TOTAL == 0)
       return false;
-
-   struct TesteConfig aux;
 
    for (int n = 1; n <= TOTAL; n++) {
       aux = va_arg(argumentos, struct TesteConfig);
@@ -80,21 +88,31 @@ CROSSLIB void executa_testes(bool execucao_do_suite, int total, ...)
  * a 'function poitner' dele e seu status, Isso tem que ser passado dentro
  * de uma tupla definida pelo macro 'unit'. Isso é o que permite a captura
  * do nome da função em sí. */
-   struct TesteConfig testes[total];
    va_list args;
    char* nome_fn = NULL;
+   /* Como no MSVC não tem Variable-Length-Arrays(VLAs), um modo de alocar
+    * memória dinâmica apenas declarando o comprimento da array numa variável
+    * isso em tempo de compilação. O negócio é usar 'malloc' mesmo. Lembre-se
+    * e é preciso liberar posteriormente. */
+   struct TesteConfig * testes;
+   uint64_t n = (uint64_t)total;
+   const int sz = sizeof(struct TesteConfig);
 
+   testes = malloc(n * sz);
    va_start(args, total);
    captura_testes_definidos(testes, total, args);
    va_end(args);
 
-   for (int q = 1; q <= total; q++) {
-      nome_fn = (char*)testes[q - 1].nome;
-      cabecalho_do_teste(nome_fn);
-      testes[q - 1].rotina();
-      CONTAGEM_DE_TESTES++;
+   if (execucao_do_suite) {
+      for (int q = 1; q <= total; q++) {
+         nome_fn = (char*)testes[q - 1].nome;
+         cabecalho_do_teste(nome_fn);
+         testes[q - 1].rotina();
+         CONTAGEM_DE_TESTES++;
+      }
    }
    imprime_separador(60);
+   free(testes);
 }
 
 #ifdef __unit_tests__
