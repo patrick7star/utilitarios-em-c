@@ -13,20 +13,22 @@
 #endif
 
 
-int find(char* string, char pattern) 
+#ifdef __linux__          
+#define None -1
+
+static int find(const char* string, char pattern) 
 {
 /* Acha a posição da primeira ocorrência do caractére na string. Se não
  * encontrar nada, então o retorno será -1. */
-   int t = strlen(string);
+   int t = (int)strlen(string);
 
    for (int k = 0; k < t; k++) {
       if (string[k] == pattern)
          return k;
    }
-   return -1;
+   return None;
 }
 
-#ifdef __linux__          
 void destroi_dimensao(Dimensao d) 
    { if (d != NULL) free(d); }
 
@@ -116,8 +118,8 @@ CROSSLIB struct TerminalSize obtem_dimensao(void) {
 
    In = GetStdHandle(STD_OUTPUT_HANDLE);
    GetConsoleScreenBufferInfo(In, &Out);
-   altura = Out.dwSize.Y;
-   largura = Out.dwSize.X;
+   altura = (uint8_t)Out.dwSize.Y;
+   largura = (uint8_t)Out.dwSize.X;
 
    return (struct TerminalSize){.linhas=altura, .colunas=largura};
 }
