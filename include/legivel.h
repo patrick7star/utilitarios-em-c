@@ -22,7 +22,7 @@
   #ifdef __LIB_DLL__
     #define CROSSLIB __declspec(dllexport)
   #else
-    #define CROSSLIB 
+    #define CROSSLIB __declspec(dllimport)
   #endif
 #elif defined(__linux__)
     #define CROSSLIB 
