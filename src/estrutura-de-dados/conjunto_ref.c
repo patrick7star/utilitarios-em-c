@@ -530,10 +530,15 @@ char* set_to_str(Conjunto S, ToString f) {
    size_t total_alocado = (mC + strlen(separador)) * sizeof(char) + 30;
    resultado_fmt = malloc(total_alocado);
 
+   #ifdef __linux__
    // Branqueando-a com algum conteudo.
    strcpy(resultado_fmt, "");
    // Colocando o cabeçalho primeiramente ...
    strcat(resultado_fmt, cabecalho);
+   #elif defined(_WIN32)
+   strcpy_s(resultado_fmt, 1, "");
+   strcpy_s(resultado_fmt, total_alocado - 1, cabecalho);
+   #endif
 
    if (vazia_set(S)) 
       // O fim depedente se foi iterado ou não.
@@ -543,15 +548,24 @@ char* set_to_str(Conjunto S, ToString f) {
          IterOutputSet i = next_set(&iterador_copia);
          generico_t dado = i.item;
          dado_str = f(dado);
+         #ifdef __linux__
          strcat(resultado_fmt, dado_str);
          strcat(resultado_fmt, separador);
+         #elif defined(_WIN32)
+         strcat_s(resultado_fmt, strlen(dado_str), dado_str);
+         strcat_s(resultado_fmt, strlen(separador), separador);
+         #endif
          // Removendo dado em formato string.
          free(dado_str);
       }
       fim = "\b\b}";
    }
    // Enclausurando a formatação da estrutura.
-   strcat(resultado_fmt, fim); 
+   // #ifdef __linux__
+   // strcat(resultado_fmt, fim); 
+   // #elif defined(_WIN32)
+   strcat_s(resultado_fmt, strlen(fim), fim); 
+   // #endif
    return resultado_fmt; 
 }
 
@@ -561,7 +575,7 @@ void impressao_generica(Conjunto S, ToString funcao) {
    IterSet i = cria_iter_set(S);
    char* dado_str;
 
-   printf("Conjunto(%lu): {", tamanho_set(S));
+   printf("Conjunto(%zu): {", tamanho_set(S));
    if (vazia_set(S))
       { puts("}"); return; }
 
@@ -707,6 +721,50 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
    return result;
 }
 
+/* === === === === === === === === === === === === === === === === === ===
+ *                            Nomes em Inglês
+ *                         (eles são mais comuns)
+ *   Um simples encapsulamento das funções que já fazem isso.
+ * === === === === === === === === === === === === === === === === === ==*/
+ Set new_set (Hash h, Eq f)
+   { return cria_set(h, f); }
+
+ void drop_set (Set e)
+    { destroi_set(e); }
+
+ void drop_inner_set (Set a, Drop g) 
+   { destroi_interno_set(a, g); }
+
+ bool add_methods_set (Conjunto e, Hash f, Eq g)
+   { return adiciona_metodos_set(e, f, g); }
+
+ bool add_set (Conjunto a, generico_t b)
+   { return adiciona_set(a, b); }
+
+ bool remove_set (Conjunto a, generico_t b)
+   { return deleta_set(a, b); }
+
+ bool contains_set (Conjunto a, generico_t e)
+   { return pertence_set(a, e); }
+
+ bool empty_set (Conjunto a)
+   { return vazia_set(a); }
+
+ size_t length_set (Conjunto a)
+   { return tamanho_set(a); }
+
+ void print_set (Conjunto a, ToString f)
+   { return imprime_set(a, f); }
+
+ Set union_set (Conjunto a, Conjunto b)
+   { return uniao_set(a, b); }
+
+ Set intersection_set (Conjunto a, Conjunto b)
+   { return intersecao_set(a, b); }
+
+ Set difference_set (Conjunto a, Conjunto b)
+   { return diferenca_set(a, b); }
+
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
  *
@@ -718,7 +776,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
-#ifdef _UT_CONJUNTO
+#if defined(_UT_CONJUNTO) && defined(__linux__)
 #include <assert.h>
 #include "teste.h"
 #include "tempo.h"
@@ -1370,4 +1428,42 @@ int main(int total, char* args[], char* vars[])
 
    return EXIT_SUCCESS;
 }
+#elif defined(_WIN32) && defined(__unit_tests__)
+size_t hash_int (generico_t key, size_t cp) {
+   int K = *((int*)key);
+   return K % cp;
+}
+
+bool eq_int(generico_t a, generico_t b) 
+   { return *((int*)a) == *((int*)b); }
+
+char* fmt_int(generico_t e) {
+   const int N = 4;
+   const int sz = sizeof(char);
+   char* output = malloc(N * sz);
+   int valor = *((int*)e);
+
+   sprintf(output, "%d", valor);
+   return output;
+}
+
+int main(int total, char* args[], char* vars[]) 
+{
+   /* Uma simples inserção de dados repetidos. */
+   int entradas[] = {1, 2, 2, 3, 4, 5, 6, 6, 6};
+   const int M = sizeof(entradas) / sizeof(int);
+
+   Set A = cria_set(hash_int, eq_int);
+
+   printf("Quantia de itens no Conjunto: %zu\n", tamanho_set(A));
+   for (int n = 0; n <= M; n++)
+      add_set(A, &entradas[n]);
+   printf("Quantia de itens no Conjunto: %zu\n", tamanho_set(A));
+   print_set(A, fmt_int);
+
+   drop_set(A);
+
+   return EXIT_SUCCESS;
+}
 #endif
+
