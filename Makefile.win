@@ -1,7 +1,6 @@
 AR            = llvm-ar.exe
 CC	           = clang-cl.exe
 CLANG         = clang.exe
-#HEADER        = ./include/windows
 HEADER        = ./include
 TESTER_ST_LIB = -Lbin/static -ltempo -legivel -lterminal -lteste
 
@@ -21,7 +20,8 @@ clean:
 legivel-all: legivel-obj legivel-lib legivel-test
 
 legivel-obj:
-	@$(CC) -I$(HEADER) /Ot /c src/legivel.c /Fobuild/legivel.obj 
+	@$(CC) -I$(HEADER) /D__LIB_DLL__ /Ot \
+		/c src/legivel.c /Fobuild/legivel.obj 
 	@echo "Objeto otimizado de 'legivel' compilado."
 
 legivel-test:
@@ -66,7 +66,7 @@ tempo-test:
 terminal-all: terminal-obj terminal-test
 
 terminal-obj:
-	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+	@$(CLANG) -I$(HEADER) -D__LIB_DLL__ -Wall -pedantic -O3 \
       -c -o build/terminal.obj src/terminal.c
 	@echo "O objeto de 'terminal' foi compilado."
 
@@ -106,8 +106,7 @@ progresso-run:
 teste-all: teste-obj teste-test
 
 teste-obj:
-	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
-      -c -o build/teste.obj src/teste.c
+	@$(CC) /I$(HEADER) /D__LIB_DLL__ /Ot /c /Fo./build/teste.obj src/teste.c
 	@echo "O objeto de 'teste' foi compilado."
 
 teste-test: progresso-obj
@@ -141,3 +140,13 @@ memoria-test:
 	@echo "Objeto dos testes de 'memória' foram compilado."
 	@$(CC) -I$(HEADER) -o bin/tests/ut_memoria.exe build/memoria-test.obj
 	@echo "Unitários de 'memória' estão compilado."
+
+# === === ===  === === === === === === === === === === === === === === ====
+#									Estruturas de Dados	
+# === === ===  === === === === === === === === === === === === === === ====
+conjuntoref-obj:
+	$(CC) /I$(HEADER) /Os /Ot /W3 /c /Fo./build/conjuto.obj src/estrutura-de-dados/conjunto_ref.c
+
+conjuntoref-test:
+	$(CC) /I$(HEADER) /D__unit_tests__ /Od /c /Fo./build/conjunto-test.obj src/estrutura-de-dados/conjunto_ref.c
+	$(CC) /I$(HEADER) /Fe:bin/tests/ut_conjunto.exe build/conjunto-test.obj build/tempo.obj build/teste.obj build/terminal.obj build/legivel.obj
