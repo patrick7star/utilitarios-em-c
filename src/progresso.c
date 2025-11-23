@@ -230,6 +230,9 @@ bool esgotado_bp(RefPG a) {
       return esgotado_bpt(&a->progresso.temporal);
    case Simples:
       return esgotado_bps(&a->progresso.simples);
+   default:
+      perror("Opção não é prá ser chamada!");
+      exit(2);
    };
 }
 

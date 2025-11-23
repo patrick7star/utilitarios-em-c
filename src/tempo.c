@@ -269,6 +269,19 @@ void teste_desconhecido_ii(void) {
    size_t decorrido_nano = fim.tv_nsec - inicio.tv_nsec;
    printf("%ldseg %ldns\n", decorrido_seg, decorrido_nano);
 }
+
+int main(int qtd, char* argumentos[], char* envs[]) 
+{
+   alocacao_e_desalocacao(); 
+   visualizacao_dos_marcos();
+   stringficacao_do_temporizador();
+   dois_tais_ate_o_esgotamento();
+   reutilizacao_do_temporizador();
+   disparando_o_cronometro();
+   teste_desconhecido_i();
+   teste_desconhecido_ii();
+   return EXIT_SUCCESS;
+}
 #elif defined(_WIN32) && defined(__unit_tests__)
 #include <synchapi.h>
 #include <locale.h>
