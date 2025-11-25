@@ -18,7 +18,7 @@ TESTADOR_ST = build/teste.o build/tempo.o build/terminal.o build/legivel.o
 # assim é possivel fazer-lo apenas com o 'gcc', respeitando o que já foi
 # feito na plataforma Linux com o 'clang' também.
 CC			= /usr/bin/gcc 
-CLANG		= $(CC)
+CLANG		= $(CC) 
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
@@ -97,34 +97,96 @@ limpa:
 #							Compila/ou Executa Todos Grupos:
 #			   	Objetos, Testes Unitários, Bibliotecas e etc.
 #
+#  Existe grupos de binários, que são muito uteis que sejam compilados 
+# primeiro, ou em forma de grupos. Isso ajuda no processo de automatização
+# de compilação. Feito tais, compilar tudo que foi feito, será preciso de 
+# apenas um simples comando.
+#
+#								Bibliotecas Estáticas:
+#
+#	O negócio deste algoritmo é agrupar alguns tipos de bibliotecas, com 
+# traços em comum, em apenas um grupo. A parte de 'coleções' é óbvia, eles
+# meio que estão todas num subdiretório. Entretanto, os demais, são mais
+# espalhados. Alguns, compartilharão a mesma lib, pois tem algunas funções
+# e utilitários, que são tipo uma interseção.
+#
+#	Legendas Importantes:
+#		stlib - static library(biblioteca estática)
+#		dylib - dynamic library(biblioteca dinâmica/compartilhada)
+#		test  - obviamente 'teste'.
+#		obj	- arquivo objeto.
+#		run	- rodar os testes
+#		all	- fazer tudo acima de cada subgrupo.
 # === === ===  === === === === === === === === === === === === === === ====
-compila-principais-objetos: obj-legivel obj-terminal obj-tempo obj-teste \
-	obj-aleatorio obj-ponto obj-progresso obj-conversao
+all-principais: constroi-raiz all-teste all-legivel all-terminal \
+					 all-ponto all-progresso all-estringue all-aleatorio
 
-compila-principais-bibliotecas: lib-progresso lib-legivel lib-tempo \
-	lib-terminal lib-aleatorio lib-teste lib-ponto lib-conversao
+obj-principais: obj-legivel obj-terminal obj-tempo obj-teste \
+					 obj-aleatorio obj-ponto obj-progresso obj-estringue
 
-compila-principais-tudo: constroi-raiz \
-	compila-principais-objetos compila-principais-bibliotecas \
-	all-teste all-legivel all-terminal all-tempo all-ponto all-conversao \
-	all-progresso all-lista-array-ref all-impressao all-memoria
+dylib-principais: lib-progresso lib-legivel lib-tempo lib-terminal \
+						lib-aleatorio lib-teste lib-ponto lib-estringue
 
-compila-testes-unitarios: test-terminal test-ponto test-aleatorio \
-	test-tempo test-impressao test-legivel test-conversao test-estringue
+test-principais: test-terminal test-ponto test-aleatorio test-tempo \
+					  test-legivel test-estringue test-teste
 
-roda-testes-unitarios: run-teste run-terminal run-ponto run-tempo \
-	run-estringue
-	
+run-principais: run-teste run-terminal run-ponto run-tempo run-estringue \
+					 run-progresso run-aleatorio
+
+# ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
 compila-bibliotecas-colecoes: lib-hashtable-ref lib-pilha-ligada-ref \
 	lib-fila-circular-ref lib-lista-array-ref lib-fila-ligada-ref
 
 compila-objetos-colecoes: obj-hashtable-ref obj-conjunto-ref \
 	obj-pilha-ligada-ref obj-lista-array-ref obj-deque-ligada-ref \
-	obj-fila-ligada-ref obj-fila-array-ref
+	obj-fila-ligada-ref obj-fila-array-ref obj-fila-circular-ref
 
 compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
 	test-pilha-ligada-ref test-lista-posicional-ref test-lista-array-ref \
 	test-fila-ligada-ref
+
+# ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+stlib-basic:
+	@ar crs bin/static/libbasico.a \
+		build/legivel.o build/tempo.o  build/teste.o build/terminal.o \
+		build/aleatorio.o build/ponto.o build/progresso.o \
+		build/estringue.o build/lista-array-ref.o -lm
+	@echo "Biblioteca 'libbasico.a' criada com sucesso."
+
+stlib-collections:
+	@ar crs bin/static/libcolecoes.a \
+		build/deque-ligada-ref.o build/fila-ligada-ref.o  \
+		build/lista-array-ref.o  build/hashtable-ref.o \
+		build/fila-array-ref.o build/fila-circular-ref.o \
+		build/pilha-ligada-ref.o build/conjunto-ref.o
+	@echo "Biblioteca 'libcolecoes.a' criada com sucesso."
+
+stlib-display:
+	@ar crs bin/static/libvisualiza.a \
+				build/impressao.o build/lista-array-ref.o \
+				build/legivel.o build/progresso.o
+	@echo "Biblioteca 'libvisualiza.a' criada com sucesso."
+
+stlib-computing:
+	@ar crs bin/static/libcomputa.a \
+				build/aleatorio.o build/combinatoria.o build/memoria.o \
+				build/estringue.o build/conversao.o
+	@echo "Biblioteca 'libcomputa.a' criada com sucesso."
+
+stlib-everything:
+	@ar crs bin/static/libutilitarios.a \
+			build/legivel.o build/tempo.o  build/teste.o build/terminal.o \
+			build/aleatorio.o build/ponto.o build/progresso.o \
+			build/estringue.o build/lista-array-ref.o -lm \
+				build/impressao.o build/lista-array-ref.o \
+				build/legivel.o build/progresso.o \
+			build/aleatorio.o build/combinatoria.o build/memoria.o \
+			build/estringue.o build/conversao.o \
+				build/deque-ligada-ref.o build/fila-ligada-ref.o  \
+				build/lista-array-ref.o  build/hashtable-ref.o \
+				build/fila-array-ref.o build/fila-circular-ref.o \
+				build/pilha-ligada-ref.o build/conjunto-ref.o
+	@echo "Biblioteca condensada 'libutilitarios.a' criada."
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Teste
@@ -132,8 +194,6 @@ compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
 COMPILA_TST = -D__unit_tests__ -D__debug__ -D__debug__executa_testes_b
 DEPS_TST 	= build/tempo.o build/legivel.o build/terminal.o
 EXE_TST 		= bin/tests/ut_teste
-EXE_TST_I 	= bin/shared/libteste.so
-EXE_TST_II 	= bin/static/libteste.a
 
 all-teste: obj-teste test-teste lib-teste
 
@@ -142,10 +202,14 @@ obj-teste:
 	@echo "Gerou o arquivo objeto 'teste.o' em 'build'."
 
 lib-teste: obj-teste
-	@$(CC) -Iinclude/ -o $(EXE_TST_I) -shared -fPIC src/teste.c $(DEPS_TST)
-	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
-	@ar crs $(EXE_TST_II) build/teste.o
+	@ar crs bin/static/libteste.a build/teste.o build/legivel.o \
+		build/tempo.o build/terminal.o
 	@echo "Compilação da biblioteca estática 'libteste.a'."
+	@$(CC) -I$(HEADERS) -Wall -O3 -Oz -fPIC \
+		-c -o build/teste-dylib.o src/teste.c  \
+		-Lbin/static -lteste -lm
+	@$(CC) -I$(HEADERS) -o bin/shared/libteste.so -shared build/teste-dylib.o
+	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
 
 test-teste:
 	@$(CC) -Isrc/teste -Iinclude -Wall -Werror \
@@ -165,7 +229,7 @@ run-teste:
 	./$(EXE_TST)
 
 clean-teste:
-	rm -v $(EXE_TST) $(EXE_TST_I) $(EXE_TST_II)
+	rm -v build/teste* bin/*/*teste*
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Terminal
@@ -205,7 +269,7 @@ clean-terminal:
 # 									Módulo Ponto
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_PONTO = bin/tests/ut_ponto
-DEPS_PONTO = -L bin/shared -lteste -ltempo -llegivel -lterminal
+DEPS_PONTO = $(TESTADOR_ST) -lm
 
 all-ponto: obj-ponto test-ponto lib-ponto
 
@@ -215,14 +279,16 @@ obj-ponto:
 
 lib-ponto:
 	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libponto.so build/ponto.o
-	@echo "biblioteca compartilhada 'libponto.so' compilada."
-	@ar crs bin/static/libponto.a build/ponto.o
-	@echo "biblioteca estática 'libponto.a' compilada."
+		-o build/ponto-dylib.o src/ponto.c
+	@$(CLANG) -I$(HEADERS) -shared \
+		-o bin/shared/libponto.so  \
+			build/ponto-dylib.o
+	@echo "Biblioteca compartilhada 'libponto.so' compilada."
 
 test-ponto:
 	@$(CC) -O0 -Wall -Iinclude/ -D_UT_PONTO -Wno-main \
-		-o $(EXE_PONTO) src/ponto.c $(DEPS_PONTO) -lm
+			-c -o build/ponto-teste.o src/ponto.c
+	@$(CC) -Iinclude/ -o $(EXE_PONTO) build/ponto-teste.o $(DEPS_PONTO)
 	@echo "Compilado os testes-unitários de 'ponto.c' em bin/tests."
 
 run-ponto:
@@ -243,16 +309,23 @@ DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo \
 all-aleatorio: obj-aleatorio test-aleatorio lib-aleatorio
 
 obj-aleatorio:
-	@$(CC) -O3 -Os -c -I include/ -Wall -Werror -o build/aleatorio.o src/aleatorio.c
+	@$(CC) -O3 -Os -I$(HEADERS) -Wall -Werror \
+		-c -o build/aleatorio.o src/aleatorio.c
 	@echo "Gerou o arquivo objeto 'aleatorio.o' em 'build'."
 
 test-aleatorio:
-	@$(CC) -Wall $(FLAGS_RANDOM) -o $(EXE_RANDOM) $(SRC_RANDOM) $(DEPS_RANDOM) -lm
+	$(CC) -I$(HEADERS) -Wall -O0 -DUT_ALEATORIO \
+		-c -o build/aleatorio-teste.o src/aleatorio.c 
+	@$(CC) -o $(EXE_RANDOM) build/aleatorio-teste.o \
+		-Lbin/static/ -lteste -lm
 	@echo "Compilado os testes-unitários de 'aleatorio' em bin/tests."
 
 lib-aleatorio:
 	@$(CC) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libaleatorio.so build/aleatorio.o
+		-o build/aleatorio-dylib.o src/aleatorio.c
+	@$(CC) -I$(HEADERS) -shared \
+		-o bin/shared/libaleatorio.so \
+			build/aleatorio-dylib.o
 	@echo "Biblioteca compartilhada 'libaleatorio.so' compilada."
 	@ar crs bin/static/libaleatorio.a build/aleatorio.o
 	@echo "Biblioteca estática 'libaleatorio.a' compilada."
@@ -309,34 +382,37 @@ clean-tempo:
 # 									Modulo Estringue
 # === === ===  === === === === === === === === === === === === === === ====
 COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
-EXE_STR 		 = bin/tests/ut_estringue
-EXE_STR_I 	 = bin/shared/libestringue.so
-BUILD_STR 	 = build/estringue.o
-BUILD_STR_I  = build/estringue-teste.o
-DEPS_STR 	 = $(OBJS_TESTE) build/teste.o
-SRC_STR 	 	 = src/estringue.c
 
 all-estringue: obj-estringue test-estringue lib-estringue
 
 obj-estringue:
-	@$(CC) -Os -Wall -Werror -Iinclude -c -o $(BUILD_STR) $(SRC_STR)
+	@$(CC) -Os -Wall -Werror -Iinclude \
+			-c -o build/estringue.o src/estringue.c
 	@echo "Gerou o arquivo objeto 'estringue.o' em 'build'."
 
 lib-estringue:
-	@$(CC) -Iinclude -shared -fPIC -o $(EXE_STR_I) $(BUILD_STR) \
-		-Lbin/static -llaref
+	@$(CC) -I$(HEADERS) -fPIC -c -o build/estringue-dylib.o src/estringue.c 
+	@$(CC) -I$(HEADERS) -shared \
+				-o bin/shared/estringue.so \
+					build/estringue-dylib.o
 	@echo "Biblioteca compartilhada 'libestringue.so' compilada."
-	@ar crs bin/static/libestringue.a build/estringue.o
+	@ar crs bin/static/libestringue.a \
+				build/estringue.o \
+				build/lista-array-ref.o
 	@echo "Biblioteca estática 'libestringue.a' compilada."
 
 test-estringue:
-	@$(CC) -Iinclude -ggdb -O0 -Wall $(COMPILAR_STR) \
-      -c -o $(BUILD_STR_I) $(SRC_STR)
-	@$(CC) -I ./include -o $(EXE_STR) $(BUILD_STR_I) $(DEPS_STR) $(TESTADOR)
+	@$(CC) -I$(HEADERS) -ggdb -O0 -Wall $(COMPILAR_STR) \
+      -c -o build/estringue-teste.o src/estringue.c
+	@$(CC) -I$(HEADERS) \
+		-o bin/tests/ut_estringue \
+			build/estringue-teste.o \
+			build/lista-array-ref.o \
+		$(TESTADOR_ST) -lm
 	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
 
 run-estringue:
-	./$(EXE_STR)
+	./bin/tests/ut_estringue
 
 clean-estringue:
 	@rm -vf $(BUILD_STR_I) $(BUILD_STR)  $(EXE_STR) $(EXE_STR_I) \
@@ -394,12 +470,11 @@ obj-progresso:
 	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
 
 lib-progresso: obj-progresso
-	@$(CLANG) -I$(HEADERS) -fPIC -c -o build/progresso-dylib.o src/progresso.c
+	@$(CLANG) -I$(HEADERS) -fPIC \
+		-c -o build/progresso-dylib.o src/progresso.c
 	@$(CLANG) -I include -o $(LIB_SO_PROG) -shared build/progresso-dylib.o
 	@echo "Compilação de uma biblioteca compartilhada 'libprogresso.so' em \
 			 'bin/shared'."
-	@ar crs $(LIB_A_PROG) build/progresso.o
-	@echo "Compilação de uma biblioteca estática 'libprogresso.a' em 'bin/static'."
 
 test-progresso:
 	@$(CLANG) -O0 -std=gnu2x -I include/ -Wall -D__unit_tests__ \
@@ -462,16 +537,22 @@ obj-impressao:
 	@echo "Gerou o arquivo objeto 'impressao.o' em 'build'."
 
 lib-impressao: obj-impressao
-	@$(CLANG) -Iinclude/ -shared -fPIC -o bin/shared/libimpressao.so build/impressao.o -Lbin/static -llaref
+	@$(CLANG) -I$(HEADERS) -fPIC -O3 -Oz \
+		-c -o build/impressao-dylib.o src/impressao.c
+	@$(CLANG) -I$(HEADERS) -shared \
+		-o bin/shared/libimpressao.so \
+			build/impressao-dylib.o \
+			build/lista-array-ref-dylib.o
 	@echo "Biblioteca compartilhada 'libimpressao.so' compilada."
-	@ar crs bin/static/libimpressao.a build/impressao.o
+	@ar crs bin/static/libimpressao.a \
+				build/impressao.o build/lista-array-ref.o
 	@echo "Biblioteca estática 'libimpressao.a' compilada."
 
 test-impressao:
 	@$(CLANG) -Iinclude/ -g3 -O0 -Wall -D__unit_tests__ -D__debug__ \
 		-c -o build/impressao-teste.o src/impressao.c 
 	@$(CLANG) -o bin/tests/ut_impressao build/impressao-teste.o \
-		$(TESTADOR) -llaref
+					$(TESTADOR_ST) build/lista-array-ref.o -lm
 	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
 
 run-impressao:
@@ -514,39 +595,25 @@ run-combinatoria:
 	./bin/tests/ut_combinatoria
 
 # === === ===  === === === === === === === === === === === === === === ====
-# 									Módulo Fio
-# === === ===  === === === === === === === === === === === === === === ====
-test-fio:
-	$(CC) -I$(HEADERS) -D__unit_tests__ -Wall -Werror -O0 -c -o build/fio-teste.o src/fio.c
-	$(CC) -I$(HEADERS) -o bin/tests/ut_fio build/fio-teste.o -L$(DLL) -llegivel
-
-run-fio:
-	@bin/tests/ut_fio
-
-# === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Memória
 # === === ===  === === === === === === === === === === === === === === ====
-BUILD_MEM 		= build/memoria.o
-BUILD_TST_MEM 	= build/memoria-teste.o
-EXE_MEM 			= bin/tests/ut_memoria
-DYLIB_MEM 		= bin/shared/libmemoria.so
-STLIB_MEM 		= bin/static/libmemoria.a
-
 all-memoria: obj-memoria test-memoria lib-memoria
 
 obj-memoria:
-	@$(CC) -O3 -I$(HEADERS) -Wall -Werror -c -o $(BUILD_MEM) src/memoria.c
+	@$(CC) -O3 -I$(HEADERS) -Wall -Werror -c -o build/memoria.o src/memoria.c
 
 test-memoria:
-	@$(CC) -I$(HEADERS) -D__unit_tests__ -Wall \
-		-c -o $(BUILD_TST_MEM) src/memoria.c
-	@$(CC) -I$(HEADERS) -o $(EXE_MEM) $(BUILD_TST_MEM)
+	@$(CC) -I$(HEADERS) -O0 -D__unit_tests__ -Wall \
+		-c -o build/memoria-teste.o src/memoria.c
+	@$(CC) -I$(HEADERS) -o bin/tests/ut_memoria build/memoria-teste.o
+	@echo "Teste 'ut_memoria' compilado."
 
 lib-memoria:
-	@$(CC) -I$(HEADERS) -shared -fPIC -o $(DYLIB_MEM) $(BUILD_MEM)
+	@$(CC) -I$(HEADERS) -fPIC -c -o build/memoria-dylib.o src/memoria.c
+	@$(CC) -I$(HEADERS) -shared \
+			-o bin/shared/memoria.so \
+				build/memoria-dylib.o
 	@echo "Biblioteca compartilhada 'libmemoria.so' compilada."
-	@ar crs $(STLIB_MEM) $(BUILD_MEM)
-	@echo "Biblioteca estática 'libmemoria.a' compilada."
 
 run-memoria:
 	@bin/tests/ut_memoria
@@ -645,11 +712,13 @@ obj-lista-array-ref:
 	@echo "Gerou o arquivo objeto 'lista-array-ref.o', em 'build'."
 
 lib-lista-array-ref: 
-	@$(CLANG) -O3 -Os -std=gnu2x -I include/ -shared -fPIC \
-		-o bin/shared/liblaref.so build/lista-array-ref.o
+	@$(CLANG) -O3 -Os -std=gnu2x -I$(HEADERS) -fPIC \
+		-c -o build/lista-array-ref-dylib.o \
+				src/estrutura-de-dados/listaarray_ref.c
+	@$(CLANG) -I$(HEADERS) -shared \
+				-o bin/shared/liblaref.so \
+					build/lista-array-ref-dylib.o
 	@echo "Biblioteca compartilhada 'liblaref.so' compilada."
-	@ar crs bin/static/liblaref.a build/lista-array-ref.o
-	@echo "Biblioteca estática 'liblaref.a' compilada."
 
 test-lista-array-ref:
 	@$(CC) -c -Iinclude -Wall -Werror $(COMPILA_LA_REF) \
@@ -799,7 +868,7 @@ clean-fila-circular-ref:
 # 						 	Modulo Fila-Ligada Referência
 # === === ===  === === === === === === === === === === === === === === ====
 SRC_FL_REF   = src/estrutura-de-dados/filaligada_ref.c
-OBJ_FL_REF 	 = build/filaligada_ref.o
+OBJ_FL_REF 	 = build/fila-ligada-ref.o
 EXE_FL_REF 	 = bin/tests/ut_fila_ligada_ref
 DYLIB_FL_REF = bin/shared/libflref.so
 STLIB_FL_REF = bin/static/libflref.a
@@ -833,21 +902,18 @@ run-fila-ligada-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 obj-deque-ligada-ref:
 	@$(CLANG) -O3 -Oz -I include/ -Wall -c \
-		-o build/dequeligada_ref.o \
+		-o build/deque-ligada-ref.o \
 		src/estrutura-de-dados/dequeligada_ref.c
 	@echo "Gerou o arquivo objeto 'dequeligada_ref.o', em 'build'."
-	@ar crs $(STLIB_FL_REF) $(OBJ_FL_REF)
 
-# === === ===  === === === === === === === === === === === === === === ====
-# 						 	Todo 'lib' Utilitários Ligada.
-# === === ===  === === === === === === === === === === === === === === ====
-compila-static-lib:
-	$(CC) -I$(HEADERS) -Os -O3 -c -o build/lib-utilitarios.o src/lib.c
-	@echo "Objeto do grande pacote 'utilitarios' foi compilado."
-	@ar crs bin/static/libutilitarios.a build/lib-utilitarios.o \
-		build/legivel.o build/tempo.o build/teste.o build/terminal.o \
-		build/aleatorio.o build/ponto.o -lm
-	@echo "Biblioteca 'libutilitarios.a' criada com sucesso."
+test-deque-ligada-ref:
+	@$(CLANG) -O0 -Wall -Wextra -I$(HEADERS) -DUT_DEQUE_LIGADA \
+		-c -o build/deque-ligada-ref-teste.o \
+				src/estrutura-de-dados/dequeligada_ref.c
+	@$(CLANG) \
+		-o bin/tests/ut_dequeligada_ref build/deque-ligada-ref-teste.o \
+			-Lbin/shared/ -lteste -laleatorio
+	@echo "Teste de 'fila-ligada-ref' compilada."
 
 # === === ===  === === === === === === === === === === === === === === ===
 #
