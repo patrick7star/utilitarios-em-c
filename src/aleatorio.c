@@ -241,7 +241,7 @@ void embaralha_array(generico_t seq, int n, int sz)
    } while (i < (n - 1));
 }
 
-#ifdef _UT_ALEATORIO
+#ifdef UT_ALEATORIO
 /* === === === === === === === === === === === === === === === === === ==
  *                            Testes Unitários
  *
@@ -256,9 +256,11 @@ void embaralha_array(generico_t seq, int n, int sz)
 #include <stdlib.h>
 #include <assert.h>
 #include <tgmath.h>
+// Parte da própria biblioteca:
 #include "teste.h"
 #include "tempo.h"
 #include "impressao.h"
+#include "macros.h"
 #endif
 
 void tempo_do_primeiro_inteiro_positivo_sorteado(void) {
