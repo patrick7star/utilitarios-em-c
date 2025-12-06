@@ -561,11 +561,11 @@ char* set_to_str(Conjunto S, ToString f) {
       fim = "\b\b}";
    }
    // Enclausurando a formatação da estrutura.
-   // #ifdef __linux__
-   // strcat(resultado_fmt, fim); 
-   // #elif defined(_WIN32)
+   #ifdef __linux__
+   strcat(resultado_fmt, fim); 
+   #elif defined(_WIN32)
    strcat_s(resultado_fmt, strlen(fim), fim); 
-   // #endif
+   #endif
    return resultado_fmt; 
 }
 
@@ -781,7 +781,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
 #include "teste.h"
 #include "tempo.h"
 #include "legivel.h"
-#include "dados_testes.h"
+#include "dados-testes.h"
 
 size_t hash_byte (generico_t key, size_t cp) {
    uint8_t K = *((uint8_t*)key);
@@ -1299,9 +1299,9 @@ void demonstracao_simples_da_conversao_em_str(void) {
 
 void teste_primario_de_operacoes_de_conjuntos(void) 
 {
-   const int N = 10;
-   uint16_t input_b[N] = { 1, 3, 6, 9, 12, 15, 18, 21, 24, 27};
-   uint16_t input_a[N] = { 1, 2, 4, 6, 8, 12, 14, 16, 18, 20 };
+   uint16_t input_b[] = { 1, 3, 6, 9, 12, 15, 18, 21, 24, 27};
+   uint16_t input_a[] = { 1, 2, 4, 6, 8, 12, 14, 16, 18, 20 };
+   const int N = sizeof(input_a) / sizeof(uint16_t);
    Conjunto B = cria_set(hash_u16, eq_u16); 
    Conjunto A = cria_set(hash_u16, eq_u16);
    uint16_t* X, *Y;
