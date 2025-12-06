@@ -132,14 +132,14 @@ test-principais: test-terminal test-ponto test-aleatorio test-tempo \
 
 run-principais: run-teste run-terminal run-ponto run-tempo run-estringue \
 					 run-progresso run-aleatorio
-
 # ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
-compila-bibliotecas-colecoes: lib-hashtable-ref lib-pilha-ligada-ref \
-	lib-fila-circular-ref lib-lista-array-ref lib-fila-ligada-ref
+obj-colecoes: obj-conjunto-ref obj-hashtable-ref obj-fila-circular-ref \
+				  obj-pilha-ligada-ref obj-lista-array-ref obj-fila-ligada-ref \
+				  obj-deque-ligada-ref obj-fila-array-ref
 
-compila-objetos-colecoes: obj-hashtable-ref obj-conjunto-ref \
-	obj-pilha-ligada-ref obj-lista-array-ref obj-deque-ligada-ref \
-	obj-fila-ligada-ref obj-fila-array-ref obj-fila-circular-ref
+lib-colecoes:	lib-hashtable-ref lib-pilha-ligada-ref \
+					lib-fila-circular-ref lib-lista-array-ref \
+					lib-fila-ligada-ref
 
 compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
 	test-pilha-ligada-ref test-lista-posicional-ref test-lista-array-ref \
@@ -637,11 +637,11 @@ obj-hashtable-ref:
 	@echo "Gerou o arquivo objeto 'hashtable-ref.o', em 'build'."
 
 lib-hashtable-ref: 
-	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libhtref.so build/hashtable-ref.o
+	@$(CLANG) -std=gnu2x -I$(HEADERS) -fPIC -Wall -O3 \
+		-c -o build/hashtableref-lib.o $(SRC_HT_REF)
+	@$(CLANG) -I$(HEADERS) -shared \
+		-o bin/shared/libhtref.so build/hashtableref-lib.o
 	@echo "Biblioteca compartilhada 'libhtref.so' compilada."
-	@ar crs bin/static/libhtref.a build/hashtable-ref.o
-	@echo "Biblioteca estática 'libhtref.a' compilada."
 
 test-hashtable-ref:
 	@$(CC) -I include/ $(COMPILA_HT_REF) $(FLAGS_HT_REF) -std=c18 -Wall \
@@ -659,10 +659,10 @@ clean-hashtable-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Conjunto Referência
 # === === ===  === === === === === === === === === === === === === === ====
-COMPILA_SET_REF 	  = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__
+COMPILA_SET_REF 	  = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__ \
+							 -Wno-gnu-folding-constant 
 EXE_SET_REF 		  = bin/tests/ut_conjunto_ref
 LIB_SO_SET_REF      = bin/shared/libconjref.so
-LIB_A_SET_REF 		  = bin/static/libconjref.a
 SRC_SET_REF 		  = src/estrutura-de-dados/conjunto_ref.c
 
 # Compila tudo acima, mas não rota o testes, ou exclui o que foi compilado.
@@ -674,17 +674,18 @@ obj-conjunto-ref:
 	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
 
 test-conjunto-ref:
-	@$(CLANG) -O0 -std=gnu18 -Wall -I include/ $(COMPILA_SET_REF) \
-		-Wno-gnu-folding-constant -o $(EXE_SET_REF) $(SRC_SET_REF) \
-		$(OBJS_SET_REF) -lm $(TESTADOR)
+	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall $(COMPILA_SET_REF) \
+		-c -o build/conjuntoref-test.o $(SRC_SET_REF) 
+	@$(CLANG) -I$(HEADERS) -o $(EXE_SET_REF) build/conjuntoref-test.o \
+				-lm $(TESTADOR_ST)
 	@echo "Teste 'ut_conjunto_ref' compilado."
 
 lib-conjunto-ref: 
-	@$(CLANG) -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libconjref.so build/conjunto-ref.o
+	@$(CLANG) -I$(HEADERS) -fPIC -Wall -O3 -Oz \
+		-c -o build/conjuntoref-lib.o $(SRC_SET_REF)
+	@$(CLANG) -I$(HEADERS) -shared \
+		-o bin/shared/libconjref.so build/conjuntoref-lib.o
 	@echo "Biblioteca compartilhada 'libconjref.so' compilada."
-	@ar crs bin/static/libconjref.a build/conjunto-ref.o
-	@echo "Biblioteca estática 'libconjref.a' compilada."
 
 run-conjunto-ref:
 	./$(EXE_SET_REF)
@@ -748,11 +749,11 @@ obj-pilha-ligada-ref:
 	@echo "Gerou o arquivo objeto 'pilhaligada_ref.o', em 'build'."
 
 lib-pilha-ligada-ref:
-	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libplref.so build/pilha-ligada-ref.o 
+	@$(CLANG) -std=gnu2x -I$(HEADERS) -fPIC -Wall -O3 -Oz \
+		-c -o build/pilhaligadaref-lib.o $(SRC_PL_REF)
+	@$(CLANG) -std=gnu2x -I$(HEADERS) -shared \
+		-o bin/shared/libplref.so build/pilhaligadaref-lib.o 
 	@echo "Biblioteca compartilhada 'libplref.so' compilada."
-	@ar crs bin/static/libplref.a build/pilha-ligada-ref.o
-	@echo "Biblioteca estática 'libplref.a' compilada."
 
 test-pilha-ligada-ref:
 	@$(CLANG) $(MOSTRA_PL) -Iinclude -Wall -c -o $(BUILD_PL_REF) $(SRC_PL_REF)
