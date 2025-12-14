@@ -118,8 +118,9 @@ limpa:
 #		run	- rodar os testes
 #		all	- fazer tudo acima de cada subgrupo.
 # === === ===  === === === === === === === === === === === === === === ====
-all-principais: constroi-raiz all-teste all-legivel all-terminal \
-					 all-ponto all-progresso all-estringue all-aleatorio
+all-principais: constroi-raiz all-teste all-legivel \
+					 all-terminal all-ponto all-progresso all-estringue \
+					 all-aleatorio
 
 obj-principais: obj-legivel obj-terminal obj-tempo obj-teste \
 					 obj-aleatorio obj-ponto obj-progresso obj-estringue
@@ -211,7 +212,7 @@ lib-teste: obj-teste
 	@$(CC) -I$(HEADERS) -o bin/shared/libteste.so -shared build/teste-dylib.o
 	@echo "Compilação da biblioteca compartilhada 'libteste.so'."
 
-test-teste:
+test-teste: obj-tempo obj-legivel obj-terminal obj-progresso
 	@$(CC) -Isrc/teste -Iinclude -Wall -Werror \
 		-c -o build/amostras.o src/teste/amostras.c
 	@$(CC) -Wall -Iinclude $(COMPILA_TST) \
@@ -301,10 +302,7 @@ clean-ponto:
 # 									Módulo Aleatório
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_RANDOM = bin/tests/ut_aleatorio
-SRC_RANDOM = src/aleatorio.c
-FLAGS_RANDOM = -I include/ -D__debug__ -D_UT_ALEATORIO -Wall -Werror
-DEPS_RANDOM = -Lbin/shared/ -lteste -llegivel -lterminal -ltempo \
-				  -limpressao
+DEPS_RANDOM = $(TESTADOR_ST) build/impressao.o build/lista-array-ref.o -lm
 
 all-aleatorio: obj-aleatorio test-aleatorio lib-aleatorio
 
@@ -313,11 +311,12 @@ obj-aleatorio:
 		-c -o build/aleatorio.o src/aleatorio.c
 	@echo "Gerou o arquivo objeto 'aleatorio.o' em 'build'."
 
-test-aleatorio:
-	$(CC) -I$(HEADERS) -Wall -O0 -DUT_ALEATORIO \
-		-c -o build/aleatorio-teste.o src/aleatorio.c 
-	@$(CC) -o $(EXE_RANDOM) build/aleatorio-teste.o \
-		-Lbin/static/ -lteste -lm
+test-aleatorio: obj-impressao obj-lista-array-ref
+	@$(CC) -I$(HEADERS) -Wall -O0 -DUT_ALEATORIO \
+		-c -o build/aleatorio-test.o src/aleatorio.c 
+	@echo "Gerado o objeto aleatorio-test.o em 'build'."
+	@$(CC) -I$(HEADERS) -o $(EXE_RANDOM) build/aleatorio-test.o \
+			$(DEPS_RANDOM)
 	@echo "Compilado os testes-unitários de 'aleatorio' em bin/tests."
 
 lib-aleatorio:
@@ -383,14 +382,14 @@ clean-tempo:
 # === === ===  === === === === === === === === === === === === === === ====
 COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
 
-all-estringue: obj-estringue test-estringue lib-estringue
+all-estringue: obj-estringue lib-estringue test-estringue 
 
 obj-estringue:
 	@$(CC) -Os -Wall -Werror -Iinclude \
 			-c -o build/estringue.o src/estringue.c
 	@echo "Gerou o arquivo objeto 'estringue.o' em 'build'."
 
-lib-estringue:
+lib-estringue: obj-lista-array-ref
 	@$(CC) -I$(HEADERS) -fPIC -c -o build/estringue-dylib.o src/estringue.c 
 	@$(CC) -I$(HEADERS) -shared \
 				-o bin/shared/estringue.so \
@@ -469,18 +468,18 @@ obj-progresso:
 		-c -o build/progresso.o src/progresso.c 
 	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
 
-lib-progresso: obj-progresso
-	@$(CLANG) -I$(HEADERS) -fPIC \
+lib-progresso:
+	@$(CLANG) -I$(HEADERS) -O3 -Oz -fPIC \
 		-c -o build/progresso-dylib.o src/progresso.c
-	@$(CLANG) -I include -o $(LIB_SO_PROG) -shared build/progresso-dylib.o
+	@$(CLANG) -I$(HEADERS) -o $(LIB_SO_PROG) -shared build/progresso-dylib.o
 	@echo "Compilação de uma biblioteca compartilhada 'libprogresso.so' em \
 			 'bin/shared'."
 
 test-progresso:
-	@$(CLANG) -O0 -std=gnu2x -I include/ -Wall -D__unit_tests__ \
+	@$(CLANG) -O0 -std=gnu2x -I$(HEADERS) -Wall -D__unit_tests__ \
 		-c -o build/progresso-teste.o src/progresso.c
-	@$(CLANG) -I include/ -Wall \
-		-o $(EXE_PROG) build/progresso-teste.o -lm $(TESTADOR)
+	@$(CLANG) -I$(HEADERS) \
+		-o $(EXE_PROG) build/progresso-teste.o -lm $(TESTADOR_ST)
 	@echo "Compilado os testes-unitários de 'progresso' em bin/tests."
 
 run-progresso:
@@ -536,8 +535,8 @@ obj-impressao:
 		-c -o build/impressao.o src/impressao.c
 	@echo "Gerou o arquivo objeto 'impressao.o' em 'build'."
 
-lib-impressao: obj-impressao
-	@$(CLANG) -I$(HEADERS) -fPIC -O3 -Oz \
+lib-impressao: obj-lista-array-ref lib-lista-array-ref
+	@$(CLANG) -I$(HEADERS) -Wall -fPIC -O3 -Oz \
 		-c -o build/impressao-dylib.o src/impressao.c
 	@$(CLANG) -I$(HEADERS) -shared \
 		-o bin/shared/libimpressao.so \
