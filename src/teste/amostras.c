@@ -1,7 +1,7 @@
 
 #include "amostras.h"
 #include "progresso.h"
-#include "../dados_testes.h"
+#include "dados_testes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
