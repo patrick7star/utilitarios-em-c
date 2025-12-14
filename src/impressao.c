@@ -20,6 +20,18 @@ tabela.
 #include "terminal.h"
 
 
+/* Arrays com dados de alguma definições, para ser usada principalmente
+ * como iteradores. */
+const enum Formatacao TODAS_CORES[] = {
+   Preto, Vermelho, Verde, Amarelo, Azul, 
+   Violeta, AzulMarinho, Branco
+};
+
+const enum Formatacao TODOS_EFEITOS[] = {
+   Negrito, Italico, Piscante, Frio, Sublinhado,
+   Riscado, Normal
+};
+
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Listagem de Strings 
  * === === === === === === === === === === === === === === === === === ===*/
