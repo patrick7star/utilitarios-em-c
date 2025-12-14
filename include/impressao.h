@@ -71,15 +71,10 @@
  };
 
  /* O proposito de tais arrays é somente para iteração das definições acima.
-  * Isso é útil tanto para testes unitários, quanto aplicações. */
- const enum Formatacao TODAS_CORES[] = {
-   Preto, Vermelho, Verde, Amarelo, Azul, 
-   Violeta, AzulMarinho, Branco
- };
- const enum Formatacao TODOS_EFEITOS[] = {
-   Negrito, Italico, Piscante, Frio, Sublinhado,
-   Riscado, Normal
- };
+  * Isso é útil tanto para testes unitários, quanto aplicações. 
+  */
+ extern const enum Formatacao TODAS_CORES[];
+ extern const enum Formatacao TODOS_EFEITOS[];
 
  /* Vários apelidos para diferência strings coloridas das normais. Na raíz,
   * elas são as mesmas coisas, entranto, as coloridas são mais cumpridas 
