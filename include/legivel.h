@@ -1,6 +1,6 @@
 /* Grandezas mais legíveis:
  * Faz conversões de grandezas referentes a dados utilizados em computação,
- * ou outros campos. 
+ * ou outros campos.
  */
 
 #ifndef LEGIVEL_H
@@ -12,6 +12,9 @@
 #ifdef __linux__
 #include <time.h>
 #include <sys/time.h>
+#elif defined(_WIN32)
+#include <Windows.h>
+#include <windef.h>
 #endif
 
 /* Fazendo a biblioteca multiplataforma. Isso é importante aqui, pois faz
@@ -25,15 +28,15 @@
     #define CROSSLIB __declspec(dllimport)
   #endif
 #elif defined(__linux__)
-    #define CROSSLIB 
+    #define CROSSLIB
 #endif
 
 
  // Converte o tamanho(em bytes) para uma forma mais humamente legível.
- CROSSLIB char* tamanho_legivel(size_t bytes); 
+ CROSSLIB char* tamanho_legivel(size_t bytes);
 
  // Coloca um valor de modo mais legivel.
- CROSSLIB char* valor_legivel_usize (size_t); 
+ CROSSLIB char* valor_legivel_usize (size_t);
  CROSSLIB char* valor_legivel_isize (int64_t);
  CROSSLIB char* valor_legivel_f32   (float);
  CROSSLIB char* valor_legivel_f64   (double);
@@ -56,6 +59,11 @@
  CROSSLIB char* tempo_legivel_timeval  (struct timeval t);
 #endif
 
+#ifdef _WIN32
+ /* Converte um FILETIME para um inteiro de forma bem direta. */
+ CROSSLIB size_t filetime_to_usize     (FILETIME);
+ CROSSLIB char* tempo_legivel_filetime (FILETIME);
+#endif
 
 #ifdef __linux__
 #define tempo_legivel(T) _Generic((T),       \
@@ -67,13 +75,14 @@
 #elif defined(_WIN32)
  #define tempo_legivel(T) _Generic((T),       \
     double:         tempo_legivel_double,     \
-    size_t:         tempo_legivel_usize       \
+    size_t:         tempo_legivel_usize,      \
+    FILETIME:       tempo_legivel_filetime    \
  )(T)
 #endif
 
- /* Constante de peso, tempo e tamanho, definidas e utilizadas, ao longo do 
+ /* Constante de peso, tempo e tamanho, definidas e utilizadas, ao longo do
   * programa. Que podem servir prá quem desejar tal valor aproximado. */
- extern const size_t MILHAR; 
+ extern const size_t MILHAR;
  extern const size_t MILHAO;
  extern const size_t BILHAO;
  extern const size_t TRILHAO;
