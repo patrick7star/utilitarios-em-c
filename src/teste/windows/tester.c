@@ -4,8 +4,6 @@
 // Biblioteca padrão do C:
 #include <stddef.h>
 // API do Windows.
-// #include <libloaderapi.h>
-// #include <sysinfoapi.h>
 #include <Windows.h>
 
 /* === === === === === === === === === === === === === === === === === ===+
