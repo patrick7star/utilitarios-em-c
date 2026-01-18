@@ -20,22 +20,24 @@ clean:
 legivel-all: legivel-obj legivel-lib legivel-test
 
 legivel-obj:
-	@$(CC) -I$(HEADER) /D__LIB_DLL__ /Ot \
-		/c src/legivel.c /Fobuild/legivel.obj 
+	@$(CC) /I$(HEADER) /D__LIB_DLL__ /Ot \
+			 /c src/legivel.c /Fobuild/legivel.obj
 	@echo "Objeto otimizado de 'legivel' compilado."
 
 legivel-test:
-	@$(CLANG) -I$(HEADER) -D__unit_tests__ -g3 -O0 -Wall \
-		-c -o build/legivel-test.obj src/legivel.c 
+	@$(CLANG) -I$(HEADER) -D__LIB_DLL__ -D__unit_tests__ -g3 -O0 -Wall \
+				 -c -o build/legivel-test.obj src/legivel.c
 	@echo "Objeto do 'legivel-test' gerado."
-	@$(CLANG) -I$(HEADER) -o bin/tests/ut_legivel.exe build/legivel-test.obj
+	@$(CLANG) -I$(HEADER) -o bin/tests/ut_legivel.exe \
+				 build/legivel-test.obj build/teste.obj build/tempo.obj \
+				 build/terminal.obj
 	@echo "Testes unitários de 'legivel' compilados."
 
 legivel-lib:
 	$(AR) crs bin/static/liblegivel.a build/legivel.obj
 	@echo "Biblioteca estática 'legível' criada."
 	$(CC) /I ./include/ /D __LIB_DLL__ /LD \
-		/Fe:bin/shared/legivel.dll src/legivel.c
+			/Fe:bin/shared/legivel.dll src/legivel.c
 	@echo "Biblioteca dinâmica 'legível' criada."
 
 legivel-run:
@@ -50,7 +52,7 @@ tempo-all: tempo-obj tempo-test
 
 tempo-obj:
 	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
-      -c -o build/tempo.obj src/tempo.c
+			 -c -o build/tempo.obj src/tempo.c
 	@echo "O objeto de 'tempo' foi compilado."
 
 tempo-test:
@@ -67,12 +69,12 @@ terminal-all: terminal-obj terminal-test
 
 terminal-obj:
 	@$(CLANG) -I$(HEADER) -D__LIB_DLL__ -Wall -pedantic -O3 \
-      -c -o build/terminal.obj src/terminal.c
+				 -c -o build/terminal.obj src/terminal.c
 	@echo "O objeto de 'terminal' foi compilado."
 
 terminal-test:
 	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
-		-c -o build/terminal-test.obj src/terminal.c
+			 -c -o build/terminal-test.obj src/terminal.c
 	@echo "O objeto dos testes de 'terminal' foram compilado."
 	@$(CC) -I$(HEADER) -o bin/tests/ut_terminal.exe build/terminal-test.obj
 	@echo "Os testes unitários de 'terminal' estão compilado."
@@ -87,12 +89,12 @@ progresso-all: progresso-obj progresso-test
 
 progresso-obj:
 	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
-      -c -o build/progresso.obj src/progresso.c
+			 -c -o build/progresso.obj src/progresso.c
 	@echo "O objeto de 'progresso' foi compilado."
 
 progresso-test:
 	@$(CC) -I$(HEADER) -Wall -pedantic -g3 -O0 -D__unit_tests__ \
-		-c -o build/progresso-test.obj src/progresso.c
+			 -c -o build/progresso-test.obj src/progresso.c
 	@echo "O objeto dos testes de 'progresso' foram compilado."
 	@$(CC) -I$(HEADER) -o bin/tests/ut_progresso.exe build/progresso-test.obj
 	@echo "Os testes unitários de 'progresso' estão compilado."
@@ -110,13 +112,14 @@ teste-obj:
 	@echo "O objeto de 'teste' foi compilado."
 
 teste-test: progresso-obj
-	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0	\
-      -D__unit_tests__ -Wno-strict-prototypes				\
-		-c -o build/teste-test.obj src/teste.c
+	@$(CC) /I $(HEADER) /std:c17 /W3  /Og /Od	\
+			 /D__unit_tests__ /D__LIB_DLL__ \
+			 -Wno-strict-prototypes -Wno-reserved-identifier \
+			 /c /Fobuild/teste-test.obj src/teste.c
 	@echo "Objeto dos testes de 'teste' foram compilado."
-	@$(CC) -I$(HEADER) -c -o build/amostras.obj src/teste/amostras.c
+	@$(CC) /I$(HEADER) /c /Fobuild/amostras.obj src/teste/amostras.c
 	@echo "Objeto das funções em 'amostras' gerado."
-	@$(CC) -I$(HEADER) -o bin/tests/ut_teste.exe build/teste-test.obj \
+	@$(CC) /I$(HEADER) /Fe:bin/tests/ut_teste.exe build/teste-test.obj \
 			build/legivel.obj build/tempo.obj build/terminal.obj			\
 			build/amostras.obj build/progresso.obj
 	@echo "Unitários de 'teste' estão compilado."
@@ -130,19 +133,19 @@ teste-clean:
 memoria-all: memoria-obj memoria-test
 
 memoria-obj:
-	@$(CC) -I$(HEADER) -Wall -pedantic -O3 \
+	@$(CLANG) -I$(HEADER) -Wall -pedantic -O3 \
       -c -o build/memoria.obj src/memoria.c
 	@echo "O objeto de 'memória' foi compilado."
 
 memoria-test:
-	@$(CC) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0 -D__unit_tests__   \
-		-c -o build/memoria-test.obj src/memoria.c
+	@$(CLANG) -I$(HEADER) -std=c17 -Wall -pedantic -g3 -O0 -D__unit_tests__ \
+				 -c -o build/memoria-test.obj src/memoria.c
 	@echo "Objeto dos testes de 'memória' foram compilado."
-	@$(CC) -I$(HEADER) -o bin/tests/ut_memoria.exe build/memoria-test.obj
+	@$(CLANG) -I$(HEADER) -o bin/tests/ut_memoria.exe build/memoria-test.obj
 	@echo "Unitários de 'memória' estão compilado."
 
 # === === ===  === === === === === === === === === === === === === === ====
-#									Estruturas de Dados	
+#									Estruturas de Dados
 # === === ===  === === === === === === === === === === === === === === ====
 conjuntoref-obj:
 	$(CC) /I$(HEADER) /Os /Ot /W3 /c /Fo./build/conjuto.obj src/estrutura-de-dados/conjunto_ref.c
