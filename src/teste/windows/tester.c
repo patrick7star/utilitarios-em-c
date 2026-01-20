@@ -6,11 +6,7 @@
 // API do Windows.
 #include <Windows.h>
 
-/* === === === === === === === === === === === === === === === === === ===+
- *                      Dados Globais Referentes as
- *                   Implementações Abaixo
- * === === === === === === === === === === === === === === === === === ===*/
-/* contabilizando testes sem nomes/ ou mensagens passadas. */
+/* Contabilizando testes sem nomes/ ou mensagens passadas. */
 static uint16_t CONTAGEM_DE_TESTES = 0;
 
 /* === === === === === === === === === === === === === === === === === ===+
@@ -26,16 +22,17 @@ static void cabecalho_do_teste(char *nome)
    int largura = DIM.colunas - MARGEM;
    /* Nota: tal coisa é importante, já que o Windows C Compiler(MSVC), não
     * suporta tal feature. Logo é preciso alocar memória dinâmica manualmente
-    * usando o 'memory allocation(malloc)'. 
+    * usando o 'memory allocation(malloc)'.
     */
    const int sz = sizeof(char);
    char* barra = malloc((uint64_t)largura * sz);
    char* rotulo = malloc((uint64_t)DIM.colunas * sz);
+   uint16_t indice = CONTAGEM_DE_TESTES + 1;
 
    // Fazendo separador e formatando seu título ...
    memset(barra, '\0', DIM.colunas);
    memset(barra, '-', DIM.colunas - 1);
-   sprintf(rotulo, "%s::[%d]", nome, CONTAGEM_DE_TESTES);
+   sprintf(rotulo, " [%uº]::%s ", indice, nome);
    memmove(barra + MARGEM, rotulo, strlen(rotulo));
 
    printf("\n%s\n\n", barra);
@@ -55,6 +52,48 @@ static void imprime_separador(int n)
    putchar('\n');
 }
 
+static void contabiliza_execucao(void)
+   { CONTAGEM_DE_TESTES += 1; }
+
+static int conta_valores_true(struct TesteConfig* list, const int n)
+{
+   int contagem = 0;
+
+   for (int m = 1; m <= n; m++)
+      if (list[m - 1].ativado)
+         contagem++;
+   return contagem;      
+}
+
+static void mostra_status_geral
+  (struct TesteConfig* lista, const int n, double tempo)
+{
+   int habilitados = conta_valores_true(lista, n);
+   int desabilitados = abs(n - habilitados);
+
+   printf(
+      "Testes definidos: %d on | %d off; Levou %0.3lfseg\n\n", 
+      habilitados, desabilitados, tempo
+   );
+}
+
+static double decorrido_seg(SYSTEMTIME a, SYSTEMTIME b)
+{  
+   double inicio, fim;
+
+   inicio = (double) (
+      a.wDay * DIA + a.wMonth * MES + a.wYear * ANO + 
+      a.wHour * HORA + a.wMinute* MINUTO + a.wSecond + 
+      (double)a.wMilliseconds / 1.0e3
+   );
+   fim = (double) (
+      b.wDay * DIA + b.wMonth * MES + b.wYear * ANO + 
+      b.wHour * HORA + b.wMinute* MINUTO + b.wSecond + 
+      (double)b.wMilliseconds / 1.0e3
+   );
+
+   return fim - inicio;
+}
 // ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
 static bool captura_testes_definidos
   (struct TesteConfig* lista, const int TOTAL, va_list argumentos)
@@ -64,11 +103,11 @@ static bool captura_testes_definidos
    if (TOTAL == 0)
       return false;
 
-   for (int n = 1; n <= TOTAL; n++) {
+   for (int n = 1; n <= TOTAL; n++) 
+   {
       aux = va_arg(argumentos, struct TesteConfig);
       lista[n - 1] = aux;
    }
-
    return true;
 }
 
@@ -92,33 +131,45 @@ CROSSLIB void executa_testes(bool execucao_do_suite, int total, ...)
     * memória dinâmica apenas declarando o comprimento da array numa variável
     * isso em tempo de compilação. O negócio é usar 'malloc' mesmo. Lembre-se
     * e é preciso liberar posteriormente. */
-   struct TesteConfig * testes;
-   uint64_t n = (uint64_t)total;
-   const int sz = sizeof(struct TesteConfig);
+   const int N = (int)total;
+   /* Só por garantia o dobro do que é preciso. Quase nada com o que
+    * geralmente é alocado. No máximo, algumas dezenas de testes. Centenas
+    * de milhares, está descartado. */
+   struct TesteConfig testes[2 * N];
+   SYSTEMTIME a, b;
 
-   testes = malloc(n * sz);
    va_start(args, total);
-   captura_testes_definidos(testes, total, args);
+   captura_testes_definidos(testes, N, args);
    va_end(args);
+   // Começando a medida.
+   GetSystemTime(&a);
 
-   if (execucao_do_suite) {
-      for (int q = 1; q <= total; q++) {
+   if (execucao_do_suite)
+   {
+      for (int q = 1; q <= N; q++)
+      {
          nome_fn = (char*)testes[q - 1].nome;
          cabecalho_do_teste(nome_fn);
-         testes[q - 1].rotina();
-         CONTAGEM_DE_TESTES++;
+
+         if (testes[q - 1].ativado)
+            testes[q - 1].rotina();
+         else
+            puts("\tO teste está DESABILITADO.");
+         contabiliza_execucao();
       }
    }
+   // Termina a medida de tempo.
+   GetSystemTime(&b);
    imprime_separador(60);
-   free(testes);
+   mostra_status_geral(testes, total, decorrido_seg(a, b));
 }
 
 #ifdef __unit_tests__
- #ifdef _WIN32
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Testes Unitários
  * === === === === === === === === === === === === === === === === === ===*/
 #include "../amostras.h"
+#include "legivel.h"
 
 TESTE debug_teste_config(struct TesteConfig* obj) {
    const char* const SEP = "\t\b\b";
@@ -132,30 +183,75 @@ TESTE debug_teste_config(struct TesteConfig* obj) {
    );
 }
 
-TESTE prototipo_da_funcao_executa_testes
-  (bool execucao_do_suite, int total, ...)
-{
-   struct TesteConfig testes[total];
-   va_list args;
+// Testes que não quebram para testar com o suite.
+TESTE capitaliza_palavras_void(void)
+   { capitaliza_palavras(); }
 
-   va_start(args, total);
-   captura_testes_definidos(testes, total, args);
+TESTE string_alternada_void(void)
+   { string_alternada(); }
 
-   for (int i = 1; i <= total; i++)
-      { putchar('\n'); debug_teste_config(&testes[i - 1]); putchar('\n'); }
-   va_end(args);
+TESTE funcao_que_executa_multiplos_testes(void) {
+   puts(
+      "\n\nOs testes aqui testados, realmente estão usando a função"
+      " 'executa_testes', que é a função final, e não um protótipo dela."
+      "Para usar tal função, é preciso que seu primeiro argumento seja, se "
+      "é para usar o 'suíte', isto é, todos as funções declaradas no "
+      "escopo da chamada; assim também quantas são no total. Ambos "
+      "argumentos são separados por vírgula. Para declara uma função, esta "
+      "tem que ser do tipo 'TESTE'[void(*)(void)], você precisa apenas "
+      "escrever o seu nome, sem string sem nada, e seu estado, se deseja "
+      "executar tal,... tudo isso dentro da função-macro 'Unit', terminado "
+      "separa com vírgula, tanto da declaração inicial ativação e quantia "
+      "como da das outras declarações de testes unitários."
+   );
 
-   for (int i = 1; i <= total; i++)
-      cabecalho_do_teste((char*)testes[i - 1].nome);
-}
-
-TESTE captura_de_todos_argumentos(void) {
-   prototipo_da_funcao_executa_testes (
-     true, 2,
-         Unit(percorrendo_string, false),
-         Unit(stringficacao_de_valores_primitivos, true)
+   executa_testes(
+     true, 4,
+         Unit(percorrendo_string, true),
+         Unit(stringficacao_de_valores_primitivos, false),
+         Unit(capitaliza_palavras_void, true),
+         Unit(string_alternada_void, true)
    );
 }
- #endif
+
+void debug_systemtime(SYSTEMTIME x)
+{
+   printf(
+      "%u/%02u/%u - %02u:%02u:%02u %ums - dia(%u)\n", 
+      x.wDay, x.wMonth, x.wYear, 
+      x.wHour, x.wMinute, x.wSecond,
+      x.wMilliseconds, x.wDayOfWeek
+   );
+}
+
+TESTE medicao_de_tempo(void) {
+   DWORD a, b;
+   SYSTEMTIME x, y;
+
+   GetSystemTime(&x);
+   a = GetTickCount();
+   Sleep(2);
+   b = GetTickCount();
+   GetSystemTime(&y);
+
+   debug_systemtime(x);
+   debug_systemtime(y);
+
+   printf("Decorrido(GetTickCount): %lums\n", b - a);
+   printf("Decorrido(GetSystemTime): %lfms\n", decorrido_seg(x, y));
+}
+
+TESTE configuracao_de_testes(void) {
+   struct TesteConfig input[] = {
+      Unit(percorrendo_string, false),
+      Unit(stringficacao_de_valores_primitivos, false),
+      Unit(capitaliza_palavras_void, true),
+      Unit(string_alternada_void, true)
+   };
+   const int N = sizeof(input) / sizeof(struct TesteConfig);
+
+   for (int n = 0; n < N; n++)
+      debug_teste_config(&input[n]);
+}
 #endif
 
