@@ -38,8 +38,8 @@
  * executa-la?! */
 struct TesteConfig { const char* nome; Fn rotina; bool ativado; };
 
-#define Unit(FUNCAO, ESTADO) (  \
-   (struct TesteConfig){         \
+#define Unit(FUNCAO, ESTADO) (   \
+   (struct TesteConfig) {        \
       .nome = #FUNCAO,           \
       .rotina = FUNCAO,          \
       .ativado = ESTADO          \
