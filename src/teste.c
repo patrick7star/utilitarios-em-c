@@ -157,7 +157,11 @@ int main(int qtd, char* args[], char* vars[]) {
    setlocale(LC_CTYPE, "en_US.UTF-8");
 
    puts("Ainda não portado os testes para Windows.");
-   captura_de_todos_argumentos();
+
+   funcao_que_executa_multiplos_testes();
+   medicao_de_tempo();
+   configuracao_de_testes();
+
    return EXIT_SUCCESS;
 }
 #endif
