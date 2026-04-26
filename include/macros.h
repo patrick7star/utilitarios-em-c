@@ -25,10 +25,11 @@
   * tipo de declaração.
   *   Também pega todos nomes variádos que tal trecho pode ter. Na verdade
   * são mais uma versão aproximada do primeiro. */
- #define loop_infinito while (true)
- #define LOOP_INFINITO   loop_infinito 
- #define LOOP            loop_infinito
- #define loop            loop_infinito
- #define __LOOP__        loop_infinito
- #define __loop__        loop_infinito
+ #define loop_infinito    while (true)
+ #define LOOP_INFINITO    loop_infinito 
+ #define LoopInfinito     loop_infinito
+ #define loopinfinito     loop_infinito
+ #define __LOOPINFINITO__ loop_infinito
+ #define __loopinfinito__ loop_infinito
+ #define __LoopInfinito__ loop_infinito
 
