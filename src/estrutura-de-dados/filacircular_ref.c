@@ -255,22 +255,25 @@ size_t tamanho_fc(FilaCircular q, size_t sz) {
    return a + (b + c) * n;
 }
 
-#ifdef UT_FILA_CIRCULAR
+#ifdef __unit_tests__
 /* === === === === === === === === === === === === === === === === === ==
  *                     Testes Unitários da 
  *                Fila Circular e outras Funções
  * === === === === === === === === === === === === === === === === === ==*/
+// Bibliotecas padrão do C:
 #include <assert.h>
 #include <string.h>
 #include <tgmath.h>
 #include <limits.h>
-#include "dados_testes.h"
+// Bibliotecas do próprio projeto:
+#include "dados-testes.h"
 #include "teste.h"
 #include "tempo.h"
 #include "legivel.h"
 #include "progresso.h"
+#include "macros.h"
 
-void criacao_e_destruicao(void) {
+UNIT_TEST criacao_e_destruicao(void) {
    FilaCircular queue = cria_fc();
    assert (queue != NULL);
    puts("alocação foi bem sucedida.");
@@ -278,7 +281,7 @@ void criacao_e_destruicao(void) {
    puts("desalocação foi bem sucedida.");
 }
 
-void visualiza_fc_de_strings(FilaCircular Q) {
+UNIT_TEST visualiza_fc_de_strings(FilaCircular Q) {
    if (vazia_fc(Q)) { puts("{}"); return; }
 
    nodulo_t* atual = Q->fim->seta;
@@ -292,7 +295,7 @@ void visualiza_fc_de_strings(FilaCircular Q) {
    puts("\b\b -->}\n");
 }
 
-void efetuando_operacoes(void) {
+UNIT_TEST efetuando_operacoes(void) {
    const char* strings_input[] = {
       frutas[4], frutas[8], boys_names[1],
       boys_names[4], girls_names[5], veiculos[10]
@@ -309,7 +312,7 @@ void efetuando_operacoes(void) {
    }
    visualiza_fc_de_strings(queue);
 
-   loop_infinito {
+   LOOP_INFINITO {
       // abandona o loop se a 'fila' está vázia.
       if (vazia_fc(queue)) break;
 
@@ -321,7 +324,7 @@ void efetuando_operacoes(void) {
    destroi_fc(queue);
 }
 
-void verificando_rotacao(void) {
+UNIT_TEST verificando_rotacao(void) {
    FilaCircular queue = cria_fc();
    const char* strings_input[] = {
       veiculos[4], frutas[6], boys_names[5],
@@ -395,7 +398,7 @@ static char* int32_to_str(generico_t dt) {
    return inteiro_fmt;
 }
 
-void simples_visualizacao_da_fila(void) {
+UNIT_TEST simples_visualizacao_da_fila(void) {
    FilaCircular queue = cria_fc();
    int entradas[] = {-99999, -9999, -999, -99, -9, 9, 99, 999, 9999, 99999};
 
@@ -408,7 +411,7 @@ void simples_visualizacao_da_fila(void) {
    destroi_fc(queue);
 }
 
-void estressando_rotacao(void) {
+UNIT_TEST estressando_rotacao(void) {
    FilaCircular queue = cria_fc();
    int entradas[] = {-99999, -9999, -999, -99, -9, 9, 99, 999, 9999, 99999};
    const size_t TOTAL = 100000;
@@ -433,7 +436,7 @@ void estressando_rotacao(void) {
 static bool desaloca_int32(generico_t a)
    { free(a); a = NULL; return true; }
 
-void nao_quebra_em_liberar_dados_de_fila_vazias(void) {
+UNIT_TEST nao_quebra_em_liberar_dados_de_fila_vazias(void) {
    puts("Criado com sucesso, porém sem dados interno.");
    FilaCircular queue = cria_fc();
    printf("Liberando fila-circular, e seus dados internos ... ");
@@ -442,14 +445,26 @@ void nao_quebra_em_liberar_dados_de_fila_vazias(void) {
 }
 
 int main(void) {
-   executa_testes (
-      6, criacao_e_destruicao, true,
+   /* 
+   == == == Código Morto(função descontinuada) == == ==
+   executa_testes(
+       6, criacao_e_destruicao, true,
          efetuando_operacoes, true,
          verificando_rotacao, true,
          simples_visualizacao_da_fila, true,
          nao_quebra_em_liberar_dados_de_fila_vazias, true,
          estressando_rotacao, true
-   ); 
+   );*/
+
+   executa_testes_b(
+       true, 6, 
+         Unit(criacao_e_destruicao, true),
+         Unit(efetuando_operacoes, true),
+         Unit(verificando_rotacao, true),
+         Unit(simples_visualizacao_da_fila, true),
+         Unit(nao_quebra_em_liberar_dados_de_fila_vazias, true),
+         Unit(estressando_rotacao, true)
+   );
 
    return EXIT_SUCCESS;
 }
