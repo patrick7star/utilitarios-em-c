@@ -9,10 +9,11 @@
 # Quase todos testes de módulo abaixo usam o 'módulo teste'. Aqui vai 
 # a ligação ao sua lib compartilhada, assim não é preciso escrever toda
 # vez isso no final de cada teste, apenas usar a variável.
-TESTADOR		= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
+TESTADOR_DYLIB	= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
+TESTADOR_OBJ	= build/teste.o build/tempo.o build/terminal.o build/legivel.o
+TESTADOR_STLIB	= -Lbin/static -lteste -lvisualiza -lm
 HEADERS		= ./include/
 DLL			= bin/shared/
-TESTADOR_ST = build/teste.o build/tempo.o build/terminal.o build/legivel.o
 # Isso está sendo coloca, pois o WSL(uso no Windows), apenas tem o
 # compilador GCC, não o Clang. Ambos 'clang' e 'gcc' podem ser igualados,
 # assim é possivel fazer-lo apenas com o 'gcc', respeitando o que já foi
@@ -134,6 +135,8 @@ test-principais: test-terminal test-ponto test-aleatorio test-tempo \
 run-principais: run-teste run-terminal run-ponto run-tempo run-estringue \
 					 run-progresso run-aleatorio
 # ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+all-colecoes: constroi-raiz obj-colecoes lib-colecoes test-colecoes
+
 obj-colecoes: obj-conjunto-ref obj-hashtable-ref obj-fila-circular-ref \
 				  obj-pilha-ligada-ref obj-lista-array-ref obj-fila-ligada-ref \
 				  obj-deque-ligada-ref obj-fila-array-ref
@@ -142,11 +145,13 @@ lib-colecoes:	lib-hashtable-ref lib-pilha-ligada-ref \
 					lib-fila-circular-ref lib-lista-array-ref \
 					lib-fila-ligada-ref
 
-compila-testes-unitarios-colecoes: test-conjunto-ref test-hashtable-ref \
+test-colecoes: test-conjunto-ref test-hashtable-ref \
 	test-pilha-ligada-ref test-lista-posicional-ref test-lista-array-ref \
 	test-fila-ligada-ref
 
 # ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
+# Compilação focada em junção de bibliotecas estáticas.
+
 stlib-basic:
 	@ar crs bin/static/libbasico.a \
 		build/legivel.o build/tempo.o  build/teste.o build/terminal.o \
@@ -833,36 +838,38 @@ clean-lista-posicional-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Circular Referência
 # === === ===  === === === === === === === === === === === === === === ====
-SRC_FC_REF 	 = src/estrutura-de-dados/filacircular_ref.c 
-OBJ_FC_REF 	 = build/fila-circular-ref.o
-OBJ_FC_REF_I = build/fila-circular-ref-teste.o
-EXE_FC_REF 	 = bin/tests/ut_filacirular_ref 
-DYLIB_FC_REF = bin/shared/libfcref.so
-STLIB_FC_REF = bin/static/libfcref.a
+SRC_FC_REF			= src/estrutura-de-dados/filacircular_ref.c 
+OBJ_FC_REF			= build/filacircularref.o
+OBJ_DYLIB_FC_REF	= build/filacircularref-dylib.o
+OBJ_TEST_FC_REF	= build/filacircularref-test.o
+EXE_TEST_FC_REF	= bin/tests/ut-filacirularref 
+EXE_DYLIB_FC_REF	= bin/shared/libfcref.so
 
 all-fila-circular-ref: obj-fila-circular-ref lib-fila-circular-ref \
 	test-fila-circular-ref
 
 obj-fila-circular-ref:
-	@$(CLANG) -O3 -Oz -I include/ -Wall -Werror \
+	@$(CLANG) -O3 -Oz -I$(HEADERS) -Wall -Werror \
 		-c -o $(OBJ_FC_REF) $(SRC_FC_REF)
 	@echo "Gerou o arquivo objeto 'fila-circular-ref.o', em 'build'."
 
 test-fila-circular-ref:
-	$(CLANG) -O0 -I include/ -Wall -Werror -DUT_FILA_CIRCULAR -D__debug__ \
-		-o $(EXE_FC_REF) $(SRC_FC_REF) $(TESTADOR) -lprogresso
-	@echo "Teste 'ut_fila_array_ref' compilado com sucesso."
+	@$(CLANG) -O0 -I$(HEADERS) -Wall -Werror \
+			-D__unit_tests__ -D__debug__ \
+			-c -o $(OBJ_TEST_FC_REF) $(SRC_FC_REF)
+	@$(CLANG) -I$(HEADERS) \
+			-o $(EXE_TEST_FC_REF) $(OBJ_TEST_FC_REF) $(TESTADOR_STLIB)
+	@echo "Teste 'ut-filacircularref' compilado com sucesso."
 	
-lib-fila-circular-ref: obj-fila-circular-ref
-	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o $(DYLIB_FC_REF) $(OBJ_FC_REF) 
+lib-fila-circular-ref:
+	@$(CLANG) -O3 -Oz -std=gnu2x -I$(HEADERS) -fPIC -Wall -Werror \
+		-c -o $(OBJ_DYLIB_FC_REF) $(SRC_FC_REF) 
+	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_FC_REF) $(OBJ_DYLIB_FC_REF) 
 	@echo "Biblioteca compartilhada 'libfcref.so' compilada."
-	@ar crs $(STLIB_FC_REF) $(OBJ_FC_REF)
-	@echo "Biblioteca estática 'libfcref.a' compilada."
 
 clean-fila-circular-ref:
-	@rm -v -f $(EXE_FC_REF) $(OBJ_FC_REF) $(DYLIB_FC_REF) \
-		$(OBJ_FC_REF_I) $(STLIB_FC_REF)
+	@rm -v -f $(OBJ_FC_REF) $(OBJ_TEST_FC_REF) $(OBJ_DYLIB_FC_REF) \
+				 $(EXE_DYLIB_FC_REF) $(EXE_TEST_FC_REF)
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Ligada Referência
