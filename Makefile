@@ -663,40 +663,41 @@ clean-hashtable-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Conjunto Referência
 # === === ===  === === === === === === === === === === === === === === ====
-COMPILA_SET_REF 	  = -D_MEDIA_DOS_SLOTS -D_UT_CONJUNTO -D__debug__ \
-							 -Wno-gnu-folding-constant 
-EXE_SET_REF 		  = bin/tests/ut_conjunto_ref
-LIB_SO_SET_REF      = bin/shared/libconjref.so
-SRC_SET_REF 		  = src/estrutura-de-dados/conjunto_ref.c
+EXE_TEST_SET_REF	= bin/tests/ut-conjuntoref
+EXE_DYLIB_SET_REF = bin/shared/libconjref.so
+SRC_SET_REF 		= src/estrutura-de-dados/conjunto_ref.c
+OBJ_TEST_SET_REF	= build/conjuntoref-test.o
+OBJ_SET_REF			= build/conjunto-ref.o 
+OBJ_DYLIB_SET_REF = build/conjuntoref-dylib.o 
 
 # Compila tudo acima, mas não rota o testes, ou exclui o que foi compilado.
 all-conjunto-ref: obj-conjunto-ref lib-conjunto-ref test-conjunto-ref
 
 obj-conjunto-ref:
-	@$(CLANG) -std=gnu2x -O3 -Oz -I include/ -Wall -c \
-		-o build/conjunto-ref.o $(SRC_SET_REF) 
+	@$(CLANG) -std=gnu2x -O3 -Oz -I$(HEADERS) -Wall -Werror -pedantic \
+			 	 -c -o $(OBJ_SET_REF) $(SRC_SET_REF) 
 	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
 
 test-conjunto-ref:
-	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall $(COMPILA_SET_REF) \
-		-c -o build/conjuntoref-test.o $(SRC_SET_REF) 
-	@$(CLANG) -I$(HEADERS) -o $(EXE_SET_REF) build/conjuntoref-test.o \
-				-lm $(TESTADOR_ST)
-	@echo "Teste 'ut_conjunto_ref' compilado."
+	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall -D__unit_tests__ \
+		-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF) 
+	@$(CLANG) -I$(HEADERS) -o $(EXE_TEST_SET_REF) $(OBJ_TEST_SET_REF) \
+				-lm $(TESTADOR_STLIB) 
+	@echo "Teste 'ut-conjuntoref' compilado."
 
 lib-conjunto-ref: 
 	@$(CLANG) -I$(HEADERS) -fPIC -Wall -O3 -Oz \
-		-c -o build/conjuntoref-lib.o $(SRC_SET_REF)
-	@$(CLANG) -I$(HEADERS) -shared \
-		-o bin/shared/libconjref.so build/conjuntoref-lib.o
+				 -c -o $(OBJ_DYLIB_SET_REF) $(SRC_SET_REF) 
+	@echo "Objeto 'conjunto-ref.o' compilado."
+	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_SET_REF) $(OBJ_DYLIB_SET_REF)
 	@echo "Biblioteca compartilhada 'libconjref.so' compilada."
 
 run-conjunto-ref:
 	./$(EXE_SET_REF)
 
 clean-conjunto-ref:
-	@rm -fv $(EXE_SET_REF) build/conjunto-ref.o $(LIB_A_SET_REF) \
-		$(LIB_SO_SET_REF) 
+	@rm -fv	$(EXE_TEST_SET_REF) $(OBJ_DYLIB_SET_REF) $(OBJ_SET_REF) \
+				$(EXE_DYLIB_SET_REF)  $(OBJ_TEST_SET_REF)
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Lista-Array Referência

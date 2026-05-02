@@ -592,7 +592,7 @@ void impressao_generica(Conjunto S, ToString funcao) {
 }
 
 void imprime_set(Conjunto a, ToString f)
-   { return impressao_generica(a, f); }
+   { impressao_generica(a, f); }
 
 bool limpa_set(Conjunto a) {
 /*   Remove todos itens do conjunto. O algoritmo para realizar isso é 
@@ -754,7 +754,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
    { return tamanho_set(a); }
 
  void print_set (Conjunto a, ToString f)
-   { return imprime_set(a, f); }
+   { imprime_set(a, f); }
 
  Set union_set (Conjunto a, Conjunto b)
    { return uniao_set(a, b); }
@@ -776,7 +776,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
-#if defined(_UT_CONJUNTO) && defined(__linux__)
+#if defined(__unit_tests__) && defined(__linux__)
 #include <assert.h>
 #include "teste.h"
 #include "tempo.h"
@@ -819,7 +819,7 @@ void insercoes_randomicas(conjunto_t* s, size_t qtd) {
 static bool free_byte(generico_t x) 
    { free(x); return true; }
 
-void operacoes_basicas_na_estrutura(void) {
+UNITARIO operacoes_basicas_na_estrutura(void) {
    Conjunto S = cria_branco_set();
    adiciona_metodos_set(S, hash_byte, eq_byte);
    uint8_t input[] = { 22, 2, 89, 2, 7, 13, 7, 89, 0};
@@ -864,7 +864,7 @@ void operacoes_basicas_na_estrutura(void) {
    destroi_interno_set(S, free_byte);
 }
 
-void rejeicao_de_entradas_duplicadas_em_massa(void) {
+UNITARIO rejeicao_de_entradas_duplicadas_em_massa(void) {
    Conjunto S = cria_com_capacidade_set(30, hash_byte, eq_byte);
    const size_t TOTAL = 30000;
    size_t rejeicoes = 0;
@@ -971,9 +971,9 @@ size_t media_itens_por_slot(Conjunto S) {
 
 struct pausa_args { TempoTipo type; uint16_t units; };
 
-void info_controlada(Conjunto S, size_t size, size_t* rejeicoes, 
-  struct pausa_args A
-){
+void info_controlada
+ (Conjunto S, size_t size, size_t* rejeicoes, struct pausa_args A)
+{
    if (!instanciado) {
       timer = cria_temporizador(A.type, A.units);
       instanciado = true;
@@ -1022,7 +1022,7 @@ void info_controlada(Conjunto S, size_t size, size_t* rejeicoes,
    }
 }
 
-static void insere_na_array_de_nodulos(ArrayNodulo array, generico_t dado,
+UNITARIO insere_na_array_de_nodulos(ArrayNodulo array, generico_t dado,
   size_t capacidade, Hash posicao, Eq compara) 
 {
 /* Verifica se o 'container' da lista a ser usado já tem uma lista, se 
@@ -1107,7 +1107,7 @@ bool dobra_array_interna(Conjunto S) {
    return false;
 }
 
-void monitorando_propriedades_sobre_estresse(void) {
+UNITARIO monitorando_propriedades_sobre_estresse(void) {
    const size_t TOTAL = 3000000;
    const size_t CP = 3000;
    Conjunto S = cria_com_capacidade_set(CP, hash_sizet, eq_sizet);
@@ -1128,7 +1128,7 @@ void monitorando_propriedades_sobre_estresse(void) {
    destroi_interno_set(S, free_usize);
 }
 
-void insercoes_stats_havendo_redimensionamento(void) {
+UNITARIO insercoes_stats_havendo_redimensionamento(void) {
    const size_t TOTAL = 9000000;
    const size_t CP = 500;
    Conjunto S = cria_com_capacidade_set(CP, hash_sizet, eq_sizet);
@@ -1149,7 +1149,7 @@ void insercoes_stats_havendo_redimensionamento(void) {
    destroi_interno_set(S, free_usize);
 }
 
-void iteracao_simples_para_testar_a_implmentacao(void) {
+UNITARIO iteracao_simples_para_testar_a_implmentacao(void) {
    Conjunto S = cria_set(hash_byte, eq_byte); 
 
    for (size_t i = 0; i < VALORES_PADRONIZADOS; i++) {
@@ -1213,7 +1213,7 @@ char* conststring(generico_t a) {
    return saida;
 }
 
-void simples_clonagem_inicial_de_iteradores(void) {
+UNITARIO simples_clonagem_inicial_de_iteradores(void) {
    Conjunto S = cria_set(hash_string, eq_string); 
 
    for (size_t i = 0; i < OBJETOS; i++) {
@@ -1282,7 +1282,7 @@ static size_t hash_u16(generico_t a, size_t cp) {
    return *ptr % cp;
 }
 
-void demonstracao_simples_da_conversao_em_str(void) {
+UNITARIO demonstracao_simples_da_conversao_em_str(void) {
    Conjunto S = cria_set(hash_u16, eq_u16); 
 
    for (size_t i = 0; i < VALORES_PADRONIZADOS_I; i++) {
@@ -1297,7 +1297,7 @@ void demonstracao_simples_da_conversao_em_str(void) {
    destroi_set(S);
 }
 
-void teste_primario_de_operacoes_de_conjuntos(void) 
+UNITARIO teste_primario_de_operacoes_de_conjuntos(void) 
 {
    uint16_t input_b[] = { 1, 3, 6, 9, 12, 15, 18, 21, 24, 27};
    uint16_t input_a[] = { 1, 2, 4, 6, 8, 12, 14, 16, 18, 20 };
@@ -1335,7 +1335,7 @@ void teste_primario_de_operacoes_de_conjuntos(void)
    destroi_set(E);
 }
 
-void efetuando_operacoes_com_conjuntos_vazios(void)
+UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
 {
    uint16_t input_a[] = { 1, 2, 4, 6, 8};
    Conjunto B = cria_set(hash_u16, eq_u16); 
