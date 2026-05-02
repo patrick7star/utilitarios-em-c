@@ -12,8 +12,8 @@
 TESTADOR_DYLIB	= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
 TESTADOR_OBJ	= build/teste.o build/tempo.o build/terminal.o build/legivel.o
 TESTADOR_STLIB	= -Lbin/static -lteste -lvisualiza -lm
-HEADERS		= ./include/
-DLL			= bin/shared/
+HEADERS			= ./include/
+DLL				= bin/shared/
 # Isso está sendo coloca, pois o WSL(uso no Windows), apenas tem o
 # compilador GCC, não o Clang. Ambos 'clang' e 'gcc' podem ser igualados,
 # assim é possivel fazer-lo apenas com o 'gcc', respeitando o que já foi
@@ -23,10 +23,10 @@ CLANG		= $(CC)
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO = v1.3.1
-OPCOES = --exclude=ut* -cvf
-NOME = utilitarios.$(VERSAO).tar 
-LOCAL = ../versions
+VERSAO	= v1.3.1
+OPCOES	= --exclude=ut* -cvf
+NOME		= utilitarios.$(VERSAO).tar 
+LOCAL		= ../versions
 CONTEUDO = include/ src/ tests/*.c Makefile
 
 # Cria estrutura onde artefatos compilados, de todos tipos, serão
@@ -615,7 +615,7 @@ test-memoria:
 lib-memoria:
 	@$(CC) -I$(HEADERS) -fPIC -c -o build/memoria-dylib.o src/memoria.c
 	@$(CC) -I$(HEADERS) -shared \
-			-o bin/shared/memoria.so \
+			-o bin/shared/libmemoria.so \
 				build/memoria-dylib.o
 	@echo "Biblioteca compartilhada 'libmemoria.so' compilada."
 
@@ -701,40 +701,38 @@ clean-conjunto-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Lista-Array Referência
 # === === ===  === === === === === === === === === === === === === === ====
-COMPILA_LA_REF = -D_ALOCACAO_E_DESALOCACAO -D__unit_tests__ -D_TO_STRING
-SRC_LA_REF = src/estrutura-de-dados/listaarray_ref.c
-BUILD_LA_REF = build/lista-array-ref-teste.o
-DEPS_LA_REF = -Lbin/shared -lteste -llegivel -lm -ltempo -lmemoria
-EXE_LA_REF = bin/tests/ut_lista_array_ref
+SRC_LA_REF		  = src/estrutura-de-dados/listaarray_ref.c
+OBJ_LA_REF	     = build/lista-array-ref-teste.o
+OBJ_TEST_LA_REF  = ./build/listaarrayref-test.o
+OBJ_DYLIB_LA_REF = build/listaarrayref-dylib.o
+EXE_TEST_LA_REF  = bin/tests/ut-listaarrayref
+EXE_DYLIB_LA_REF = bin/shared/liblaref.so 
 
 all-lista-array-ref: obj-lista-array-ref lib-lista-array-ref \
 	test-lista-array-ref
 
 obj-lista-array-ref:
-	@$(CLANG) -O3 -Oz -I include/ -Wall -c \
-		src/estrutura-de-dados/listaarray_ref.c \
-		-o build/lista-array-ref.o
+	@$(CLANG) -O3 -Oz -I$(HEADERS) -Wall -c -o $(OBJ_LA_REF) $(SRC_LA_REF)
 	@echo "Gerou o arquivo objeto 'lista-array-ref.o', em 'build'."
 
 lib-lista-array-ref: 
 	@$(CLANG) -O3 -Os -std=gnu2x -I$(HEADERS) -fPIC \
-		-c -o build/lista-array-ref-dylib.o \
-				src/estrutura-de-dados/listaarray_ref.c
-	@$(CLANG) -I$(HEADERS) -shared \
-				-o bin/shared/liblaref.so \
-					build/lista-array-ref-dylib.o
+				 -c -o $(OBJ_DYLIB_LA_REF) $(SRC_LA_REF)
+	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_LA_REF) $(OBJ_DYLIB_LA_REF)
 	@echo "Biblioteca compartilhada 'liblaref.so' compilada."
 
 test-lista-array-ref:
-	@$(CC) -c -Iinclude -Wall -Werror $(COMPILA_LA_REF) \
-		-o $(BUILD_LA_REF) $(SRC_LA_REF)
-	@$(CC) -O0 -I include/ -Wall $(COMPILA_LA_REF) \
-		-o $(EXE_LA_REF) $(BUILD_LA_REF) $(DEPS_LA_REF)
-	@echo "Teste 'ut_lista_array_ref' compilado."
+	@$(CC) -I$(HEADERS) -O0 -g3 -Wall -Werror \
+		-D_ALOCACAO_E_DESALOCACAO -D__unit_tests__ -D_TO_STRING \
+		-c -o $(OBJ_TEST_LA_REF) $(SRC_LA_REF)
+	@echo "Objeto 'listarrayref-test.o' compilado."
+	@$(CC) -I$(HEADERS) -o $(EXE_TEST_LA_REF) $(OBJ_TEST_LA_REF) \
+		-Lbin/static -lteste -lm -lcomputa
+	@echo "Teste 'ut-listaarrayref' compilado."
 
 clean-lista-array-ref:
-	@rm -fv $(EXE_LA_REF) $(BUILD_LA_REF) build/lista-array-ref.o \
-		bin/static/liblaref.a bin/shared/liblaref.so
+	@rm -fv $(OBJ_TEST_LA_REF) $(OBJ_LA_REF) $(EXE_TEST_LA_REF) \
+				$(EXE_DYLIB_LA_REF) $(OBJ_DYLIB_LA_REF)
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Pilha-Ligada Referência

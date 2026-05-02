@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Sem específicar a capacidade, será o valor abaixo que será 
+/* Sem específicar a capacidade, será o valor abaixo que será
  * automaticamente redimensionado para o arranjo de dados. */
 #define INICIAL 200
 #define MINIMO_TAMANHO 3
@@ -22,8 +22,8 @@ struct array_lista {
 };
 
 ArrayLista cria_com_capacidade_al(size_t n) {
-/* Aloca a lista, onde a 'array interna' tem uma 'capacidade inicial', ou 
- * seja, o tamanho sem amortização do total de itens é definido pelo que chama tal. Claro que tal valor inicial(a capacidade), tem que ser maior 
+/* Aloca a lista, onde a 'array interna' tem uma 'capacidade inicial', ou
+ * seja, o tamanho sem amortização do total de itens é definido pelo que chama tal. Claro que tal valor inicial(a capacidade), tem que ser maior
  * que um mínimo. */
    const size_t SIZE_LISTA = sizeof (struct array_lista);
    const size_t SIZE_GENERICO = sizeof(generico_t);
@@ -41,23 +41,23 @@ ArrayLista cria_com_capacidade_al(size_t n) {
    }
 
    if (lista != INVALIDA) {
-   /* referenciando a array alocada, copiando a capacidade passada como 
+   /* referenciando a array alocada, copiando a capacidade passada como
     * argumento, e definindo como "sem itens" a lista inicialmente. */
       lista->array = containers;
       lista->capacidade = n;
       lista->quantia = 0;
 
 
-      #ifdef _ALOCACAO_E_DESALOCACAO   
+      #ifdef _ALOCACAO_E_DESALOCACAO
       puts("a instância foi criada com sucesso.");
       #endif
    }
    return lista;
 }
 
-ArrayLista cria_al(void) 
+ArrayLista cria_al(void)
 /* Cria tal array com um tamanho definido automaticamente, não é gigante
- * tal valor, porém ainda pode ser relevante para programa muito 
+ * tal valor, porém ainda pode ser relevante para programa muito
  * compactos. */
    { return cria_com_capacidade_al(INICIAL); }
 
@@ -68,7 +68,7 @@ bool destroi_al(ArrayLista l) {
  * descrito é um valor lógico verdadeiro para o processo sem interrupção,
  * e o valor 'falso' para se houve alguma disrrupção no processo, mesmo
  * que tenha-se liberado algo. */
-   if (l == INVALIDA) 
+   if (l == INVALIDA)
    // Não há uma lista para liberar.
       return false;
    else if (l->array == INVALIDA) {
@@ -82,11 +82,11 @@ bool destroi_al(ArrayLista l) {
 }
 
 static void redimensiona(ArrayLista L, size_t nC) {
-/* Basicamente a solução foi copiada da implementação da 'fila-array' que 
+/* Basicamente a solução foi copiada da implementação da 'fila-array' que
  * é: faz uma função que redimensiona a 'array interna' da lista para o
  * tamanho desejado, em outras funções específicas, chamadas em ambos
- * métodos que altera a estrutura da estrutura, chamam tais funções, que 
- * baseado em premisas lógicas determinadas, redimensionam para mais ou 
+ * métodos que altera a estrutura da estrutura, chamam tais funções, que
+ * baseado em premisas lógicas determinadas, redimensionam para mais ou
  * para menos tal capacidade interna, já fazem quase tudo, inclusive
  * atualizar os valores. */
    size_t t = L->quantia;
@@ -97,16 +97,16 @@ static void redimensiona(ArrayLista L, size_t nC) {
     * encolhe a 'array interna' à metade. */
    for (size_t k = 0; k < t; k++) {
       /* Percorrendo à partir da 'frente' da 'fila'.*/
-      generico_t data = old_array[k]; 
+      generico_t data = old_array[k];
       new_array[k] = data;
    }
 
-   /* livrando-se da antiga, assim deixando um 'dangling pointer' na 
-    * estrutura, então retornando a nova. Deste modo, é esperado que 
+   /* livrando-se da antiga, assim deixando um 'dangling pointer' na
+    * estrutura, então retornando a nova. Deste modo, é esperado que
     * o campo liberado no escopo maior que este, pegue a nova array de
     * dados retornada. */
    free(old_array);
-   /* Realiza um 'swaping' array internas e, atualiza a capacidade. Também 
+   /* Realiza um 'swaping' array internas e, atualiza a capacidade. Também
     * a 'frente' voltou a ser a posição zero. */
    L->capacidade = nC;
    L->array = new_array;
@@ -115,9 +115,9 @@ static void redimensiona(ArrayLista L, size_t nC) {
 static bool encolhe_lista_automaticamente(ArrayLista l) {
    size_t t = l->quantia;
    size_t C = l->capacidade;
-   bool tudo_positivo_para_reduzir = { 
-      (t >= 2) && (t <= (C / 4))  
-      /* Para não reduzir a modalidade de alocação inicial, se estiver 
+   bool tudo_positivo_para_reduzir = {
+      (t >= 2) && (t <= (C / 4))
+      /* Para não reduzir a modalidade de alocação inicial, se estiver
        * nele tal capacidade não reduz, por mais que os outros estejam
        * certo para tal processamento. */
       && C != INICIAL
@@ -175,18 +175,18 @@ bool insere_al(ArrayLista l, generico_t dado) {
    return true;
 }
 
-bool vazia_al(ArrayLista l) 
+bool vazia_al(ArrayLista l)
 /* Retorna 'verdade' se a 'lista' está vázia, 'falso' caso o contŕario. */
    { return l->quantia == 0; }
 
-size_t tamanho_al(ArrayLista l) 
+size_t tamanho_al(ArrayLista l)
 // Retorna valor interno que contabiliza o líquido de inserções.
    { return l->quantia; }
 
 
 generico_t remove_al(ArrayLista l) {
 /* O processo de remoção leva-se apenas como mover o 'cursor' que indica
- * a próxima posição para inserção, no caso, para trás. Se não houver 
+ * a próxima posição para inserção, no caso, para trás. Se não houver
  * qualquer item, o retorno será 'inválido'. */
    if (vazia_al(l)) return NULL;
 
@@ -204,7 +204,7 @@ generico_t remove_al(ArrayLista l) {
 generico_t indexa_al(ArrayLista l, size_t indice) {
 /* Retorna item na posição 'indice' da array, se o valor de índice for
  * inválido retorna 'null'. Claro que é apenas possível indexar um valor
- * dentro da capacidade interna(digo no total de itens) da estrutura. Um 
+ * dentro da capacidade interna(digo no total de itens) da estrutura. Um
  * índice fora desta faixa, apenas retorna um objeto 'inválido'. */
    size_t Q = l->quantia;
 
@@ -216,7 +216,7 @@ generico_t indexa_al(ArrayLista l, size_t indice) {
 
 generico_t remove_indice_al (ArrayLista l, size_t p) {
 /* Retorna item na posição 'indice' da array, se o valor de índice for
- * inválido retorna 'null'. Como é uma remoção no meio da 'array', então 
+ * inválido retorna 'null'. Como é uma remoção no meio da 'array', então
  * será preciso mover todos 'itens' à frente da posição do anulado, e copia
  * todas seus endereços uma posição à esquerda, para tampar o buraco. */
    size_t Q = l->quantia;
@@ -232,13 +232,13 @@ generico_t remove_indice_al (ArrayLista l, size_t p) {
 
    /* Copiando todos itens à frente da posição que será removida,
     * portanto à esquerda dela. */
-   for (size_t j = p; j < (Q - 1); j++) 
+   for (size_t j = p; j < (Q - 1); j++)
       { l->array[j] = l->array[j + 1]; }
 
    return remocao;
 }
 
-size_t vacuo_al(ArrayLista l) 
+size_t vacuo_al(ArrayLista l)
 /* Retorna o vázio entre a capacidade total da estrutura, e o total de
  * elementos que ele possui. */
    { return l->capacidade - l->quantia; }
@@ -289,17 +289,17 @@ char* to_string_al(ArrayLista L, ToString fn) {
    #endif
 
    // Se está dentro do limite, então definir a primeira parte.
-   strcpy(resultado_fmt, rotulo); 
+   strcpy(resultado_fmt, rotulo);
    strcat(resultado_fmt, ": [");
 
-   if (vazia_al(L)) 
-      { strcat(resultado_fmt, "]"); } 
+   if (vazia_al(L))
+      { strcat(resultado_fmt, "]"); }
    else {
       for (size_t i = t; i > 0; i--) {
          generico_t dado = L->array[t - i];
          char* dado_str = fn(dado);
          // Concatena o dado...
-         strcat(resultado_fmt, dado_str); 
+         strcat(resultado_fmt, dado_str);
          // Concatena o separador...
          strcat(resultado_fmt, ", ");
          // Liberando a string gerada, depois de copiada.
@@ -312,13 +312,13 @@ char* to_string_al(ArrayLista L, ToString fn) {
 }
 
 ArrayLista cria_de_al(int Q, ...) {
-/* Função que aloca uma 'lista' da quantidade definida manualmente de 
+/* Função que aloca uma 'lista' da quantidade definida manualmente de
  * pointeiros. Ela serve mais de auxiliar para o macro abaixo. */
    va_list dados_seq;
    ArrayLista lista = cria_com_capacidade_al(Q);
 
    va_start(dados_seq, Q);
-   for (int i = 1; i <= Q; i++) { 
+   for (int i = 1; i <= Q; i++) {
       generico_t datum = va_arg(dados_seq, generico_t);
       insere_al(lista, datum);
    }
@@ -333,7 +333,7 @@ void destroi_todas_al(int qtd, ...) {
    va_list LISTAS;
 
    va_start(LISTAS, qtd);
-   for (int i = 1; i <= qtd; i++) { 
+   for (int i = 1; i <= qtd; i++) {
       generico_t L = va_arg(LISTAS, ArrayLista);
 
       if (destroi_al(L)) {
@@ -351,22 +351,22 @@ void destroi_todas_al(int qtd, ...) {
  * se trocou os sufixos e alguns rótulos, além de alguns toques leve na
  * implementação, campos que não se usam foram desativados, e "locomoção"
  * na "array interna" é diferente aqui. Comentários foram retirados,
- * justamente, para nota-se que aqui não é um código original. Busque o 
+ * justamente, para nota-se que aqui não é um código original. Busque o
  * original para qualquer outro problema não sintático.
  * === === === === === === === === === === === === === === === === === ==*/
 
-// Constante para comparações. 
+// Constante para comparações.
 const IterOutputAL NULO_AL = { .item = NULL };
 
 struct iterador_da_lista_ligada_al {
    ArrayLista instancia;
 
-   size_t inicial; 
+   size_t inicial;
    size_t contagem;
 };
 
 IterAL cria_iter_al(ArrayLista a) {
-   IterAL iter; 
+   IterAL iter;
 
    iter.inicial = tamanho_al(a);
    iter.contagem = 0;
@@ -406,7 +406,7 @@ size_t contagem_iter_al (IteradorRefAL iter) {
 
 IterOutputAL next_al (IteradorRefAL iter) {
    bool nao_e_possivel_iterar = {
-      consumido_iter_al(iter) || 
+      consumido_iter_al(iter) ||
       iterador_esta_invalido(iter)
    };
 
@@ -422,7 +422,7 @@ IterOutputAL next_al (IteradorRefAL iter) {
    return (IterOutputAL){ .item=dado };
 }
 
-bool consumido_iter_al(IteradorRefAL iter) 
+bool consumido_iter_al(IteradorRefAL iter)
    { return iter->contagem == iter->inicial; }
 
 IterAL clona_iter_al(IteradorRefAL iter) {
@@ -437,17 +437,17 @@ IterAL clona_iter_al(IteradorRefAL iter) {
 // === === === === === === === === === === === === === === === === === ===
 
 bool destroi_interno_al(Vetor l, Drop g) {
-/* Desalocador da lista, mas que também desaloca memória interna alocada 
+/* Desalocador da lista, mas que também desaloca memória interna alocada
  * inserida nela, claro, se o desconstrutor 'g' do tipo homogênio interno
  * for cedido também. */
    if (l == NULL || g == NULL)
-   // Caso algum dos argumentos não for válido, então não prossegue na 
+   // Caso algum dos argumentos não for válido, então não prossegue na
    // liberação, e somente retorna a negação da operação.
       return false;
 
    IterAL iteracao = cria_iter_al(l);
 
-   while (consumido_iter_al(&iteracao)) 
+   while (consumido_iter_al(&iteracao))
        g(next_al(&iteracao).item);
 
    destroi_al(l);
@@ -457,12 +457,12 @@ bool destroi_interno_al(Vetor l, Drop g) {
 void imprime_lista_al(Vetor l, ToString f) {
 /* Formatação da lista apenas, passado a função que converte o tipo genérico
  * que ela retém inicialmente, numa string. Sim, existe um limite de itens
- * que está função iprime, você tem que ativar ela se quer a impressão de 
+ * que está função iprime, você tem que ativar ela se quer a impressão de
  * tudo, caso contrário um erro será emitido. */
    if (l == NULL || f == NULL)
       return;
    else if (tamanho_al(l) > (int)1.0e4) {
-      perror("não é possível imprimir com está quantia de itens."); 
+      perror("não é possível imprimir com está quantia de itens.");
       abort();
    }
 
@@ -478,18 +478,18 @@ void imprime_lista_al(Vetor l, ToString f) {
    while (!consumido_iter_al(&iteracao)) {
       out = next_al(&iteracao);
       fmt = f(out.item);
-      printf("%s, ", fmt); 
+      printf("%s, ", fmt);
       free(fmt);
    }
    printf("\b\b]\n");
-} 
+}
 
 #if defined(__unit_tests__)
 /* === === === === === === === === === === === === === === === === === === =
  *                         Testes Unitários
  *
  * Testando todos métodos, funções, e dados abstratos acima. Deixando
- * bem referênciado esta parte, pois fica fácil descartar -- além de 
+ * bem referênciado esta parte, pois fica fácil descartar -- além de
  * ser necessário se os tipos forem trocados, do contrário o programa
  * não compila; se copiado para vários projetos. Caso também tal trecho,
  * futuramente, for colocada num subdiretório, e os tipos serem trocados
@@ -577,7 +577,7 @@ void demonstracao_com_inteiros() {
       printf ("removido: %d\n", *((int*)remove_al(outra_lista)));
       visualizacao_array_list_int(outra_lista);
    }
-      
+
    destroi_al(outra_lista);
 }
 
@@ -605,7 +605,7 @@ void verificado_o_que_foi_coletado(int total, char* argumentos[]) {
    size_t inicial = tamanho_al(lista);
    for (size_t k = 1; k <= 10; k++)
       printf (
-         "removido ==> %s(%lu)\n", 
+         "removido ==> %s(%lu)\n",
          (char*)remove_al(lista),
          tamanho_al (lista)
       );
@@ -756,11 +756,11 @@ void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
    destroi_al(v);
 }
 
-static bool free_str(generico_t e) 
+static bool free_str(generico_t e)
    { free((char*)e); return true; }
 
 void desalocador_interno(void) {
-   Vetor lista = cria_al(); 
+   Vetor lista = cria_al();
 
    for (int i = 1; i <= BOYS_NAMES; i++)
       insere_al(lista, box_str((char*)boys_names[i - 1]));
@@ -795,7 +795,7 @@ void impressao_de_lista(void) {
 
 int main(int total, char* argumentos[], char* variaveis[]) {
    executa_testes_a (
-     false, 4, 
+     false, 4,
          remocao_em_pontos_criticos, false,
          redimensionamento_automatico_da_capacidade, false,
          conversao_em_string, true
