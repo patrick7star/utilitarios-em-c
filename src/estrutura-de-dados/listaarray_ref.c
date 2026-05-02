@@ -501,7 +501,7 @@ void imprime_lista_al(Vetor l, ToString f) {
 #include "dados_testes.h"
 #include "memoria.h"
 
-void visualizacao_array_list_char(vetor_t* l) {
+TESTE visualizacao_array_list_char(vetor_t* l) {
    size_t t = tamanho_al(l);
    char* caractere;
 
@@ -522,7 +522,7 @@ void visualizacao_array_list_char(vetor_t* l) {
    }
    puts ("\b\b]");
 }
-void visualizacao_array_list_int(vetor_t* l) {
+TESTE visualizacao_array_list_int(vetor_t* l) {
    size_t t = tamanho_al(l);
    int* caractere;
 
@@ -544,7 +544,7 @@ void visualizacao_array_list_int(vetor_t* l) {
    puts ("\b\b]");
 }
 
-void demonstracao_com_caracteres() {
+TESTE demonstracao_com_caracteres() {
    vetor_t* lista = cria_com_capacidade_al(15);
    char m = 'x', n = 'A', p = 'J';
    puts("alocação ocorreu1!!!");
@@ -566,7 +566,7 @@ void demonstracao_com_caracteres() {
    destroi_al(lista);
 }
 
-void demonstracao_com_inteiros() {
+TESTE demonstracao_com_inteiros() {
    ArrayLista outra_lista = cria_al();
    int entradas[] = {39, 73, 15, 101};
 
@@ -581,7 +581,7 @@ void demonstracao_com_inteiros() {
    destroi_al(outra_lista);
 }
 
-void demonstracao_com_strings() {
+TESTE demonstracao_com_strings() {
    ArrayLista lista = cria_al();
    char* entradas[] = { "cerca", "porta", "cadeado", "mala"};
 
@@ -595,28 +595,7 @@ void demonstracao_com_strings() {
    destroi_al(lista);
 }
 
-void verificado_o_que_foi_coletado(int total, char* argumentos[]) {
-   ArrayLista lista = cria_al();
-   char** entradas = argumentos;
-
-   for (size_t k = 1; k <= total; k++)
-      insere_al (lista, entradas[k - 1]);
-
-   size_t inicial = tamanho_al(lista);
-   for (size_t k = 1; k <= 10; k++)
-      printf (
-         "removido ==> %s(%lu)\n",
-         (char*)remove_al(lista),
-         tamanho_al (lista)
-      );
-   assert (inicial - 10 == tamanho_al(lista));
-   puts ("experimentando indexação ...");
-   for (size_t k = 1; k <= tamanho_al(lista) / 2; k++)
-      printf ("%lu) %s\n", k, (char*)indexa_al(lista, k));
-   destroi_al(lista);
-}
-
-void visualiza_array_list_string(vetor_t* l) {
+TESTE visualiza_array_list_string(vetor_t* l) {
    size_t t = tamanho_al(l);
    char* string;
 
@@ -635,7 +614,7 @@ void visualiza_array_list_string(vetor_t* l) {
    puts ("\b\b]");
 }
 
-void remocao_em_pontos_criticos (void) {
+TESTE remocao_em_pontos_criticos (void) {
    ArrayLista lista = cria_al();
    char* entradas[] = { "cerca", "porta", "cadeado", "mala", "bolsa"};
 
@@ -654,7 +633,7 @@ void remocao_em_pontos_criticos (void) {
    destroi_al(lista);
 }
 
-void redimensionamento_automatico_da_capacidade(void) {
+TESTE redimensionamento_automatico_da_capacidade(void) {
    vetor_t* L = cria_com_capacidade_al(4);
 
    puts("observação da expansão da capacidade ...");
@@ -702,7 +681,7 @@ char* stringfy_str(generico_t X) {
    return fmt;
 }
 
-void conversao_em_string(void) {
+TESTE conversao_em_string(void) {
    Vetor v = cria_al();
    uint16_t* array = (uint16_t*)valores_padronizados_i;
 
@@ -717,7 +696,7 @@ void conversao_em_string(void) {
    destroi_al(v);
 }
 
-void novo_tipo_de_criacao_da_lista(void) {
+TESTE novo_tipo_de_criacao_da_lista(void) {
    ArrayLista L = cria_de_al(
       4, &valores_padronizados_i[0],
          &valores_padronizados_i[5],
@@ -733,7 +712,7 @@ void novo_tipo_de_criacao_da_lista(void) {
    destroi_al(L);
 }
 
-void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
+TESTE uso_para_chacagem_do_funcionmanento_do_iterador(void) {
    ArrayLista v = cria_al();
    uint16_t* array = (uint16_t*)valores_padronizados_i;
 
@@ -759,7 +738,7 @@ void uso_para_chacagem_do_funcionmanento_do_iterador(void) {
 static bool free_str(generico_t e)
    { free((char*)e); return true; }
 
-void desalocador_interno(void) {
+TESTE desalocador_interno(void) {
    Vetor lista = cria_al();
 
    for (int i = 1; i <= BOYS_NAMES; i++)
@@ -781,7 +760,7 @@ void desalocador_interno(void) {
 static char* generico_to_str(Generico a)
    { return (char*)a; }
 
-void impressao_de_lista(void) {
+TESTE impressao_de_lista(void) {
    Vetor v = cria_al();
 
    for (size_t i = 1; i <= FRUITS; i++) {
