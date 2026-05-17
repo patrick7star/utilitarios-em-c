@@ -128,10 +128,10 @@ const char* veiculos[] = {
    "avião", "paraquedas", "helicoptero"
 };
 
-const char silly_poem[] = (
+const char silly_poem[] = {
    "roses are red; violets are blue; i see you big pretty"
    " eyes... as a huge cloud comes me soon"
-);
+};
 
 // Contabilizei quize.
 const char* objetos[] = {
