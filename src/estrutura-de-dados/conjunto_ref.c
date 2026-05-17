@@ -45,6 +45,29 @@ typedef nodulo_t** ArrayNodulo;
 // O resultado da função que verifica se tal 'lista' tem determinado item:
 typedef struct { bool contido; size_t posicao; nodulo_t* item; } result_t;
 
+struct tabela_de_dispersao {
+   // array de containers dos dados:
+   nodulo_t** locais;
+
+   // contabilização de itens(ultra necessário nesta estranha estrutura).
+   size_t quantidade;
+
+   // quantia de blocos que tem lista-encadeadas.
+   size_t capacidade;
+
+   /* Pointeiro de função para a hash que se aplicará a todos valores. Por
+    * isso é importante que tal mapa tenha apenas um tipo de dado por 
+    * instância. Uma função que retorne o maior valor inteiro positivo
+    * possível. Ela receberá a 'chave' e a capacidade do 'mapa'. Também
+    * deve-se inserir a função que compara os dois tipos. Se não houver
+    * nenhuma das duas, a estrutura hash para aceitar tal tipo fica 
+    * impossível de se fazer. */
+   Hash __hash__; Eq __iguais__;
+   /* É possível passar depois uma 'função hash e de igualdade', assim 
+    * como outros métodos. */
+   bool __eq__confirmada;
+   bool __hash__confirmada;
+};
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 // Parte que demarca uma parte interna, o 'nódulo' da lista ligada.
@@ -85,31 +108,6 @@ static void destroi_toda_lista_ligada (nodulo_t* lista, bool tentar) {
 }
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
-
-struct tabela_de_dispersao {
-   // array de containers dos dados:
-   nodulo_t** locais;
-
-   // contabilização de itens(ultra necessário nesta estranha estrutura).
-   size_t quantidade;
-
-   // quantia de blocos que tem lista-encadeadas.
-   size_t capacidade;
-
-   /* Pointeiro de função para a hash que se aplicará a todos valores. Por
-    * isso é importante que tal mapa tenha apenas um tipo de dado por 
-    * instância. Uma função que retorne o maior valor inteiro positivo
-    * possível. Ela receberá a 'chave' e a capacidade do 'mapa'. Também
-    * deve-se inserir a função que compara os dois tipos. Se não houver
-    * nenhuma das duas, a estrutura hash para aceitar tal tipo fica 
-    * impossível de se fazer. */
-   Hash __hash__; Eq __iguais__;
-   /* É possível passar depois uma 'função hash e de igualdade', assim 
-    * como outros métodos. */
-   bool __eq__confirmada;
-   bool __hash__confirmada;
-};
-
 bool adiciona_metodos_set (Conjunto s, Hash fH, Eq fC) {
 /* Permite a adição dos métodos essenciais de overloading, posteriormente.
  * Assim pode-se criar uma instância inicial, sem necessáriamente precisar
@@ -293,7 +291,7 @@ bool pertence_set(Conjunto S, generico_t e) {
    return resultado.contido;
 }
 
-bool deleta_set(Conjunto S, generico_t e) { 
+bool remove_set(Conjunto S, generico_t e) { 
 /* A operação de remoção é apenas usar o método de atualização, para
  * inserir uma chave-em-branco no lugar da 'chave' dada, o resto é 
  * apenas realinhar das 'entradas' na array, tipo chaves-em-branco
@@ -342,6 +340,25 @@ size_t tamanho_set(Conjunto S)
    // Total de itens contidos no 'conjunto'.
    { return S->quantidade; }
 
+Generico deleta_set(Conjunto S) {
+/* O algoritmo consiste em remover o primeiro item encontrado na array de 
+ * lista encadeadas. */ 
+   size_t cursor = 0;
+   ArrayNodulo array = (*S).locais;
+   Node inicio = (*S).locais[cursor];
+
+   // Move-se até achar um lugar com de fato uma lista ligada.
+   while (inicio == NULL)
+      inicio = array[++cursor];
+
+   // Elimina o primeiro nódulo da lista.
+   Node remocao = array[cursor];
+   array[cursor] = remocao->seta;
+   (*S).quantidade -= 1;
+
+   return (*remocao).chave;
+}
+   
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Iterador: funções e métodos
@@ -384,7 +401,7 @@ struct iterador_do_conjunto {
 };
 
 // Definindo constante de iteração inválida(ou nula) do iterador:
-// const IterOutputSet NULO_SET = { NULL };
+const IterOutputSet NULO_SET = { NULL };
 
 IterSet cria_iter_set(Conjunto a) {
 /* O iterador é criado estaticamente(na stack), e, apenas funciona enquanto
@@ -591,8 +608,41 @@ void impressao_generica(Conjunto S, ToString funcao) {
    puts("\b\b}");
 }
 
+void impressao_generica_extendida
+  (Conjunto S, ToString funcao, bool desalocacao)
+{
+/* Dado um conjunto, e o método que converte seu tipo de dado interno numa
+ * string, a função faz a impressão de uma lista simples dele. Nesta aqui,
+ * diferente da outra, ele pode ou não liberar o retorno da 'função', pois 
+ * alguns funções de formatação são implementadas com  alocação memória 
+ * dinâmica, outros não. Esta função aqui, trata com os dois tipos. */
+   IterSet i = cria_iter_set(S);
+   char* dado_str;
+
+   printf("Conjunto(%zu): {", tamanho_set(S));
+   if (vazia_set(S))
+      { puts("}"); return; }
+
+   while (!consumido_iter_set(&i)) {
+      IterOutputSet a = next_set(&i);
+      generico_t dt = a.item;
+
+      // Estringuifica, imprime, e libera ciclo.
+      dado_str = funcao(dt);
+      printf("%s, ", dado_str);
+
+      /* Se for pedido, ele desaloca. Já que algumas funções de formatação
+       * alocação memória durante o processo. */
+      if (desalocacao) free(dado_str);
+   }
+   puts("\b\b}");
+}
+
 void imprime_set(Conjunto a, ToString f)
-   { impressao_generica(a, f); }
+   { impressao_generica_extendida(a, f, true); }
+
+void imprime_ref_set(Conjunto a, ToString f)
+   { impressao_generica_extendida(a, f, false); }
 
 bool limpa_set(Conjunto a) {
 /*   Remove todos itens do conjunto. O algoritmo para realizar isso é 
@@ -615,7 +665,7 @@ bool limpa_set(Conjunto a) {
 
    while (!vazia_set(a))
       // Agora aplicando a remoção ...
-      deleta_set(a, lista[t++].item);
+      remove_set(a, lista[t++].item);
    
    return true;
 }
@@ -741,8 +791,10 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  bool add_set (Conjunto a, generico_t b)
    { return adiciona_set(a, b); }
 
- bool remove_set (Conjunto a, generico_t b)
-   { return deleta_set(a, b); }
+ // Meio que o inglês e o português se juntam aqui, por isso, uma tradução
+ // fica desnecessária.
+ // bool remove_set (Conjunto a, generico_t b)
+ // { return deleta_set(a, b); }
 
  bool contains_set (Conjunto a, generico_t e)
    { return pertence_set(a, e); }
@@ -778,21 +830,81 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 #if defined(__unit_tests__) && defined(__linux__)
 #include <assert.h>
+#include <time.h>
 #include "teste.h"
 #include "tempo.h"
 #include "legivel.h"
+#include "impressao.h"
 #include "dados-testes.h"
 
-size_t hash_byte (generico_t key, size_t cp) {
-   uint8_t K = *((uint8_t*)key);
-   return K % cp;
+static time_t VALOR = 0;
+
+static size_t hash_char(GenT obj, size_t cp) { 
+   char* ptr = obj;
+   size_t valor = (size_t)(*ptr);
+
+   /* Obtém valor apenas uma vez. Se for toda hora, além de desacelar o
+    * programa, ainda o estraga. Não é possível ficar tirando um valor 
+    * diferente e querer que ele ache este mesmo valor baseado em outro. */
+   if (VALOR == 0) VALOR = time(NULL);
+
+   return ((size_t)VALOR * valor) % cp; 
 }
 
-bool eq_byte(generico_t a, generico_t b) {
+static bool eq_char(GenT a, GenT b) 
+   { return *((char*)a) == *((char*)b); }
+
+static char* debug_char(GenT x) { 
+   char* fmt = malloc(2 * sizeof(char));
+   
+   *fmt = *((char*)x);
+   *(fmt + 1) = 0x00;
+   return fmt; 
+}
+
+UNITARIO remocao_arbitraria_da_colecao(void) {
+   Set saco = cria_set(hash_char, eq_char);
+   const int LENGTH = 2 * 26;
+   char alfabeto[LENGTH];
+   int m, n, p;
+
+   for (p = 0, n = 97, m = 65; n < 97 + 26; n++, m++, p += 2)
+   {
+      alfabeto[p] = (char)n;
+      alfabeto[p + 1] = (char)m;
+   }
+
+   imprime_array(alfabeto, LENGTH);
+   imprime_set(saco, debug_char);
+
+   for (n = 0; n < LENGTH; n++)
+      adiciona_set(saco, &alfabeto[n]);
+
+   // Simples verificação, nada haver com tal teste, mas é sempre bom fazer.
+   assert(!adiciona_set(saco, &alfabeto[02]));
+   assert(!adiciona_set(saco, &alfabeto[10]));
+   assert(!adiciona_set(saco, &alfabeto[21]));
+
+   imprime_set(saco, debug_char);
+   puts("\nIniciando o processo arbitrário de remoção ...");
+
+   while (!vazia_set(saco))
+      printf("|%c| ", *((char*)deleta_set(saco)));
+   putchar('\n');
+
+   imprime_set(saco, debug_char);
+   destroi_set(saco);
+}
+
+static size_t hash_byte (generico_t key, size_t cp) {
+   size_t K = *((uint8_t*)key);
+   return K % cp;
+}
+static bool eq_byte(generico_t a, generico_t b) {
    return *((uint8_t*)a) == *((uint8_t*)b);
 }
 
-char* byte_to_str(generico_t v) {
+static char* byte_to_str(generico_t v) {
    char* resultado_fmt = malloc(4 * sizeof(char));
    uint8_t* valor = (uint8_t*)v;
    sprintf(resultado_fmt, "%3u", *valor);
@@ -849,17 +961,17 @@ UNITARIO operacoes_basicas_na_estrutura(void) {
    size_t inicialmente = tamanho_set(S);
    assert (pertence_set(S, &input[7]));
    // Tentar remover inexistentes!
-   assert(!deleta_set(S, &input[8]));
-   assert(deleta_set(S, &input[7]));
+   assert(!remove_set(S, &input[8]));
+   assert(remove_set(S, &input[7]));
    assert (!pertence_set(S, &input[7]));
    assert (tamanho_set(S) == (--inicialmente));
    // Tentar remover inexistentes!
-   assert(!deleta_set(S, &input[7]));
+   assert(!remove_set(S, &input[7]));
    print_byte_set(S);
 
    // Removendo dados estáticos, para que a declaração abaixo funcione.
    for (size_t i = 1; i <= 6; i++)
-      deleta_set(S, &input[i - 1]);
+      remove_set(S, &input[i - 1]);
    // assert (destroi_set(S));
    destroi_interno_set(S, free_byte);
 }
@@ -1399,12 +1511,13 @@ int main(int total, char* args[], char* vars[])
 	executa_testes_a(
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-      false, 7, 
-         operacoes_basicas_na_estrutura, true,
-         rejeicao_de_entradas_duplicadas_em_massa, true,
-         iteracao_simples_para_testar_a_implmentacao, true,
-         simples_clonagem_inicial_de_iteradores, true,
-         demonstracao_simples_da_conversao_em_str, true,
+      true, 8, 
+         operacoes_basicas_na_estrutura, false,
+         rejeicao_de_entradas_duplicadas_em_massa, false,
+         iteracao_simples_para_testar_a_implmentacao, false,
+         simples_clonagem_inicial_de_iteradores, false,
+         demonstracao_simples_da_conversao_em_str, false,
+         remocao_arbitraria_da_colecao, true,
          // Desativados, pois consomem CPU e tempo:
          monitorando_propriedades_sobre_estresse, false,
          insercoes_stats_havendo_redimensionamento, false
@@ -1421,7 +1534,7 @@ int main(int total, char* args[], char* vars[])
    /* Principalmente as operações de conjuntos em sí. As mais importantes
     * que são implementadas depois que toda estrutura principal foi 
     * construída. */
-      true, 2,
+      false, 2,
          teste_primario_de_operacoes_de_conjuntos, true,
          efetuando_operacoes_com_conjuntos_vazios, true
    );

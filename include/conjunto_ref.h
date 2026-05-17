@@ -23,8 +23,11 @@
 
  // Operações que alteram a estrutura interna do 'conjunto':
  bool adiciona_set (Conjunto, generico_t);
- bool deleta_set   (Conjunto, generico_t);
+ bool remove_set   (Conjunto, generico_t);
  bool limpa_set    (Conjunto);
+ /* Está função não é tão obvia quanto parece, ela remove e deleta um elemento
+  * aleatório do conjunto, se houver algum é claro. */
+ GenT deleta_set   (Conjunto);
 
  // Operações que validam, ou retorna informação da estrutura(conjunto):
  bool pertence_set  (Conjunto, generico_t);
@@ -48,7 +51,7 @@
  // typedef struct saida_da_iteracao_do_set IterOutputSet;
  typedef struct saida_da_iteracao_do_set { generico_t item; } IterOutputSet;
  // Constante que representa nenhum item iterado.
- const IterOutputSet NULO_SET = { NULL};
+ extern const IterOutputSet NULO_SET;
 
  // Métodos de criação, mudança e atual estado:
  IterSet cria_iter_set (Conjunto);
