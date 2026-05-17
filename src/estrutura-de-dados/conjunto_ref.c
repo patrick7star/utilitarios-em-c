@@ -13,6 +13,7 @@
  */
 
 #include "conjunto_ref.h"
+#include "primitivos.h"
 // biblioteca padrões em C:
 #include <inttypes.h>
 #include <stdlib.h>
@@ -837,23 +838,6 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
 #include "impressao.h"
 #include "dados-testes.h"
 
-static time_t VALOR = 0;
-
-static size_t hash_char(GenT obj, size_t cp) { 
-   char* ptr = obj;
-   size_t valor = (size_t)(*ptr);
-
-   /* Obtém valor apenas uma vez. Se for toda hora, além de desacelar o
-    * programa, ainda o estraga. Não é possível ficar tirando um valor 
-    * diferente e querer que ele ache este mesmo valor baseado em outro. */
-   if (VALOR == 0) VALOR = time(NULL);
-
-   return ((size_t)VALOR * valor) % cp; 
-}
-
-static bool eq_char(GenT a, GenT b) 
-   { return *((char*)a) == *((char*)b); }
-
 static char* debug_char(GenT x) { 
    char* fmt = malloc(2 * sizeof(char));
    
@@ -894,14 +878,6 @@ UNITARIO remocao_arbitraria_da_colecao(void) {
 
    imprime_set(saco, debug_char);
    destroi_set(saco);
-}
-
-static size_t hash_byte (generico_t key, size_t cp) {
-   size_t K = *((uint8_t*)key);
-   return K % cp;
-}
-static bool eq_byte(generico_t a, generico_t b) {
-   return *((uint8_t*)a) == *((uint8_t*)b);
 }
 
 static char* byte_to_str(generico_t v) {
@@ -1021,15 +997,6 @@ size_t total_de_bytes(Conjunto S, size_t tipo_size) {
     */
    return sizeof(npS + nS)*C + Q*(nS + npS + t + spS) + (4 * 8 + 2);
    // return 8*C + Q*(3*8 + t) + (4*8 + 2);
-}
-
-bool eq_sizet(generico_t a, generico_t b) {
-   return *((size_t*)a) == *((size_t*)b);
-}
-
-size_t hash_sizet (generico_t key, size_t cp) {
-   size_t K = *((size_t*)key);
-   return K % cp;
 }
 
 Temporizador timer;
@@ -1303,19 +1270,6 @@ UNITARIO iteracao_simples_para_testar_a_implmentacao(void) {
    destroi_set(S);
 }
 
-size_t hash_string(generico_t s, size_t cp) {
-   char* string = s;
-   size_t t = strlen(s);
-   size_t code = (size_t)string[t / 2];
-   return (t + code) % cp;
-} 
-
-bool eq_string(generico_t a, generico_t b) {
-   char* str_a = a;
-   char* str_b = b;
-   return strcmp(str_a, str_b) == 0;
-}
-
 char* conststring(generico_t a) {
    char* fonte = a;
    size_t t = strlen(fonte) + 1;
@@ -1381,17 +1335,6 @@ static char* u16_to_str(generico_t dt) {
    memset(fmt, '\0', 15);
    sprintf(fmt, "%u", valor);
    return fmt;
-}
-
-static bool eq_u16(generico_t a, generico_t b) {
-   uint16_t* ptr_a = a;
-   uint16_t* ptr_b = b;
-   return *ptr_a == *ptr_b;
-}
-
-static size_t hash_u16(generico_t a, size_t cp) {
-   uint16_t* ptr = a;
-   return *ptr % cp;
 }
 
 UNITARIO demonstracao_simples_da_conversao_em_str(void) {
@@ -1512,11 +1455,11 @@ int main(int total, char* args[], char* vars[])
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
       true, 8, 
-         operacoes_basicas_na_estrutura, false,
-         rejeicao_de_entradas_duplicadas_em_massa, false,
-         iteracao_simples_para_testar_a_implmentacao, false,
-         simples_clonagem_inicial_de_iteradores, false,
-         demonstracao_simples_da_conversao_em_str, false,
+         operacoes_basicas_na_estrutura, true,
+         rejeicao_de_entradas_duplicadas_em_massa, true,
+         iteracao_simples_para_testar_a_implmentacao, true,
+         simples_clonagem_inicial_de_iteradores, true,
+         demonstracao_simples_da_conversao_em_str, true,
          remocao_arbitraria_da_colecao, true,
          // Desativados, pois consomem CPU e tempo:
          monitorando_propriedades_sobre_estresse, false,
@@ -1525,7 +1468,7 @@ int main(int total, char* args[], char* vars[])
 
 	executa_testes_a(
    /* Teste referentes apenas das implementações de iteradores: */
-      false, 2, 
+      true, 2, 
          iteracao_simples_para_testar_a_implmentacao, true,
          simples_clonagem_inicial_de_iteradores, true
 	);
@@ -1534,7 +1477,7 @@ int main(int total, char* args[], char* vars[])
    /* Principalmente as operações de conjuntos em sí. As mais importantes
     * que são implementadas depois que toda estrutura principal foi 
     * construída. */
-      false, 2,
+      true, 2,
          teste_primario_de_operacoes_de_conjuntos, true,
          efetuando_operacoes_com_conjuntos_vazios, true
    );
