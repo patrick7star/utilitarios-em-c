@@ -23,7 +23,7 @@ CLANG		= $(CC)
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
 # mude a atual versão para não reescreve o último, pois é isso que vai 
 # acontecer.
-VERSAO	= v1.3.1
+VERSAO	= v1.4.0
 OPCOES	= --exclude=ut* -cvf
 NOME		= utilitarios.$(VERSAO).tar 
 LOCAL		= ../versions
@@ -679,7 +679,7 @@ obj-conjunto-ref:
 	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
 
 test-conjunto-ref:
-	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall -D__unit_tests__ \
+	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall -Werror -pedantic -D__unit_tests__ \
 		-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF) 
 	@$(CLANG) -I$(HEADERS) -o $(EXE_TEST_SET_REF) $(OBJ_TEST_SET_REF) \
 				-lm $(TESTADOR_STLIB) 
