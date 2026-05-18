@@ -667,7 +667,7 @@ EXE_TEST_SET_REF	= bin/tests/ut-conjuntoref
 EXE_DYLIB_SET_REF = bin/shared/libconjref.so
 SRC_SET_REF 		= src/estrutura-de-dados/conjunto_ref.c
 OBJ_TEST_SET_REF	= build/conjuntoref-test.o
-OBJ_SET_REF			= build/conjunto-ref.o 
+OBJ_SET_REF			= build/conjuntoref.o 
 OBJ_DYLIB_SET_REF = build/conjuntoref-dylib.o 
 
 # Compila tudo acima, mas não rota o testes, ou exclui o que foi compilado.
@@ -677,11 +677,16 @@ obj-conjunto-ref:
 	@$(CLANG) -std=gnu2x -O3 -Oz -I$(HEADERS) -Wall -Werror -pedantic \
 			 	 -c -o $(OBJ_SET_REF) $(SRC_SET_REF) 
 	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
+	@$(CLANG) -std=gnu2x -O3 -Oz -I$(HEADERS) -Wall -Werror -pedantic \
+			 	 -c -o build/primitivos.o src/estrutura-de-dados/primitivos.c
+	@echo "Gerou o arquivo objeto 'primitivos.o', em 'build'."
 
 test-conjunto-ref:
-	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) -Wall -Werror -pedantic -D__unit_tests__ \
-		-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF) 
-	@$(CLANG) -I$(HEADERS) -o $(EXE_TEST_SET_REF) $(OBJ_TEST_SET_REF) \
+	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) \
+				-Wall -Werror -pedantic -D__unit_tests__ \
+				-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF) 
+	@$(CLANG) -I$(HEADERS) -o $(EXE_TEST_SET_REF) \
+				build/primitivos.o $(OBJ_TEST_SET_REF) \
 				-lm $(TESTADOR_STLIB) 
 	@echo "Teste 'ut-conjuntoref' compilado."
 
@@ -689,7 +694,8 @@ lib-conjunto-ref:
 	@$(CLANG) -I$(HEADERS) -fPIC -Wall -O3 -Oz \
 				 -c -o $(OBJ_DYLIB_SET_REF) $(SRC_SET_REF) 
 	@echo "Objeto 'conjunto-ref.o' compilado."
-	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_SET_REF) $(OBJ_DYLIB_SET_REF)
+	@$(CLANG) -I$(HEADERS) -shared \
+				 -o $(EXE_DYLIB_SET_REF) $(OBJ_DYLIB_SET_REF) build/primitivos.o
 	@echo "Biblioteca compartilhada 'libconjref.so' compilada."
 
 run-conjunto-ref:
