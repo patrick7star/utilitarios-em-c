@@ -1,7 +1,21 @@
+/*
+ *   Este código foi extraído de implementação de 'hashtable', já que, é 
+ * uma implementação bem robusta, que já tem uma massa de testes feito 
+ * sobre, com as principais operações. Como o 'conjunto' em sí é 
+ * basicamente uma 'tabela de dispersão' interna, isso economiza bastante 
+ * tempo tentanto "reiventar" a roda. No decorrer só serão feitos alguns 
+ * ajustes, tipo: descartar operações que não são relevantes na estrutura 
+ * 'conjunto'(como o método de atualizar); assim como todos trechos de 
+ * 'debug', simplesmente inútil, porque o condensado de testes feitos com 
+ * a estrutura, logo deixar aqui é desnecessário, e catastrófico para 
+ * legibilidade; também, uma mexida massiva como os atuais nomes, estes 
+ * por motivos óbvios de conflito e consistência do atual código.
+ */
 
 #ifndef __CONJUNTO_REF_H__
 #define __CONJUNTO_REF_H__
 #include "definicoes.h"
+#include "primitivos.h"
 
  // Todos apelidos que a estrutura 'conjunto' assume:
  typedef struct tabela_de_dispersao 
@@ -30,10 +44,10 @@
  GenT deleta_set   (Conjunto);
 
  // Operações que validam, ou retorna informação da estrutura(conjunto):
- bool pertence_set  (Conjunto, generico_t);
- bool vazia_set     (Conjunto);
- size_t tamanho_set (Conjunto);
- void imprime_set   (Conjunto, ToString);
+ bool    pertence_set  (Conjunto, generico_t);
+ bool    vazia_set     (Conjunto);
+ size_t  tamanho_set   (Conjunto);
+ void    imprime_set   (Conjunto, ToString);
  
  /* Operações específicas para Conjuntos. Uma coisa que tem de tomar-se 
   * bastante cuidado é, os conjuntos resultantes das funções abaixo carregam
@@ -75,21 +89,23 @@
  *       motivo de futuras consultas.
  * === === === === === === === === === === === === === === === === === ==*/
  // Primeira parte:
- Set    new_set           (Hash _hash_, Eq _igual_);
- void   drop_set          (Conjunto);
- void   drop_inner_set    (Conjunto, Drop);
- bool   add_methods_set   (Conjunto, Hash, Eq);
+ Set    new_set           (Hash, Eq);
+ void   drop_set          (Set);
+ void   drop_inner_set    (Set, Drop);
+ bool   add_methods_set   (Set, Hash, Eq);
  // Segunda parte:
- bool   add_set           (Conjunto, generico_t);
- bool   remove_set        (Conjunto, generico_t);
+ bool   add_set           (Set, GenT);
+ bool   remove_set        (Set, GenT);
+ bool   clear_set         (Set);
+ GenT   pop_set           (Set a);
  // Terceira parte:
- bool   contains_set      (Conjunto, generico_t);
- bool   empty_set         (Conjunto);
- size_t length_set        (Conjunto);
- void   print_set         (Conjunto, ToString);
+ bool   contains_set      (Set, GenT);
+ bool   empty_set         (Set);
+ size_t length_set        (Set);
+ void   print_set         (Set, ToString);
  // Quarta parte: 
- Set    union_set         (Conjunto a, Conjunto b);
- Set    intersection_set  (Conjunto a, Conjunto b);
- Set    difference_set    (Conjunto a, Conjunto b);
+ Set    union_set         (Set a, Set b);
+ Set    intersection_set  (Set a, Set b);
+ Set    difference_set    (Set a, Set b);
 
 #endif
