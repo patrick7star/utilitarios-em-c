@@ -1,19 +1,4 @@
-/*
- *   Este código foi extraído de implementação de 'hashtable', já que, é 
- * uma implementação bem robusta, que já tem uma massa de testes feito 
- * sobre, com as principais operações. Como o 'conjunto' em sí é 
- * basicamente uma 'tabela de dispersão' interna, isso economiza bastante 
- * tempo tentanto "reiventar" a roda. No decorrer só serão feitos alguns 
- * ajustes, tipo: descartar operações que não são relevantes na estrutura 
- * 'conjunto'(como o método de atualizar); assim como todos trechos de 
- * 'debug', simplesmente inútil, porque o condensado de testes feitos com 
- * a estrutura, logo deixar aqui é desnecessário, e catastrófico para 
- * legibilidade; também, uma mexida massiva como os atuais nomes, estes 
- * por motivos óbvios de conflito e consistência do atual código.
- */
-
 #include "conjunto_ref.h"
-#include "primitivos.h"
 // biblioteca padrões em C:
 #include <inttypes.h>
 #include <stdlib.h>
@@ -22,18 +7,10 @@
 #include <wchar.h>
 #include <assert.h>
 
-// todas constantes:
-#define INVALIDA NULL
 
 typedef struct nodulo_do_hash { 
-   // valores genéricos tanto da chave como do valor:
+   // Como a representação é um conjunto, a chave também o elemento(dado).
    generico_t chave; 
-   /* Item inútil, com seus dias contados, porém para não obter qualquer
-    * erro de primeira, será deixado aqui inicialmente, e depois trocado
-    * por algo mais leve(um 'byte', por exemplo), já que um ponteiro ocupa
-    * oito bytes. 
-    */
-   generico_t valor;
 
    // referência para próximo item.
    struct nodulo_do_hash* seta;
@@ -74,36 +51,37 @@ struct tabela_de_dispersao {
 // Parte que demarca uma parte interna, o 'nódulo' da lista ligada.
 
 static nodulo_t* cria_nodulo (generico_t key, generico_t value) {
-   /* Retorna uma instância inválida ou não. Dependendo se a alocação 
-    * foi bem sucedidad. */
-   nodulo_t* instancia = malloc (sizeof (nodulo_t));
+/* Retorna uma instância inválida ou não. Dependendo se a alocação 
+ * foi bem sucedidad. */
+   const int size = sizeof(nodulo_t);
+   nodulo_t* instancia = malloc(size);
 
-   if (instancia != INVALIDA) {
+   if (instancia != NULL) {
       instancia->chave = key;
-      instancia->valor = value;
       instancia->seta = NULL;
    }
    return instancia;
 }
 
 static void destroi_toda_lista_ligada (nodulo_t* lista, bool tentar) {
-   if (lista != INVALIDA) {
-      // obtendo primeiro item, antes que ele possa ser "perdido".
-      nodulo_t* remocao = lista;
+   Node remocao = NULL;
+
+   if (lista != NULL) {
+      // Obtendo primeiro item, antes que ele possa ser "perdido".
+      remocao = lista;
+      // Avançando para o próximo nódulo.
       lista = lista->seta;
 
-      // resetando referências internas...
-      if (tentar) {
-         // Tentando liberar referências passadas.
+      // Resetando referências internas...
+      if (tentar)
+         /* Tentando liberar referências passadas. Pode resultar num 'crash'
+          * do programa. */
          free(remocao->chave);
-         free(remocao->valor);
-      } else {
+      else 
          remocao->chave = NULL;
-         remocao->valor = NULL;
-      }
 
       free (remocao);
-      // indo para remoção do outro nódulo ...
+      // Indo para remoção do outro nódulo ...
       destroi_toda_lista_ligada (lista, tentar);
    }
 }
@@ -114,7 +92,7 @@ bool adiciona_metodos_set (Conjunto s, Hash fH, Eq fC) {
  * Assim pode-se criar uma instância inicial, sem necessáriamente precisar
  * declarar-lôs antes, porém, só é possível adicionar/buscar/remover se 
  * houver no escopo da instância tais métodos anexados. */
-   if (s == INVALIDA)
+   if (s == NULL)
       return false;
 
    if (s->__hash__confirmada || s->__eq__confirmada) {
@@ -123,11 +101,11 @@ bool adiciona_metodos_set (Conjunto s, Hash fH, Eq fC) {
    }
    
    // coloca ambos métodos e marca como positivo paras operações.
-   if (fH != INVALIDA) {
+   if (fH != NULL) {
       s->__hash__ = fH;
       s->__hash__confirmada = true;
    }
-   if (fC != INVALIDA) {
+   if (fC != NULL) {
       s->__iguais__ = fC;
       s->__eq__confirmada = true;
    }
@@ -177,7 +155,7 @@ Conjunto cria_branco_set (void)
    { return cria_com_capacidade_set (30, NULL, NULL); }
 
 bool destroi_set(Conjunto S) { 
-   if (S == INVALIDA) return false; 
+   if (S == NULL) return false; 
 
    size_t Q = S->capacidade, i = 1;
    for (; i < Q; i++) {
@@ -190,7 +168,7 @@ bool destroi_set(Conjunto S) {
 }
 
 void destroi_interno_set(Conjunto S, Drop g) { 
-   if (S == INVALIDA) return ; 
+   if (S == NULL) return ; 
 
    size_t Q = S->capacidade, i = 1;
    for (; i < Q; i++) {
@@ -219,7 +197,7 @@ verifica_lista (nodulo_t* lista, generico_t chave, Eq compara) {
    const result_t NEGACAO_PADRAO = { false, SIZE_MAX, NULL };
    size_t indice = 0;
 
-   if (lista == INVALIDA) return NEGACAO_PADRAO;
+   if (lista == NULL) return NEGACAO_PADRAO;
 
    nodulo_t* atual = lista;
    // itera toda lista procurando por item correspondente.
@@ -248,7 +226,7 @@ bool adiciona_set(Conjunto s, generico_t e) {
    size_t posicao = s->__hash__ (e, s->capacidade);
    nodulo_t* entrada = s->locais[posicao];
 
-   if (entrada == INVALIDA) {
+   if (entrada == NULL) {
       /* se estiver vázia, facilita muito, apenas endereça espaço para uma
        * nova 'entrada' com valor e chave. */
       s->locais[posicao] = cria_nodulo (e, NULL);
@@ -347,6 +325,7 @@ Generico deleta_set(Conjunto S) {
    size_t cursor = 0;
    ArrayNodulo array = (*S).locais;
    Node inicio = (*S).locais[cursor];
+   GenT data;
 
    // Move-se até achar um lugar com de fato uma lista ligada.
    while (inicio == NULL)
@@ -355,12 +334,13 @@ Generico deleta_set(Conjunto S) {
    // Elimina o primeiro nódulo da lista.
    Node remocao = array[cursor];
    array[cursor] = remocao->seta;
+   // Importante contabilizar.
    (*S).quantidade -= 1;
+   // No caso do conjunto é a chave.
+   data = (*remocao).chave;
 
-   return (*remocao).chave;
+   return data;
 }
-   
-
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Iterador: funções e métodos
  *                         relacionados a tal
@@ -457,7 +437,7 @@ IterOutputSet next_set (IteradorRefSet iter) {
    else if (contagem_iter_set (iter) == 0)
       return NULO_SET;
 
-   if (atual != INVALIDA) {
+   if (atual != NULL) {
       // colhendo dados necessários ...
       dadoref = atual->chave;
       // movendo pela lista ...
@@ -792,12 +772,19 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  bool add_set (Conjunto a, generico_t b)
    { return adiciona_set(a, b); }
 
- // Meio que o inglês e o português se juntam aqui, por isso, uma tradução
- // fica desnecessária.
- // bool remove_set (Conjunto a, generico_t b)
- // { return deleta_set(a, b); }
+ /* Nota: Meio que o inglês e o português se juntam aqui, por isso, uma 
+  * tradução fica desnecessária. Então fica apenas 'remove_set' que retorna 
+  * 'true' ou 'false', depedendo se a operação foi bem sucedida ou não. E 
+  * como a em Português, ela recebe o conjunto e o elemento a remover. */
+ 
+ GenT pop_set(Set a)
+   // A inspiração deste nome veio do Python.
+   { return deleta_set(a); }
 
- bool contains_set (Conjunto a, generico_t e)
+ bool clear_set(Set a)
+   { return limpa_set(a); }
+
+ bool contains_set (Conjunto a, GenT e)
    { return pertence_set(a, e); }
 
  bool empty_set (Conjunto a)
@@ -1112,7 +1099,7 @@ UNITARIO insere_na_array_de_nodulos(ArrayNodulo array, generico_t dado,
    // nodulo_t* entrada = S->locais[indice];
    nodulo_t* entrada = array[indice];
 
-   if (entrada == INVALIDA) {
+   if (entrada == NULL) {
       /* se estiver vázia, facilita muito, apenas endereça espaço para uma
        * nova 'entrada' com valor e chave. */
       //S->locais[indice] = cria_nodulo (dado, NULL);
@@ -1451,16 +1438,22 @@ UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
 
 int main(int total, char* args[], char* vars[]) 
 {
+   executa_testes_b(
+   /* Agora que percebi que não usei o novo suite de testes neste
+    * código. Ele realmente é muito antigo, e foi pouco mexido. */
+      true, 1,
+         Unit(remocao_arbitraria_da_colecao, true)
+   );
+
 	executa_testes_a(
    /* Não está indentado para que mostre os testes de forma direta. O 
     * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-      true, 8, 
+      false, 7, 
          operacoes_basicas_na_estrutura, true,
          rejeicao_de_entradas_duplicadas_em_massa, true,
          iteracao_simples_para_testar_a_implmentacao, true,
          simples_clonagem_inicial_de_iteradores, true,
          demonstracao_simples_da_conversao_em_str, true,
-         remocao_arbitraria_da_colecao, true,
          // Desativados, pois consomem CPU e tempo:
          monitorando_propriedades_sobre_estresse, false,
          insercoes_stats_havendo_redimensionamento, false
