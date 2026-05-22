@@ -1,14 +1,14 @@
 /*
- *   Este código foi extraído de implementação de 'hashtable', já que, é 
- * uma implementação bem robusta, que já tem uma massa de testes feito 
- * sobre, com as principais operações. Como o 'conjunto' em sí é 
- * basicamente uma 'tabela de dispersão' interna, isso economiza bastante 
- * tempo tentanto "reiventar" a roda. No decorrer só serão feitos alguns 
- * ajustes, tipo: descartar operações que não são relevantes na estrutura 
- * 'conjunto'(como o método de atualizar); assim como todos trechos de 
- * 'debug', simplesmente inútil, porque o condensado de testes feitos com 
- * a estrutura, logo deixar aqui é desnecessário, e catastrófico para 
- * legibilidade; também, uma mexida massiva como os atuais nomes, estes 
+ *   Este código foi extraído de implementação de 'hashtable', já que, é
+ * uma implementação bem robusta, que já tem uma massa de testes feito
+ * sobre, com as principais operações. Como o 'conjunto' em sí é
+ * basicamente uma 'tabela de dispersão' interna, isso economiza bastante
+ * tempo tentanto "reiventar" a roda. No decorrer só serão feitos alguns
+ * ajustes, tipo: descartar operações que não são relevantes na estrutura
+ * 'conjunto'(como o método de atualizar); assim como todos trechos de
+ * 'debug', simplesmente inútil, porque o condensado de testes feitos com
+ * a estrutura, logo deixar aqui é desnecessário, e catastrófico para
+ * legibilidade; também, uma mexida massiva como os atuais nomes, estes
  * por motivos óbvios de conflito e consistência do atual código.
  */
 
@@ -18,7 +18,7 @@
 #include "primitivos.h"
 
  // Todos apelidos que a estrutura 'conjunto' assume:
- typedef struct tabela_de_dispersao 
+ typedef struct tabela_de_dispersao
      set_t, conjunto_t, *Conjunto, *Set, SET, CONJUNTO;
 
  // Alocação e desalocação da estrutura:
@@ -48,8 +48,8 @@
  bool    vazia_set     (Conjunto);
  size_t  tamanho_set   (Conjunto);
  void    imprime_set   (Conjunto, ToString);
- 
- /* Operações específicas para Conjuntos. Uma coisa que tem de tomar-se 
+
+ /* Operações específicas para Conjuntos. Uma coisa que tem de tomar-se
   * bastante cuidado é, os conjuntos resultantes das funções abaixo carregam
   * consigo items dos argumentos passados, portanto deve-se tomar cuidado
   * na liberação deles. */
@@ -61,22 +61,23 @@
   *                     Iterador do Conjunto
   *                        e seus métodos
   * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- - */
- typedef struct iterador_do_conjunto IterSet, *IteradorRefSet;
- // typedef struct saida_da_iteracao_do_set IterOutputSet;
- typedef struct saida_da_iteracao_do_set { generico_t item; } IterOutputSet;
+ typedef struct iterador_do_conjunto* IterSet;
+ typedef struct saida_da_iteracao_do_set { GenT item; } IterOutputSet;
+
  // Constante que representa nenhum item iterado.
  extern const IterOutputSet NULO_SET;
 
- // Métodos de criação, mudança e atual estado:
+ // Métodos de criação, mudança e atual estado, além da destruição:
  IterSet cria_iter_set (Conjunto);
+ void destroi_iter_set(IterSet);
  /* Faz a clonagem do iterador dado, inclusive seu estado(consumido ou
   * não), no mesmo estágio do que foi usado.*/
- IterSet clona_iter_set(IteradorRefSet);
+ IterSet clona_iter_set(IterSet);
  // Total de itens ainda a consumir.
- size_t contagem_iter_set (IteradorRefSet);
- IterOutputSet next_set (IteradorRefSet);
+ size_t contagem_iter_set (IterSet);
+ IterOutputSet next_set (IterSet);
  // Verifica se todos itens do 'conjunto' foram consumido via iterador.
- bool consumido_iter_set (IteradorRefSet);
+ bool consumido_iter_set (IterSet);
 
 /* === === === === === === === === === === === === === === === === === ===
  *                   Métodos e Funções em Inglês
@@ -85,7 +86,7 @@
  *    Tipo de Retorno      Nome do Método       Parâmetros
  *
  * Nota: não é recomendado rearranjar todas declarações abaixo, pois elas
- *       seguem a ordem das funções e métodos declarados acima, por um 
+ *       seguem a ordem das funções e métodos declarados acima, por um
  *       motivo de futuras consultas.
  * === === === === === === === === === === === === === === === === === ==*/
  // Primeira parte:
@@ -103,9 +104,12 @@
  bool   empty_set         (Set);
  size_t length_set        (Set);
  void   print_set         (Set, ToString);
- // Quarta parte: 
+ // Quarta parte:
  Set    union_set         (Set a, Set b);
  Set    intersection_set  (Set a, Set b);
  Set    difference_set    (Set a, Set b);
+
+ // Métodos de iteração.
+ void drop_iter_set(IterSet);
 
 #endif
