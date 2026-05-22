@@ -1,12 +1,12 @@
-#   Todas bibliotecas de módulos e submódulos, e testes unitários e 
+#   Todas bibliotecas de módulos e submódulos, e testes unitários e
 # integrais serão encontrados organizados abaixo. Você poderá compilar,
 # copia-los, exclui-los de forma coletiva ou indivídual.
 # --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
 # ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
 # 'ponto' não está terminado!
-.PHONY = test-estringue test-conversao test-impressao 
+.PHONY = test-estringue test-conversao test-impressao
 
-# Quase todos testes de módulo abaixo usam o 'módulo teste'. Aqui vai 
+# Quase todos testes de módulo abaixo usam o 'módulo teste'. Aqui vai
 # a ligação ao sua lib compartilhada, assim não é preciso escrever toda
 # vez isso no final de cada teste, apenas usar a variável.
 TESTADOR_DYLIB	= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
@@ -18,14 +18,14 @@ DLL				= bin/shared/
 # compilador GCC, não o Clang. Ambos 'clang' e 'gcc' podem ser igualados,
 # assim é possivel fazer-lo apenas com o 'gcc', respeitando o que já foi
 # feito na plataforma Linux com o 'clang' também.
-CC			= /usr/bin/gcc 
-CLANG		= $(CC) 
+CC			= /usr/bin/gcc
+CLANG		= $(CC)
 # Salva mais um backup deste projeto. Entretanto, antes de executar tal,
-# mude a atual versão para não reescreve o último, pois é isso que vai 
+# mude a atual versão para não reescreve o último, pois é isso que vai
 # acontecer.
 VERSAO	= v1.4.0
 OPCOES	= --exclude=ut* -cvf
-NOME		= utilitarios.$(VERSAO).tar 
+NOME		= utilitarios.$(VERSAO).tar
 LOCAL		= ../versions
 CONTEUDO = include/ src/ tests/*.c Makefile
 
@@ -98,14 +98,14 @@ limpa:
 #							Compila/ou Executa Todos Grupos:
 #			   	Objetos, Testes Unitários, Bibliotecas e etc.
 #
-#  Existe grupos de binários, que são muito uteis que sejam compilados 
+#  Existe grupos de binários, que são muito uteis que sejam compilados
 # primeiro, ou em forma de grupos. Isso ajuda no processo de automatização
-# de compilação. Feito tais, compilar tudo que foi feito, será preciso de 
+# de compilação. Feito tais, compilar tudo que foi feito, será preciso de
 # apenas um simples comando.
 #
 #								Bibliotecas Estáticas:
 #
-#	O negócio deste algoritmo é agrupar alguns tipos de bibliotecas, com 
+#	O negócio deste algoritmo é agrupar alguns tipos de bibliotecas, com
 # traços em comum, em apenas um grupo. A parte de 'coleções' é óbvia, eles
 # meio que estão todas num subdiretório. Entretanto, os demais, são mais
 # espalhados. Alguns, compartilharão a mesma lib, pois tem algunas funções
@@ -164,7 +164,8 @@ stlib-collections:
 		build/deque-ligada-ref.o build/fila-ligada-ref.o  \
 		build/lista-array-ref.o  build/hashtable-ref.o \
 		build/fila-array-ref.o build/fila-circular-ref.o \
-		build/pilha-ligada-ref.o build/conjunto-ref.o
+		build/pilha-ligada-ref.o build/conjuntoref.o \
+		build/primitivos.o
 	@echo "Biblioteca 'libcolecoes.a' criada com sucesso."
 
 stlib-display:
@@ -262,7 +263,7 @@ test-terminal:
 	@$(CLANG) -std=gnu18 -Wall -I ./include -c \
 		-D__debug__ -D__unit_tests__ \
 		-o build/terminal-teste.o src/terminal.c
-	@$(CLANG) -O0 -o $(EXE_TERM) build/terminal-teste.o 
+	@$(CLANG) -O0 -o $(EXE_TERM) build/terminal-teste.o
 	@echo "Link do objeto 'teste-main' feito com sucesso."
 
 run-terminal:
@@ -318,7 +319,7 @@ obj-aleatorio:
 
 test-aleatorio: obj-impressao obj-lista-array-ref
 	@$(CC) -I$(HEADERS) -Wall -O0 -DUT_ALEATORIO \
-		-c -o build/aleatorio-test.o src/aleatorio.c 
+		-c -o build/aleatorio-test.o src/aleatorio.c
 	@echo "Gerado o objeto aleatorio-test.o em 'build'."
 	@$(CC) -I$(HEADERS) -o $(EXE_RANDOM) build/aleatorio-test.o \
 			$(DEPS_RANDOM)
@@ -347,7 +348,7 @@ TEMPO_VERBOSE = -D_DEBUG_ALTERA_STATUS \
 					 -D_DEBUG_CRIA_TEMPORIZADOR \
 					 -D_DEBUG_DESTROI_TEMPORIZADOR \
 					 -D_DEBUG_DESTROI_CRONOMETRO \
-					 -D_DEBUG_CRIA_CRONOMETRO 
+					 -D_DEBUG_CRIA_CRONOMETRO
 TEMPO_FLAGS  = -I include -std=gnu18 -lm -Wall
 
 EXE_TIME 	 = bin/tests/ut_tempo
@@ -362,7 +363,7 @@ obj-tempo:
 	@$(CC) -O3 -Os -Wall -Werror -c -I include/ src/tempo.c -o build/tempo.o
 	@echo "Gerou o arquivo objeto 'tempo.o' em 'build'."
 
-test-tempo: 
+test-tempo:
 	$(CC) $(MACROS_TIME) -Wall -Werror -O0 -Iinclude \
 		-c -o build/tempo-teste.o src/tempo.c
 	$(CC) -o bin/tests/ut_tempo build/legivel.o build/tempo-teste.o -lm
@@ -371,7 +372,7 @@ test-tempo:
 lib-tempo:
 	@$(CC) -O3 -Os -Wall -I$(HEADERS) -fPIC \
 		-c -o build/tempo-dylib.o src/tempo.c
-	@$(CC) -I include/ -shared -o $(EXE_TIME_I) build/tempo-dylib.o 
+	@$(CC) -I include/ -shared -o $(EXE_TIME_I) build/tempo-dylib.o
 	@echo "compilação de uma biblioteca compartilhada."
 	@ar crs $(EXE_TIME_II) build/tempo.o
 	@echo "compilação de uma biblioteca estática."
@@ -387,7 +388,7 @@ clean-tempo:
 # === === ===  === === === === === === === === === === === === === === ====
 COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
 
-all-estringue: obj-estringue lib-estringue test-estringue 
+all-estringue: obj-estringue lib-estringue test-estringue
 
 obj-estringue:
 	@$(CC) -Os -Wall -Werror -Iinclude \
@@ -395,7 +396,7 @@ obj-estringue:
 	@echo "Gerou o arquivo objeto 'estringue.o' em 'build'."
 
 lib-estringue: obj-lista-array-ref
-	@$(CC) -I$(HEADERS) -fPIC -c -o build/estringue-dylib.o src/estringue.c 
+	@$(CC) -I$(HEADERS) -fPIC -c -o build/estringue-dylib.o src/estringue.c
 	@$(CC) -I$(HEADERS) -shared \
 				-o bin/shared/estringue.so \
 					build/estringue-dylib.o
@@ -420,7 +421,7 @@ run-estringue:
 
 clean-estringue:
 	@rm -vf $(BUILD_STR_I) $(BUILD_STR)  $(EXE_STR) $(EXE_STR_I) \
-		bin/static/libestringue.a 
+		bin/static/libestringue.a
 
 
 # === === ===  === === === === === === === === === === === === === === ====
@@ -470,7 +471,7 @@ all-progresso: obj-progresso lib-progresso test-progresso
 
 obj-progresso:
 	@$(CLANG) -O3 -Os -I$(HEADERS) -Wall \
-		-c -o build/progresso.o src/progresso.c 
+		-c -o build/progresso.o src/progresso.c
 	@echo "Gerou o arquivo objeto 'progresso.o' em 'build'."
 
 lib-progresso:
@@ -494,7 +495,7 @@ clean-progresso:
 	@rm -vf build/progresso.o build/progresso-teste.o \
 		bin/tests/ut_progresso bin/shared/libprogresso.so \
 		bin/static/libprogresso.a
-	
+
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Conversão
 # === === ===  === === === === === === === === === === === === === === ====
@@ -554,7 +555,7 @@ lib-impressao: obj-lista-array-ref lib-lista-array-ref
 
 test-impressao:
 	@$(CLANG) -Iinclude/ -g3 -O0 -Wall -D__unit_tests__ -D__debug__ \
-		-c -o build/impressao-teste.o src/impressao.c 
+		-c -o build/impressao-teste.o src/impressao.c
 	@$(CLANG) -o bin/tests/ut_impressao build/impressao-teste.o \
 					$(TESTADOR_ST) build/lista-array-ref.o -lm
 	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
@@ -630,7 +631,7 @@ SRC_HT_REF	 = src/estrutura-de-dados/hashtable_ref.c
 BUILD_HT_REF = build/hashtable-ref-teste.o
 COMPILA_HT_REF = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
 					-D_DESTRUICAO_HT -D_CONTIDO_HT \
-					-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT 
+					-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT
 FLAGS_HT_REF = -Wno-unused-variable -Wno-main
 
 all-hashtable-ref: obj-hashtable-ref lib-hashtable-ref test-hashtable-ref
@@ -640,7 +641,7 @@ obj-hashtable-ref:
 		-c -o build/hashtable-ref.o $(SRC_HT_REF)
 	@echo "Gerou o arquivo objeto 'hashtable-ref.o', em 'build'."
 
-lib-hashtable-ref: 
+lib-hashtable-ref:
 	@$(CLANG) -std=gnu2x -I$(HEADERS) -fPIC -Wall -O3 \
 		-c -o build/hashtableref-lib.o $(SRC_HT_REF)
 	@$(CLANG) -I$(HEADERS) -shared \
@@ -649,7 +650,7 @@ lib-hashtable-ref:
 
 test-hashtable-ref:
 	@$(CC) -I include/ $(COMPILA_HT_REF) $(FLAGS_HT_REF) -std=c18 -Wall \
-		-c -o $(BUILD_HT_REF) $(SRC_HT_REF) 
+		-c -o $(BUILD_HT_REF) $(SRC_HT_REF)
 	@$(CC) -o $(EXE_HT_REF) $(BUILD_HT_REF) $(TESTADOR)
 	@echo "Teste 'ut_hashtable_ref' compilado."
 
@@ -661,22 +662,22 @@ clean-hashtable-ref:
 		bin/static/libhtref.a bin/shared/libhtref.so
 
 # === === ===  === === === === === === === === === === === === === === ====
-# 						 	Modulo Conjunto Referência
+#									Módulo Conjunto
 # === === ===  === === === === === === === === === === === === === === ====
 EXE_TEST_SET_REF	= bin/tests/ut-conjuntoref
 EXE_DYLIB_SET_REF = bin/shared/libconjref.so
 SRC_SET_REF 		= src/estrutura-de-dados/conjunto_ref.c
 OBJ_TEST_SET_REF	= build/conjuntoref-test.o
-OBJ_SET_REF			= build/conjuntoref.o 
-OBJ_DYLIB_SET_REF = build/conjuntoref-dylib.o 
+OBJ_SET_REF			= build/conjuntoref.o
+OBJ_DYLIB_SET_REF = build/conjuntoref-dylib.o
 
 # Compila tudo acima, mas não rota o testes, ou exclui o que foi compilado.
 all-conjunto-ref: obj-conjunto-ref lib-conjunto-ref test-conjunto-ref
 
 obj-conjunto-ref:
 	@$(CLANG) -std=gnu2x -O3 -Oz -I$(HEADERS) -Wall -Werror -pedantic \
-			 	 -c -o $(OBJ_SET_REF) $(SRC_SET_REF) 
-	@echo "Gerou o arquivo objeto 'conjunto-ref.o', em 'build'."
+			 	 -c -o $(OBJ_SET_REF) $(SRC_SET_REF)
+	@echo "Gerou o arquivo objeto 'conjuntoref.o', em 'build'."
 	@$(CLANG) -std=gnu2x -O3 -Oz -I$(HEADERS) -Wall -Werror -pedantic \
 			 	 -c -o build/primitivos.o src/estrutura-de-dados/primitivos.c
 	@echo "Gerou o arquivo objeto 'primitivos.o', em 'build'."
@@ -684,15 +685,15 @@ obj-conjunto-ref:
 test-conjunto-ref:
 	@$(CLANG) -O0 -std=gnu18 -I$(HEADERS) \
 				-Wall -Werror -pedantic -D__unit_tests__ \
-				-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF) 
+				-c -o $(OBJ_TEST_SET_REF) $(SRC_SET_REF)
 	@$(CLANG) -I$(HEADERS) -o $(EXE_TEST_SET_REF) \
 				build/primitivos.o $(OBJ_TEST_SET_REF) \
-				-lm $(TESTADOR_STLIB) 
+				-lm $(TESTADOR_STLIB)
 	@echo "Teste 'ut-conjuntoref' compilado."
 
-lib-conjunto-ref: 
+lib-conjunto-ref:
 	@$(CLANG) -I$(HEADERS) -fPIC -Wall -O3 -Oz \
-				 -c -o $(OBJ_DYLIB_SET_REF) $(SRC_SET_REF) 
+				 -c -o $(OBJ_DYLIB_SET_REF) $(SRC_SET_REF)
 	@echo "Objeto 'conjunto-ref.o' compilado."
 	@$(CLANG) -I$(HEADERS) -shared \
 				 -o $(EXE_DYLIB_SET_REF) $(OBJ_DYLIB_SET_REF) build/primitivos.o
@@ -713,7 +714,7 @@ OBJ_LA_REF	     = build/lista-array-ref-teste.o
 OBJ_TEST_LA_REF  = ./build/listaarrayref-test.o
 OBJ_DYLIB_LA_REF = build/listaarrayref-dylib.o
 EXE_TEST_LA_REF  = bin/tests/ut-listaarrayref
-EXE_DYLIB_LA_REF = bin/shared/liblaref.so 
+EXE_DYLIB_LA_REF = bin/shared/liblaref.so
 
 all-lista-array-ref: obj-lista-array-ref lib-lista-array-ref \
 	test-lista-array-ref
@@ -722,7 +723,7 @@ obj-lista-array-ref:
 	@$(CLANG) -O3 -Oz -I$(HEADERS) -Wall -c -o $(OBJ_LA_REF) $(SRC_LA_REF)
 	@echo "Gerou o arquivo objeto 'lista-array-ref.o', em 'build'."
 
-lib-lista-array-ref: 
+lib-lista-array-ref:
 	@$(CLANG) -O3 -Os -std=gnu2x -I$(HEADERS) -fPIC \
 				 -c -o $(OBJ_DYLIB_LA_REF) $(SRC_LA_REF)
 	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_LA_REF) $(OBJ_DYLIB_LA_REF)
@@ -761,7 +762,7 @@ lib-pilha-ligada-ref:
 	@$(CLANG) -std=gnu2x -I$(HEADERS) -fPIC -Wall -O3 -Oz \
 		-c -o build/pilhaligadaref-lib.o $(SRC_PL_REF)
 	@$(CLANG) -std=gnu2x -I$(HEADERS) -shared \
-		-o bin/shared/libplref.so build/pilhaligadaref-lib.o 
+		-o bin/shared/libplref.so build/pilhaligadaref-lib.o
 	@echo "Biblioteca compartilhada 'libplref.so' compilada."
 
 test-pilha-ligada-ref:
@@ -771,7 +772,7 @@ test-pilha-ligada-ref:
 
 clean-pilha-ligada-ref:
 	@rm -v -f $(EXE_PL) $(BUILD_PL_REF) bin/shared/libplref.so \
-		build/pilha-ligada-ref.o bin/static/libplref.a 
+		build/pilha-ligada-ref.o bin/static/libplref.a
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Array Referência
@@ -793,7 +794,7 @@ obj-fila-array-ref:
 
 lib-fila-array-ref:
 	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/libfaref.so build/fila-array-ref.o 
+		-o bin/shared/libfaref.so build/fila-array-ref.o
 	@echo "Biblioteca compartilhada 'libfaref.so' compilada."
 	@ar crs bin/static/libfaref.a build/fila-array-ref.o
 	@echo "Biblioteca estática 'libfaref.a' compilada."
@@ -806,7 +807,7 @@ test-fila-array-ref:
 
 clean-fila-array-ref:
 	@rm -v -f $(EXE_FA_REF) $(BUILD_FA_REF) bin/shared/libfaref.so \
-		build/fila-array-ref.o bin/static/libfaref.a 
+		build/fila-array-ref.o bin/static/libfaref.a
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Lista-Posicional Referência(dev)
@@ -831,23 +832,23 @@ obj-lista-posicional-ref:
 
 lib-lista-posicional-ref:
 	@$(CLANG) -std=gnu2x -I include/ -shared -fPIC -Wall \
-		-o bin/shared/liblpref.so build/lista-posicional-ref.o 
+		-o bin/shared/liblpref.so build/lista-posicional-ref.o
 	@echo "Biblioteca compartilhada 'liblpref.so' compilada."
 	@ar crs bin/static/liblpref.a build/lista-posicional-ref.o
 	@echo "Biblioteca estática 'liblpref.a' compilada."
 
 clean-lista-posicional-ref:
 	@rm -v -f $(EXE_LP_REF) $(BUILD_LP_REF) bin/shared/liblpref.so \
-		build/lista-posicional-ref.o bin/static/liblpref.a 
+		build/lista-posicional-ref.o bin/static/liblpref.a
 
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Fila-Circular Referência
 # === === ===  === === === === === === === === === === === === === === ====
-SRC_FC_REF			= src/estrutura-de-dados/filacircular_ref.c 
+SRC_FC_REF			= src/estrutura-de-dados/filacircular_ref.c
 OBJ_FC_REF			= build/filacircularref.o
 OBJ_DYLIB_FC_REF	= build/filacircularref-dylib.o
 OBJ_TEST_FC_REF	= build/filacircularref-test.o
-EXE_TEST_FC_REF	= bin/tests/ut-filacirularref 
+EXE_TEST_FC_REF	= bin/tests/ut-filacirularref
 EXE_DYLIB_FC_REF	= bin/shared/libfcref.so
 
 all-fila-circular-ref: obj-fila-circular-ref lib-fila-circular-ref \
@@ -865,11 +866,11 @@ test-fila-circular-ref:
 	@$(CLANG) -I$(HEADERS) \
 			-o $(EXE_TEST_FC_REF) $(OBJ_TEST_FC_REF) $(TESTADOR_STLIB)
 	@echo "Teste 'ut-filacircularref' compilado com sucesso."
-	
+
 lib-fila-circular-ref:
 	@$(CLANG) -O3 -Oz -std=gnu2x -I$(HEADERS) -fPIC -Wall -Werror \
-		-c -o $(OBJ_DYLIB_FC_REF) $(SRC_FC_REF) 
-	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_FC_REF) $(OBJ_DYLIB_FC_REF) 
+		-c -o $(OBJ_DYLIB_FC_REF) $(SRC_FC_REF)
+	@$(CLANG) -I$(HEADERS) -shared -o $(EXE_DYLIB_FC_REF) $(OBJ_DYLIB_FC_REF)
 	@echo "Biblioteca compartilhada 'libfcref.so' compilada."
 
 clean-fila-circular-ref:
@@ -894,7 +895,7 @@ obj-fila-ligada-ref:
 
 lib-fila-ligada-ref: obj-fila-ligada-ref
 	@$(CLANG) -std=gnu2x -I$(HEADERS) -shared -fPIC -Wall \
-		-o $(DYLIB_FL_REF) $(OBJ_FL_REF) 
+		-o $(DYLIB_FL_REF) $(OBJ_FL_REF)
 	@echo "Biblioteca compartilhada 'libflref.so' compilada."
 	@ar crs $(STLIB_FL_REF) $(OBJ_FL_REF)
 	@echo "Biblioteca estática 'libflref.a' compilada."
