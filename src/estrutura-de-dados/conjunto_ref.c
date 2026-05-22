@@ -8,9 +8,9 @@
 #include <assert.h>
 
 
-typedef struct nodulo_do_hash { 
+typedef struct nodulo_do_hash {
    // Como a representação é um conjunto, a chave também o elemento(dado).
-   generico_t chave; 
+   generico_t chave;
 
    // referência para próximo item.
    struct nodulo_do_hash* seta;
@@ -34,14 +34,14 @@ struct tabela_de_dispersao {
    size_t capacidade;
 
    /* Pointeiro de função para a hash que se aplicará a todos valores. Por
-    * isso é importante que tal mapa tenha apenas um tipo de dado por 
+    * isso é importante que tal mapa tenha apenas um tipo de dado por
     * instância. Uma função que retorne o maior valor inteiro positivo
     * possível. Ela receberá a 'chave' e a capacidade do 'mapa'. Também
     * deve-se inserir a função que compara os dois tipos. Se não houver
-    * nenhuma das duas, a estrutura hash para aceitar tal tipo fica 
+    * nenhuma das duas, a estrutura hash para aceitar tal tipo fica
     * impossível de se fazer. */
    Hash __hash__; Eq __iguais__;
-   /* É possível passar depois uma 'função hash e de igualdade', assim 
+   /* É possível passar depois uma 'função hash e de igualdade', assim
     * como outros métodos. */
    bool __eq__confirmada;
    bool __hash__confirmada;
@@ -51,7 +51,7 @@ struct tabela_de_dispersao {
 // Parte que demarca uma parte interna, o 'nódulo' da lista ligada.
 
 static nodulo_t* cria_nodulo (generico_t key, generico_t value) {
-/* Retorna uma instância inválida ou não. Dependendo se a alocação 
+/* Retorna uma instância inválida ou não. Dependendo se a alocação
  * foi bem sucedidad. */
    const int size = sizeof(nodulo_t);
    nodulo_t* instancia = malloc(size);
@@ -77,7 +77,7 @@ static void destroi_toda_lista_ligada (nodulo_t* lista, bool tentar) {
          /* Tentando liberar referências passadas. Pode resultar num 'crash'
           * do programa. */
          free(remocao->chave);
-      else 
+      else
          remocao->chave = NULL;
 
       free (remocao);
@@ -90,7 +90,7 @@ static void destroi_toda_lista_ligada (nodulo_t* lista, bool tentar) {
 bool adiciona_metodos_set (Conjunto s, Hash fH, Eq fC) {
 /* Permite a adição dos métodos essenciais de overloading, posteriormente.
  * Assim pode-se criar uma instância inicial, sem necessáriamente precisar
- * declarar-lôs antes, porém, só é possível adicionar/buscar/remover se 
+ * declarar-lôs antes, porém, só é possível adicionar/buscar/remover se
  * houver no escopo da instância tais métodos anexados. */
    if (s == NULL)
       return false;
@@ -99,7 +99,7 @@ bool adiciona_metodos_set (Conjunto s, Hash fH, Eq fC) {
       perror ("não é possível aplicar isso, pois já foram anteriormente.");
       abort();
    }
-   
+
    // coloca ambos métodos e marca como positivo paras operações.
    if (fH != NULL) {
       s->__hash__ = fH;
@@ -148,14 +148,33 @@ Conjunto cria_set (Hash _hash_, Eq _igual_)
    // criação vázia da 'hashtable', com uma capacidade inicial.
    { return cria_com_capacidade_set (20, _hash_, _igual_); }
 
-Conjunto cria_branco_set (void) 
+Conjunto cria_branco_set (void)
 /* cria a mesma instância que acima, porém sem as instâncias necessárias
- * nele a priori. Elas são necessárias para fazer várias operações, 
+ * nele a priori. Elas são necessárias para fazer várias operações,
  * porém para apenas instânciar, não. */
    { return cria_com_capacidade_set (30, NULL, NULL); }
 
-bool destroi_set(Conjunto S) { 
-   if (S == NULL) return false; 
+Conjunto clona_set(Conjunto S)
+{
+/* Realiza a clonagem do conjunto passado. Claro, é preciso que ele esteja
+ * antes bem definido, portando contendo funções 'hash' e 'eq'. Ele não aceita
+ * clonagem de cojuntos em branco, já que parece uma operação bem redundante
+ * quando você poderia apenas chamar 'cria_branco_set' ao invés. */
+   Hash f = (*S).__hash__;
+   Eq g = (*S).__iguais__;
+   Set clone = new_set(f, g);
+   IterSet iter = cria_iter_set(S);
+
+   // Itera cada item, enquanto adiciona ele no novo conjunto.
+   while (!consumido_iter_set(iter))
+      add_set(clone, next_set(iter).item);
+
+   destroi_iter_set(iter);
+   return clone;
+}
+
+bool destroi_set(Conjunto S) {
+   if (S == NULL) return false;
 
    size_t Q = S->capacidade, i = 1;
    for (; i < Q; i++) {
@@ -167,8 +186,8 @@ bool destroi_set(Conjunto S) {
    return true;
 }
 
-void destroi_interno_set(Conjunto S, Drop g) { 
-   if (S == NULL) return ; 
+void destroi_interno_set(Conjunto S, Drop g) {
+   if (S == NULL) return ;
 
    size_t Q = S->capacidade, i = 1;
    for (; i < Q; i++) {
@@ -178,16 +197,16 @@ void destroi_interno_set(Conjunto S, Drop g) {
    free (S);
 }
 
-static result_t 
+static result_t
 verifica_lista (nodulo_t* lista, generico_t chave, Eq compara) {
 /* Vários algoritmos abaixo, necessitam uma hora varrer a lista ligada
- * interna, obtem o item específicos(compararação) e tal. Tal função 
- * auxiliar terceira para toda cadeia abaixo, tal rotina. Retorna-se 
+ * interna, obtem o item específicos(compararação) e tal. Tal função
+ * auxiliar terceira para toda cadeia abaixo, tal rotina. Retorna-se
  * então se há tal, a posição na lista-encadeada, e o item pertecente,
- * mesmo que as funções abaixo não precisem, todas, de todos estes 
+ * mesmo que as funções abaixo não precisem, todas, de todos estes
  * componentes.
  *
- *    Entrada: 
+ *    Entrada:
  *       - inicio da 'lista encadeada'
  *       - 'chave' do dicionário que se quer verificar
  *       - função que compara dado da referência
@@ -220,7 +239,7 @@ verifica_lista (nodulo_t* lista, generico_t chave, Eq compara) {
 
 bool adiciona_set(Conjunto s, generico_t e) {
 /* Computa posição na array baseada na chave e capacidade. A função
- * hash, por desenho da estrutura, já vem embutida. O retorno "positivo" 
+ * hash, por desenho da estrutura, já vem embutida. O retorno "positivo"
  * do tipo lógico confirma que a operação foi sucedida no fim.
  */
    size_t posicao = s->__hash__ (e, s->capacidade);
@@ -236,7 +255,7 @@ bool adiciona_set(Conjunto s, generico_t e) {
       // confirma inserção como feita, se chegar até aqui.
       return true;
    } else {
-      /* Se não for inválida, percorrer lista até o final, enquanto que 
+      /* Se não for inválida, percorrer lista até o final, enquanto que
        * compara com cada item, para ver se tem alguma chave já registrada.
        */
       bool (*funcao)(generico_t, generico_t) = s->__iguais__;
@@ -254,14 +273,14 @@ bool adiciona_set(Conjunto s, generico_t e) {
    }
 }
 
-bool pertence_set(Conjunto S, generico_t e) { 
-/* verifica se tal chave está contida na tabela de dispersão. Chama 
+bool pertence_set(Conjunto S, generico_t e) {
+/* verifica se tal chave está contida na tabela de dispersão. Chama
  * função que da uma varrida na lista interna procurando pelo primeiro
  * item correspondente, manda o resultado e muito mais, porém apenas
  * estamos interessado na condição de "pertencimento" retornada. */
 
    /* computa posição na array baseada na chave e capacidade. A função
-    * hash, por desenho da estrutura, já vem embutida. 
+    * hash, por desenho da estrutura, já vem embutida.
     */
    size_t posicao = S->__hash__ (e, S->capacidade);
    nodulo_t* list = S->locais[posicao];
@@ -270,9 +289,9 @@ bool pertence_set(Conjunto S, generico_t e) {
    return resultado.contido;
 }
 
-bool remove_set(Conjunto S, generico_t e) { 
+bool remove_set(Conjunto S, generico_t e) {
 /* A operação de remoção é apenas usar o método de atualização, para
- * inserir uma chave-em-branco no lugar da 'chave' dada, o resto é 
+ * inserir uma chave-em-branco no lugar da 'chave' dada, o resto é
  * apenas realinhar das 'entradas' na array, tipo chaves-em-branco
  * no fim dela, 'entradas' não vázia no começo, não importando a ordem. */
    size_t posicao = S->__hash__ (e, S->capacidade);
@@ -295,7 +314,7 @@ bool remove_set(Conjunto S, generico_t e) {
             i++;
          } while (i < outcome.posicao);
          antecessor->seta = item->seta;
-      } else 
+      } else
          /* Se for o primeiro item na lista encadeada, então apenas fazer
           * seu começo apontar prá o que seu único item está apontando.
           */
@@ -309,19 +328,19 @@ bool remove_set(Conjunto S, generico_t e) {
    return a_chave_existe;
 }
 
-bool vazia_set(Conjunto S) 
+bool vazia_set(Conjunto S)
 /* Operações, principalmente de encapsulamento, extremamente triviais
  * mais necessárias para esconder, futurumente quando este arquivo
  * fazer parte da 'lib' acessar tais valores da estrutura. */
    { return S->quantidade == 0; }
 
-size_t tamanho_set(Conjunto S) 
+size_t tamanho_set(Conjunto S)
    // Total de itens contidos no 'conjunto'.
    { return S->quantidade; }
 
 Generico deleta_set(Conjunto S) {
-/* O algoritmo consiste em remover o primeiro item encontrado na array de 
- * lista encadeadas. */ 
+/* O algoritmo consiste em remover o primeiro item encontrado na array de
+ * lista encadeadas. */
    size_t cursor = 0;
    ArrayNodulo array = (*S).locais;
    Node inicio = (*S).locais[cursor];
@@ -347,8 +366,8 @@ Generico deleta_set(Conjunto S) {
  *
  *   Basicamente uma cópia do que foi feito na estrutura hashtable. Que é,
  * toda esta implementação, um cópia desta, com algumas modificações, digo
- * principalmente os nomes, o sufixo os diferencia. Algum problema futuro, 
- * consultar tal, pode ter sido uma copia ou alteração aqui que está 
+ * principalmente os nomes, o sufixo os diferencia. Algum problema futuro,
+ * consultar tal, pode ter sido uma copia ou alteração aqui que está
  * causando tal bug. Lá, os algoritmos são muito mais sólidos.
  *   Alguns nomes dos campos das abstrações diferem em nome e significado,
  * no fim, fico com este, pois é mais recente, o modo aqui chamados deve
@@ -360,12 +379,12 @@ Generico deleta_set(Conjunto S) {
  * conjunto é inútil. */
 // struct saida_da_iteracao_do_set { generico_t item; };
 
-struct iterador_do_conjunto {
-/* Necessita de algumas coisas: a referência do conjunto que ele itera; 
- * o total de itens iniciais, já que é necessário que tal não mude na 
+typedef struct iterador_do_conjunto {
+/* Necessita de algumas coisas: a referência do conjunto que ele itera;
+ * o total de itens iniciais, já que é necessário que tal não mude na
  * iteração, guardamos tal valor, para verificar a cada chamada de iteração
- * se não houve alteração; um cursor, assim a iteração é simplesmente 
- * dependente da chamada; também a contagem de itens iterados, assim é 
+ * se não houve alteração; um cursor, assim a iteração é simplesmente
+ * dependente da chamada; também a contagem de itens iterados, assim é
  * possível estimar quanto falta para consumir todo iterador(acabar). */
    // Instância do conjunto que se itera.
    Conjunto instancia;
@@ -376,19 +395,27 @@ struct iterador_do_conjunto {
 
    // Referência ao próximo nó à iterar.
    Node cursor;
-   /* Índice na array de listas-ligadas que forma a hashtable(motor da 
+   /* Índice na array de listas-ligadas que forma a hashtable(motor da
     * estrutura conjunto). */
    size_t indice;
-};
+} ITERADOR;
 
 // Definindo constante de iteração inválida(ou nula) do iterador:
 const IterOutputSet NULO_SET = { NULL };
 
+static IterSet box_iterset(ITERADOR obj)
+{
+   const int sz = sizeof(ITERADOR);
+   IterSet caixa = malloc(sz);
+
+   memcpy(caixa, &obj, sz);
+   return caixa;
+}
+
 IterSet cria_iter_set(Conjunto a) {
 /* O iterador é criado estaticamente(na stack), e, apenas funciona enquanto
  * o conjunto que e ele itera existe. */
-   struct iterador_do_conjunto iter; 
-
+   ITERADOR iter;
    // Quantos itens há inicialmente nela(para constante verificação).
    iter.total_inicial = tamanho_set(a);
    // Sempre começa no primeiro índice da array de linked-lists.
@@ -399,10 +426,10 @@ IterSet cria_iter_set(Conjunto a) {
    // A referência da instância que se está iterando...
    iter.instancia = a;
 
-   return iter;
+   return box_iterset(iter);
 }
 
-static bool iterador_valido (IteradorRefSet iter) {
+static bool iterador_valido (IterSet iter) {
 /* Para realizar qualquer uma das operações abaixo, é necessário
  * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
  * tamanho que na criação da instância. */
@@ -411,9 +438,9 @@ static bool iterador_valido (IteradorRefSet iter) {
    return (iter->total_inicial == T && referencia_existe);
 }
 
-size_t contagem_iter_set (IteradorRefSet iter) {
+size_t contagem_iter_set (IterSet iter) {
 /* O restante de iterações é calculado na seguinte forma: total de itens na
- * "lista" menos os já iterados. 
+ * "lista" menos os já iterados.
  */
    if (iterador_valido (iter))
       return iter->total_inicial - iter->contagem;
@@ -423,8 +450,8 @@ size_t contagem_iter_set (IteradorRefSet iter) {
    abort();
 }
 
-IterOutputSet next_set (IteradorRefSet iter) {
-/* Retorna "próximo" item do iterador de tal conjunto, à partir de onde 
+IterOutputSet next_set (IterSet iter) {
+/* Retorna "próximo" item do iterador de tal conjunto, à partir de onde
  * parou na última chamada, se houver algum. Em caso de ter se esgotado,
  * ou simplemente não houver nada a iterar, simplesmente retorna o valor
  * nulo deste tipo de dado. */
@@ -459,17 +486,17 @@ IterOutputSet next_set (IteradorRefSet iter) {
    return NULO_SET;
 }
 
-bool consumido_iter_set(IteradorRefSet iter) 
-/* Verifica se o iterador foi todo consumido, ou seja, todos itens do 
+bool consumido_iter_set(IterSet iter)
+/* Verifica se o iterador foi todo consumido, ou seja, todos itens do
  * conjunto foram devidamente iterados. */
    { return iter->contagem == iter->total_inicial; }
 
-IterSet clona_iter_set(IteradorRefSet iter) {
-/* Clona o iterador passado, à partir do estágio que está. A alteração 
- * deste novo clone, ou do original, não alteram a iteração de cada, más 
- * sim, a mudança da estrutura original, que não permite ambos realizar 
- * mais iterações. */ 
-   IterSet novo;
+IterSet clona_iter_set(IterSet iter) {
+/* Clona o iterador passado, à partir do estágio que está. A alteração
+ * deste novo clone, ou do original, não alteram a iteração de cada, más
+ * sim, a mudança da estrutura original, que não permite ambos realizar
+ * mais iterações. */
+   ITERADOR novo;
    // Copiando informações:
    novo.instancia = iter->instancia;
    novo.contagem = iter->contagem;
@@ -478,21 +505,34 @@ IterSet clona_iter_set(IteradorRefSet iter) {
    novo.cursor = iter->cursor;
    novo.indice = iter->indice;
 
-   return novo;
+   return box_iterset(novo);
 }
+
+void desaloca_iter_set(IterSet iter)
+   { free(iter); }
+// Outros nomes cabiveis para tal tipo, o que está acima é o que é usado
+// por toda implementação.
+void destroi_iter_set(IterSet iter)
+   { desaloca_iter_set(iter); }
+
+void drop_iter_set(IterSet iter)
+   { desaloca_iter_set(iter); }
+
+void free_iter_set(IterSet iter)
+   { desaloca_iter_set(iter); }
 // === === === === === === === === === === === === === === === === === ===
 
 char* set_to_str(Conjunto S, ToString f) {
 /* Converte uma string para string, dado a função que transforma o dado
  * interno dela em string. Há um limite aqui, é uma função que usa muito
- * recurso, então há um limite de itens que se podem imprimir, aqui no 
+ * recurso, então há um limite de itens que se podem imprimir, aqui no
  * caso está na casa das dezenas de milhares; se for necessário aumentar
- * isso é possível(para o máximo até). Coloco tal limite, porque uso 
+ * isso é possível(para o máximo até). Coloco tal limite, porque uso
  * geralmente isso para exemplos com poucas quantidades, não vejo nenhuma
  * necessidade de aumentar isso. */
    char* resultado_fmt;
    IterSet iterador = cria_iter_set(S);
-   IterSet iterador_copia = clona_iter_set(&iterador);
+   IterSet iterador_copia = clona_iter_set(iterador);
    size_t mC = 0;
    const char* cabecalho = "Conjunto: {";
    const char* fim;
@@ -511,8 +551,8 @@ char* set_to_str(Conjunto S, ToString f) {
    }
 
    // Computa dado que gera a mais longa string.
-   while (!consumido_iter_set(&iterador)) {
-      IterOutputSet i = next_set(&iterador);
+   while (!consumido_iter_set(iterador)) {
+      IterOutputSet i = next_set(iterador);
       generico_t dado = i.item;
       dado_str = f(dado);
       size_t t = strlen(dado_str);
@@ -538,12 +578,12 @@ char* set_to_str(Conjunto S, ToString f) {
    strcpy_s(resultado_fmt, total_alocado - 1, cabecalho);
    #endif
 
-   if (vazia_set(S)) 
+   if (vazia_set(S))
       // O fim depedente se foi iterado ou não.
       fim = "}";
    else {
-      while (!consumido_iter_set(&iterador_copia)) {
-         IterOutputSet i = next_set(&iterador_copia);
+      while (!consumido_iter_set(iterador_copia)) {
+         IterOutputSet i = next_set(iterador_copia);
          generico_t dado = i.item;
          dado_str = f(dado);
          #ifdef __linux__
@@ -560,11 +600,15 @@ char* set_to_str(Conjunto S, ToString f) {
    }
    // Enclausurando a formatação da estrutura.
    #ifdef __linux__
-   strcat(resultado_fmt, fim); 
+   strcat(resultado_fmt, fim);
    #elif defined(_WIN32)
-   strcat_s(resultado_fmt, strlen(fim), fim); 
+   strcat_s(resultado_fmt, strlen(fim), fim);
    #endif
-   return resultado_fmt; 
+
+   // Como o interno foi mexido, agora é preciso desalocar o iterador.
+   desaloca_iter_set(iterador);
+   desaloca_iter_set(iterador_copia);
+   return resultado_fmt;
 }
 
 void impressao_generica(Conjunto S, ToString funcao) {
@@ -577,8 +621,8 @@ void impressao_generica(Conjunto S, ToString funcao) {
    if (vazia_set(S))
       { puts("}"); return; }
 
-   while (!consumido_iter_set(&i)) {
-      IterOutputSet a = next_set(&i);
+   while (!consumido_iter_set(i)) {
+      IterOutputSet a = next_set(i);
       generico_t dt = a.item;
 
       // Estringuifica, imprime, e libera ciclo.
@@ -587,6 +631,7 @@ void impressao_generica(Conjunto S, ToString funcao) {
       free(dado_str);
    }
    puts("\b\b}");
+   desaloca_iter_set(i);
 }
 
 void impressao_generica_extendida
@@ -594,8 +639,8 @@ void impressao_generica_extendida
 {
 /* Dado um conjunto, e o método que converte seu tipo de dado interno numa
  * string, a função faz a impressão de uma lista simples dele. Nesta aqui,
- * diferente da outra, ele pode ou não liberar o retorno da 'função', pois 
- * alguns funções de formatação são implementadas com  alocação memória 
+ * diferente da outra, ele pode ou não liberar o retorno da 'função', pois
+ * alguns funções de formatação são implementadas com  alocação memória
  * dinâmica, outros não. Esta função aqui, trata com os dois tipos. */
    IterSet i = cria_iter_set(S);
    char* dado_str;
@@ -604,8 +649,8 @@ void impressao_generica_extendida
    if (vazia_set(S))
       { puts("}"); return; }
 
-   while (!consumido_iter_set(&i)) {
-      IterOutputSet a = next_set(&i);
+   while (!consumido_iter_set(i)) {
+      IterOutputSet a = next_set(i);
       generico_t dt = a.item;
 
       // Estringuifica, imprime, e libera ciclo.
@@ -617,6 +662,7 @@ void impressao_generica_extendida
       if (desalocacao) free(dado_str);
    }
    puts("\b\b}");
+   desaloca_iter_set(i);
 }
 
 void imprime_set(Conjunto a, ToString f)
@@ -626,10 +672,10 @@ void imprime_ref_set(Conjunto a, ToString f)
    { impressao_generica_extendida(a, f, false); }
 
 bool limpa_set(Conjunto a) {
-/*   Remove todos itens do conjunto. O algoritmo para realizar isso é 
+/*   Remove todos itens do conjunto. O algoritmo para realizar isso é
  * obter a lista(uma array) de itens, indexar uma por uma, e pedir para
  * o método apropriado do conjunto faça isso. Retorno lógico funciona de
- * modo simples, 'falso' se ela estava vázia, ou seja, não era precisa 
+ * modo simples, 'falso' se ela estava vázia, ou seja, não era precisa
  * remover nada; 'verdadeiro' caso contrário. */
    if (vazia_set(a))
       return false;
@@ -639,46 +685,47 @@ bool limpa_set(Conjunto a) {
    size_t t = 0;
 
    // Listando itens numa array-fixa ...
-   while (!consumido_iter_set(&iterador))
-      lista[t++] = next_set(&iterador);
+   while (!consumido_iter_set(iterador))
+      lista[t++] = next_set(iterador);
    // Zerando para indexação seguinte ...
    t = 0;
 
    while (!vazia_set(a))
       // Agora aplicando a remoção ...
       remove_set(a, lista[t++].item);
-   
+
+   desaloca_iter_set(iterador);
    return true;
 }
 
 /* === === === === === === === === === === === === === === === === === ==
- *                      Operações envolvendo 
+ *                      Operações envolvendo
  *                            Conjuntos
  *
- *   Veja que é necessário tomar precação com estas operações, porque o 
- * resultado é um conjunto novo, porém compartilhando o endereço dos 
+ *   Veja que é necessário tomar precação com estas operações, porque o
+ * resultado é um conjunto novo, porém compartilhando o endereço dos
  * itens de cada conjunto passado, ou seja, se você liberar algum deles
- * com destruição dos itens, ou o resultado das operações, é possível que 
+ * com destruição dos itens, ou o resultado das operações, é possível que
  * causa problemas de memórias tipo 'dangling pointers'.
  * === === === === === === === === === === === === === === === === === ==*/
 Conjunto uniao_set(Conjunto a, Conjunto b)
 {
-/*   Pega dois conjuntos não vázio, então junta todos itens, distintos e 
+/*   Pega dois conjuntos não vázio, então junta todos itens, distintos e
  * iguais de cada, sem duplicar o item em sí. O retorno será um conjunto
  * com ambos itens de cada conjunto.
  *   O algoritmo para conseguir tal conjunto resultante é o seguinte: Ambos
- * conjuntos serão iterados, e adicionado ao resultante, que cuida 
+ * conjuntos serão iterados, e adicionado ao resultante, que cuida
  * internamente com itens já adicionados(duplicados). */
    bool ambos_iteradores_esgotados = false;
-   /* Funções hashes, e de comparação, de cada uma, são as mesmas, ou 
+   /* Funções hashes, e de comparação, de cada uma, são as mesmas, ou
     * resultam no mesmo valor para inputs semelhantes. */
    Hash hash = a->__hash__; Eq equal = a->__iguais__;
    Conjunto resultado = cria_set(hash, equal);
    IterSet ia = cria_iter_set(a), ib = cria_iter_set(b);
-   
+
    do {
-      IterOutputSet x = next_set(&ia);
-      IterOutputSet y = next_set(&ib);
+      IterOutputSet x = next_set(ia);
+      IterOutputSet y = next_set(ib);
 
       /* Adiciona se, e somente se, a saída de iterador for válida. Assim,
        * evita que um iterador que se esgotou quebre a lógica da inserção.
@@ -690,8 +737,8 @@ Conjunto uniao_set(Conjunto a, Conjunto b)
 
       // Verificando se ambos iteradores se esgotarem de novas itens.
       ambos_iteradores_esgotados = (
-         !consumido_iter_set(&ia) ||
-         !consumido_iter_set(&ib)
+         !consumido_iter_set(ia) ||
+         !consumido_iter_set(ib)
       );
 
    } while (ambos_iteradores_esgotados);
@@ -700,36 +747,39 @@ Conjunto uniao_set(Conjunto a, Conjunto b)
    printf("Total de itens: %lu\n", tamanho_set(resultado));
    #endif
 
+   desaloca_iter_set(ia);
+   desaloca_iter_set(ib);
    return resultado;
 }
 
 Conjunto intersecao_set(Conjunto a, Conjunto b)
 {
 /* O algoritmo de interseção é o seguinte: pegue o iterador de algum dos
- * argumentos, na iteração, verifique se tal item já está no outro, se 
+ * argumentos, na iteração, verifique se tal item já está no outro, se
  * estiver, então adicione tal item. */
    Hash hash = a->__hash__; Eq equal = a->__iguais__;
    Conjunto result = cria_set(hash, equal);
    IterSet iA = cria_iter_set(a);
 
    do {
-      IterOutputSet e = next_set(&iA);
+      IterOutputSet e = next_set(iA);
 
       if (e.item != NULO_SET.item)
       {
          if (pertence_set(b, e.item))
-         // Apenas adiciona tal elemento, na resultante, se o outro 
+         // Apenas adiciona tal elemento, na resultante, se o outro
          // conjunto também tem ele.
             adiciona_set(result, e.item);
       }
-   } while (!consumido_iter_set(&iA));
+   } while (!consumido_iter_set(iA));
 
+   desaloca_iter_set(iA);
    return result;
 }
 
 Conjunto diferenca_set(Conjunto a, Conjunto b)
 {
-/* Algoritmo da diferença de conjuntos -- observe que aqui a ordem das 
+/* Algoritmo da diferença de conjuntos -- observe que aqui a ordem das
  * operações importam, segue estritamente a definição da operação: todos
  * itens de A, que não estão em B. Basicamente, podemos fazer isso seguindo
  * o algoritmo de interseção, porém adicionar apenas itens que não fazem
@@ -739,7 +789,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
    IterSet iA = cria_iter_set(a);
 
    do {
-      IterOutputSet e = next_set(&iA);
+      IterOutputSet e = next_set(iA);
 
       if (e.item != NULO_SET.item)
       {
@@ -747,8 +797,9 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
          if (!pertence_set(b, e.item))
             adiciona_set(result, e.item);
       }
-   } while (!consumido_iter_set(&iA));
+   } while (!consumido_iter_set(iA));
 
+   desaloca_iter_set(iA);
    return result;
 }
 
@@ -763,7 +814,7 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  void drop_set (Set e)
     { destroi_set(e); }
 
- void drop_inner_set (Set a, Drop g) 
+ void drop_inner_set (Set a, Drop g)
    { destroi_interno_set(a, g); }
 
  bool add_methods_set (Conjunto e, Hash f, Eq g)
@@ -772,11 +823,11 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  bool add_set (Conjunto a, generico_t b)
    { return adiciona_set(a, b); }
 
- /* Nota: Meio que o inglês e o português se juntam aqui, por isso, uma 
-  * tradução fica desnecessária. Então fica apenas 'remove_set' que retorna 
-  * 'true' ou 'false', depedendo se a operação foi bem sucedida ou não. E 
+ /* Nota: Meio que o inglês e o português se juntam aqui, por isso, uma
+  * tradução fica desnecessária. Então fica apenas 'remove_set' que retorna
+  * 'true' ou 'false', depedendo se a operação foi bem sucedida ou não. E
   * como a em Português, ela recebe o conjunto e o elemento a remover. */
- 
+
  GenT pop_set(Set a)
    // A inspiração deste nome veio do Python.
    { return deleta_set(a); }
@@ -805,11 +856,14 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
  Set difference_set (Conjunto a, Conjunto b)
    { return diferenca_set(a, b); }
 
+Set clone_set(Set x)
+   { return clona_set(x); }
+
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
- *                      Testes Unitários 
+ *                      Testes Unitários
  *
  * Testando todos métodos, funções, e dados abstratos acima. Deixando
- * bem referênciado esta parte, pois fica fácil descartar -- além de 
+ * bem referênciado esta parte, pois fica fácil descartar -- além de
  * ser necessário se os tipos forem trocados, do contrário o programa
  * não compila; se copiado para vários projetos. Caso também esta parte
  * futuramente for colocada num subdiretório, e os tipos serem trocados
@@ -825,12 +879,79 @@ Conjunto diferenca_set(Conjunto a, Conjunto b)
 #include "impressao.h"
 #include "dados-testes.h"
 
-static char* debug_char(GenT x) { 
-   char* fmt = malloc(2 * sizeof(char));
-   
-   *fmt = *((char*)x);
-   *(fmt + 1) = 0x00;
-   return fmt; 
+UNITARIO remocao_arbitraria_da_colecao(void);
+UNITARIO operacoes_basicas_na_estrutura(void);
+UNITARIO rejeicao_de_entradas_duplicadas_em_massa(void);
+UNITARIO monitorando_propriedades_sobre_estresse(void);
+UNITARIO insercoes_stats_havendo_redimensionamento(void);
+UNITARIO iteracao_simples_para_testar_a_implmentacao(void);
+UNITARIO simples_clonagem_inicial_de_iteradores(void);
+UNITARIO demonstracao_simples_da_conversao_em_str(void);
+UNITARIO teste_primario_de_operacoes_de_conjuntos(void);
+UNITARIO efetuando_operacoes_com_conjuntos_vazios(void);
+UNITARIO clonagem_de_conjunto(void);
+
+int main(int total, char* args[], char* vars[])
+{
+   executa_testes_b(
+   /* Agora que percebi que não usei o novo suite de testes neste
+    * código. Ele realmente é muito antigo, e foi pouco mexido. */
+      true, 3,
+         Unit(clonagem_de_conjunto, true),
+         Unit(remocao_arbitraria_da_colecao, true),
+         Unit(iteracao_simples_para_testar_a_implmentacao, false)
+   );
+
+	executa_testes_a(
+   /* Não está indentado para que mostre os testes de forma direta. O
+    * editor usado aqui sempre dobra, subtrechos identados quando abre. */
+      false, 6,
+         operacoes_basicas_na_estrutura, true,
+         rejeicao_de_entradas_duplicadas_em_massa, true,
+         simples_clonagem_inicial_de_iteradores, true,
+         demonstracao_simples_da_conversao_em_str, true,
+         // Desativados, pois consomem CPU e tempo:
+         monitorando_propriedades_sobre_estresse, false,
+         insercoes_stats_havendo_redimensionamento, false
+	);
+
+	executa_testes_a(
+   /* Teste referentes apenas das implementações de iteradores: */
+      true, 2,
+         iteracao_simples_para_testar_a_implmentacao, true,
+         simples_clonagem_inicial_de_iteradores, true
+	);
+
+   executa_testes_a(
+   /* Principalmente as operações de conjuntos em sí. As mais importantes
+    * que são implementadas depois que toda estrutura principal foi
+    * construída. */
+      true, 2,
+         teste_primario_de_operacoes_de_conjuntos, true,
+         efetuando_operacoes_com_conjuntos_vazios, true
+   );
+
+   return EXIT_SUCCESS;
+}
+
+UNITARIO clonagem_de_conjunto(void)
+{
+   Set vogais = new_set(hash_char, eq_char);
+   char entradas[] = {'A', 'e', 'I', 'o', 'U'};
+   Set copia;
+
+   add_set(vogais, &entradas[0]);
+   add_set(vogais, &entradas[1]);
+   add_set(vogais, &entradas[2]);
+   add_set(vogais, &entradas[3]);
+   add_set(vogais, &entradas[4]);
+   copia = clona_set(vogais);
+
+   print_set(vogais, debug_char);
+   print_set(copia, debug_char);
+
+   assert(length_set(vogais) == length_set(copia));
+   drop_set(vogais);
 }
 
 UNITARIO remocao_arbitraria_da_colecao(void) {
@@ -874,7 +995,7 @@ static char* byte_to_str(generico_t v) {
    return resultado_fmt;
 }
 
-void print_byte_set(Conjunto S) 
+void print_byte_set(Conjunto S)
    { impressao_generica(S, byte_to_str); }
 
 void insercoes_randomicas(conjunto_t* s, size_t qtd) {
@@ -891,7 +1012,7 @@ void insercoes_randomicas(conjunto_t* s, size_t qtd) {
    }
 }
 
-static bool free_byte(generico_t x) 
+static bool free_byte(generico_t x)
    { free(x); return true; }
 
 UNITARIO operacoes_basicas_na_estrutura(void) {
@@ -952,12 +1073,12 @@ UNITARIO rejeicao_de_entradas_duplicadas_em_massa(void) {
       uint8_t* X = malloc(sizeof(uint8_t));
       *X = rand() % UINT8_MAX;
 
-      if (!adiciona_set(S, X)) 
+      if (!adiciona_set(S, X))
          { rejeicoes++; free(X); }
    }
 
    printf(
-      "total de aprovações|rejeições: %lu|%lu\n", 
+      "total de aprovações|rejeições: %lu|%lu\n",
       TOTAL - rejeicoes, rejeicoes
    );
    print_byte_set(S);
@@ -977,7 +1098,7 @@ size_t total_de_bytes(Conjunto S, size_t tipo_size) {
 
 
    /* Contabilizando os bytes manualmente, vamos lá. A estrutura 'nódulo'
-    * tem 3 pointeiros; já array que segura a lista ligada tem 
+    * tem 3 pointeiros; já array que segura a lista ligada tem
     * 'a capacidade' de pointeiros. A estrutura ao todo, tem estas duas
     * estrutura dinâmicas, e outras estáticas, sendo tais últimas: dois
     * ponteiros, dois valores lógicos, e dois inteiros de 64-bits.
@@ -1022,7 +1143,7 @@ size_t media_itens_por_slot(Conjunto S) {
       while (!adiciona_set(I, i))
          i = int_sorteio(0, C - 1);
 
-      while (atual != NULL) 
+      while (atual != NULL)
          { atual = atual->seta; rol++; }
    } while(--Lc > 0);
 
@@ -1076,7 +1197,7 @@ void info_controlada
       printf(
          "\nTamanho do 'conjunto' atualmente: %s\n"
          "Nº. de itens: %s\nInserções per seg: %s (%0.1lf%%)\n"
-         "Fator de carga: %0.1lf\nItens por lista-interna: %lu\n", 
+         "Fator de carga: %0.1lf\nItens por lista-interna: %lu\n",
          size_str, qtd_itens_str, addsup_per_str, aumento_percentual,
          fator_de_carga, media_itens_por_slot(S)
       );
@@ -1089,11 +1210,11 @@ void info_controlada
 }
 
 UNITARIO insere_na_array_de_nodulos(ArrayNodulo array, generico_t dado,
-  size_t capacidade, Hash posicao, Eq compara) 
+  size_t capacidade, Hash posicao, Eq compara)
 {
-/* Verifica se o 'container' da lista a ser usado já tem uma lista, se 
- * não tiver, o 'dado' será seu primeiro nódulo, se houver um/alguns, 
- * travessa a 'lista' verificando se já existe um nódulo como o atual 
+/* Verifica se o 'container' da lista a ser usado já tem uma lista, se
+ * não tiver, o 'dado' será seu primeiro nódulo, se houver um/alguns,
+ * travessa a 'lista' verificando se já existe um nódulo como o atual
  * item a ser inserido, se não houver, então adiciona no final dela. */
    size_t indice = posicao(dado, capacidade);
    // nodulo_t* entrada = S->locais[indice];
@@ -1105,7 +1226,7 @@ UNITARIO insere_na_array_de_nodulos(ArrayNodulo array, generico_t dado,
       //S->locais[indice] = cria_nodulo (dado, NULL);
       entrada = cria_nodulo(dado, NULL);
    } else {
-      /* Se não for inválida, percorrer lista até o final, enquanto que 
+      /* Se não for inválida, percorrer lista até o final, enquanto que
        * compara com cada item, para ver se tem alguma chave já registrada.
        */
       nodulo_t* nova = cria_nodulo (dado, NULL);
@@ -1129,7 +1250,7 @@ bool dobra_array_interna(Conjunto S) {
    size_t C = S->capacidade;
    double fator_de_carga = (double)t / (double)C;
 
-   if (fator_de_carga > 10.0) 
+   if (fator_de_carga > 10.0)
    {
       // Nova array de containers(locais aqui nomeado).
       size_t size = sizeof (nodulo_t*);
@@ -1140,7 +1261,7 @@ bool dobra_array_interna(Conjunto S) {
       Eq compara = S->__iguais__;
 
       // Travessando a array de listas, e copiando o dado interno.
-      for (size_t p = 1; p <= C; p++) 
+      for (size_t p = 1; p <= C; p++)
       {
          // Lista no índice p-nésimo.
          nodulo_t* lista = old_array[p - 1];
@@ -1154,9 +1275,9 @@ bool dobra_array_interna(Conjunto S) {
             X = X->seta;
 
             insere_na_array_de_nodulos(
-               new_array, dado_ref, nC,  
+               new_array, dado_ref, nC,
                calculo, compara
-            ); 
+            );
          }
          destroi_toda_lista_ligada(lista, false);
       }
@@ -1216,7 +1337,7 @@ UNITARIO insercoes_stats_havendo_redimensionamento(void) {
 }
 
 UNITARIO iteracao_simples_para_testar_a_implmentacao(void) {
-   Conjunto S = cria_set(hash_byte, eq_byte); 
+   Conjunto S = cria_set(hash_byte, eq_byte);
 
    for (size_t i = 0; i < VALORES_PADRONIZADOS; i++) {
       uint8_t* X = (uint8_t*)&valores_padronizados[i];
@@ -1226,48 +1347,40 @@ UNITARIO iteracao_simples_para_testar_a_implmentacao(void) {
    puts("Conjunto que será iterador:");
    impressao_generica(S, byte_to_str);
    IterSet I = cria_iter_set(S);
-   printf("Itens à consumir: %lu\n", contagem_iter_set(&I));
+   printf("Itens à consumir: %lu\n", contagem_iter_set(I));
 
    puts("\nComeçando a iteração...");
    IterOutputSet resultado;
    uint8_t* dado;
 
    puts("\n\tPrimeiro, iterações manuais...");
-   resultado = next_set(&I);
+   resultado = next_set(I);
    dado = resultado.item;
    printf("\t\tItem iterado: '%u'\n", *dado);
-   resultado = next_set(&I);
+   resultado = next_set(I);
    dado = resultado.item;
    printf("\t\tItem iterado: '%u'\n", *dado);
-   resultado = next_set(&I);
+   resultado = next_set(I);
    dado = resultado.item;
    printf("\t\tItem iterado: '%u'\n", *dado);
-   assert (contagem_iter_set(&I) == 7);
+   assert (contagem_iter_set(I) == 7);
 
    puts("\n\tEntão, iterações automáticas...");
    do {
-      resultado = next_set(&I);
+      resultado = next_set(I);
       dado = resultado.item;
       printf(
-         "\t\tItem iterado: '%u', \tfaltam %lu itens\n", 
-         *dado, contagem_iter_set(&I)
+         "\t\tItem iterado: '%u', \tfaltam %lu itens\n",
+         *dado, contagem_iter_set(I)
       );
-   } while(!consumido_iter_set(&I));
+   } while(!consumido_iter_set(I));
 
+   desaloca_iter_set(I);
    destroi_set(S);
 }
 
-char* conststring(generico_t a) {
-   char* fonte = a;
-   size_t t = strlen(fonte) + 1;
-   char* saida = malloc(t * sizeof(char));
-
-   strcpy(saida, fonte);
-   return saida;
-}
-
 UNITARIO simples_clonagem_inicial_de_iteradores(void) {
-   Conjunto S = cria_set(hash_string, eq_string); 
+   Conjunto S = cria_set(hash_string, eq_string);
 
    for (size_t i = 0; i < OBJETOS; i++) {
       char* s = (char*)objetos[i];
@@ -1275,81 +1388,73 @@ UNITARIO simples_clonagem_inicial_de_iteradores(void) {
       assert (adiciona_set(S, K));
    }
    puts("Conjunto que será iterador:");
-   impressao_generica(S, conststring);
+   impressao_generica(S, debug_string);
    IterSet I = cria_iter_set(S);
-   printf("Itens à consumir: %lu\n", contagem_iter_set(&I));
-   IterSet H = clona_iter_set(&I);
+   printf("Itens à consumir: %lu\n", contagem_iter_set(I));
+   IterSet H = clona_iter_set(I);
 
-   assert (contagem_iter_set(&I) == contagem_iter_set(&H));
+   assert (contagem_iter_set(I) == contagem_iter_set(H));
    for (size_t i = 0; i < 4; i++) {
-      IterOutputSet X = next_set(&I);
+      IterOutputSet X = next_set(I);
       char* dado = X.item;
       printf("\tIterado: '%s'\n", dado);
    }
    printf(
       "Contagem do original/clone: %lu/%lu\n",
-      contagem_iter_set(&I), contagem_iter_set(&H)
+      contagem_iter_set(I), contagem_iter_set(H)
    );
-   assert (contagem_iter_set(&I) < contagem_iter_set(&H));
+   assert (contagem_iter_set(I) < contagem_iter_set(H));
 
-   char* dado_clone, *dado_original; size_t q, Q; 
+   char* dado_clone, *dado_original; size_t q, Q;
    do {
-      q = contagem_iter_set(&I);
-      Q = contagem_iter_set(&H);
-      IterOutputSet X = next_set(&I), Y = next_set(&H);
+      q = contagem_iter_set(I);
+      Q = contagem_iter_set(H);
+      IterOutputSet X = next_set(I), Y = next_set(H);
       dado_original = X.item;
       dado_clone = Y.item;
 
-      if (!consumido_iter_set(&I) && !consumido_iter_set(&H))
+      if (!consumido_iter_set(I) && !consumido_iter_set(H))
          printf(
-            "  Original(%lu) >>> '%s'\t\t\tClone(%lu) >>> '%s'\n", 
+            "  Original(%lu) >>> '%s'\t\t\tClone(%lu) >>> '%s'\n",
             q, dado_original, Q, dado_clone
          );
-      else if (!consumido_iter_set(&I)) 
+      else if (!consumido_iter_set(I))
          printf("  Original(%lu) >>> '%s'\n", q, dado_original);
-      else if (!consumido_iter_set(&H)) 
+      else if (!consumido_iter_set(H))
          printf("  Clone(%lu) >>> '%s'\n", Q, dado_clone);
-   } while (!consumido_iter_set(&H) || !consumido_iter_set(&I));
+   } while (!consumido_iter_set(H) || !consumido_iter_set(I));
 
+   desaloca_iter_set(I);
+   desaloca_iter_set(H);
    destroi_set(S);
 }
 
-static char* u16_to_str(generico_t dt) {
-   char* fmt = malloc(15 * sizeof(char));
-   uint16_t* pointer = dt;
-   uint16_t valor = *pointer;
-
-   memset(fmt, '\0', 15);
-   sprintf(fmt, "%u", valor);
-   return fmt;
-}
-
 UNITARIO demonstracao_simples_da_conversao_em_str(void) {
-   Conjunto S = cria_set(hash_u16, eq_u16); 
+   Conjunto S = cria_set(hash_u16, eq_u16);
 
    for (size_t i = 0; i < VALORES_PADRONIZADOS_I; i++) {
       uint16_t* X = (uint16_t*)&valores_padronizados_i[i];
       adiciona_set(S, X);
    }
    puts("Aqui como fica a formatação em string:");
-   char* stringset = set_to_str(S, u16_to_str);
+   char* stringset = set_to_str(S, debug_u16);
    puts(stringset);
 
    free(stringset);
    destroi_set(S);
 }
 
-UNITARIO teste_primario_de_operacoes_de_conjuntos(void) 
+UNITARIO teste_primario_de_operacoes_de_conjuntos(void)
 {
    uint16_t input_b[] = { 1, 3, 6, 9, 12, 15, 18, 21, 24, 27};
    uint16_t input_a[] = { 1, 2, 4, 6, 8, 12, 14, 16, 18, 20 };
    const int N = sizeof(input_a) / sizeof(uint16_t);
-   Conjunto B = cria_set(hash_u16, eq_u16); 
+   Conjunto B = cria_set(hash_u16, eq_u16);
    Conjunto A = cria_set(hash_u16, eq_u16);
    uint16_t* X, *Y;
-   ToString f = u16_to_str;
+   ToString f = debug_u16;
 
-   for (size_t i = 0; i < N; i++) 
+   for (size_t i = 0; i < N; i++)
    {
       X = &input_b[i];
       Y = &input_a[i];
@@ -1380,10 +1485,10 @@ UNITARIO teste_primario_de_operacoes_de_conjuntos(void)
 UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
 {
    uint16_t input_a[] = { 1, 2, 4, 6, 8};
-   Conjunto B = cria_set(hash_u16, eq_u16); 
+   Conjunto B = cria_set(hash_u16, eq_u16);
    Conjunto A = cria_set(hash_u16, eq_u16);
    uint16_t *Y;
-   ToString f = u16_to_str;
+   ToString f = debug_u16;
    int sz = sizeof(input_a) / sizeof(uint16_t);
 
    for (int i = 0; i < sz; i++) {
@@ -1399,7 +1504,7 @@ UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
    Conjunto D = intersecao_set(A, B);
    Conjunto E = diferenca_set(A, B);
    Conjunto F = diferenca_set(B, A);
-   
+
    puts(
       "\n\t\tPrimeiro com um conjunto vázio e outro cheio:"
       "\nResultados das iterseção, união e diferença, respectivamente, "
@@ -1421,7 +1526,7 @@ UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
    D = intersecao_set(A, B);
    E = diferenca_set(A, B);
    F = diferenca_set(B, A);
-   
+
    puts(
       "\n\t\tSegundo com ambos conjuntos vázios:"
       "\nResultados das iterseção, união e diferença, respectivamente, "
@@ -1436,54 +1541,13 @@ UNITARIO efetuando_operacoes_com_conjuntos_vazios(void)
    destroi_set(E); destroi_set(F);
 }
 
-int main(int total, char* args[], char* vars[]) 
-{
-   executa_testes_b(
-   /* Agora que percebi que não usei o novo suite de testes neste
-    * código. Ele realmente é muito antigo, e foi pouco mexido. */
-      true, 1,
-         Unit(remocao_arbitraria_da_colecao, true)
-   );
-
-	executa_testes_a(
-   /* Não está indentado para que mostre os testes de forma direta. O 
-    * editor usado aqui sempre dobra, subtrechos identados quando abre. */
-      false, 7, 
-         operacoes_basicas_na_estrutura, true,
-         rejeicao_de_entradas_duplicadas_em_massa, true,
-         iteracao_simples_para_testar_a_implmentacao, true,
-         simples_clonagem_inicial_de_iteradores, true,
-         demonstracao_simples_da_conversao_em_str, true,
-         // Desativados, pois consomem CPU e tempo:
-         monitorando_propriedades_sobre_estresse, false,
-         insercoes_stats_havendo_redimensionamento, false
-	);
-
-	executa_testes_a(
-   /* Teste referentes apenas das implementações de iteradores: */
-      true, 2, 
-         iteracao_simples_para_testar_a_implmentacao, true,
-         simples_clonagem_inicial_de_iteradores, true
-	);
-
-   executa_testes_a(
-   /* Principalmente as operações de conjuntos em sí. As mais importantes
-    * que são implementadas depois que toda estrutura principal foi 
-    * construída. */
-      true, 2,
-         teste_primario_de_operacoes_de_conjuntos, true,
-         efetuando_operacoes_com_conjuntos_vazios, true
-   );
-
-   return EXIT_SUCCESS;
-}
 #elif defined(_WIN32) && defined(__unit_tests__)
 size_t hash_int (generico_t key, size_t cp) {
    int K = *((int*)key);
    return K % cp;
 }
 
-bool eq_int(generico_t a, generico_t b) 
+bool eq_int(generico_t a, generico_t b)
    { return *((int*)a) == *((int*)b); }
 
 char* fmt_int(generico_t e) {
@@ -1496,7 +1560,7 @@ char* fmt_int(generico_t e) {
    return output;
 }
 
-int main(int total, char* args[], char* vars[]) 
+int main(int total, char* args[], char* vars[])
 {
    /* Uma simples inserção de dados repetidos. */
    int entradas[] = {1, 2, 2, 3, 4, 5, 6, 6, 6};
