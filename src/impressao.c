@@ -1,12 +1,3 @@
-/*
-  Um bom modo de organizar dados tabelados. O módulo possuí uma estrutura 
-onde você pega todo 'rol' de dados, cede um 'rótulo' a ele e toda vez que 
-impresso será visualizado fechado por caractéres `Unicode` de uma maneira 
-bem formatada no terminal. A estrutura `Coluna` que proporciona isso, 
-também aceita a impressão de outras juntas, formando assim uma bonita 
-tabela.
-*/
-
 #include "impressao.h"
 // Biblioteca padrão do C:
 #include <stdio.h>
