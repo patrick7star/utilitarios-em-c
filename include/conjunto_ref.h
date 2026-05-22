@@ -94,6 +94,7 @@
  void   drop_set          (Set);
  void   drop_inner_set    (Set, Drop);
  bool   add_methods_set   (Set, Hash, Eq);
+ Set    clone_set         (Set);
  // Segunda parte:
  bool   add_set           (Set, GenT);
  bool   remove_set        (Set, GenT);
