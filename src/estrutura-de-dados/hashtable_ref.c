@@ -43,15 +43,15 @@ typedef struct nodulo_do_hash nodulo_t, *Node;
  *                   transporta os 'itens'
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 struct nodulo_do_hash { 
-   // valores genéricos tanto da chave como do valor:
-   generico_t chave; 
-   generico_t valor;
+   // Valores genéricos tanto da chave como do valor:
+   GenT chave; 
+   GenT valor;
 
    // referência para próximo item.
-   nodulo_t* seta;
+   Node seta;
 };
 
-static nodulo_t* cria_nodulo (generico_t key, generico_t value) {
+static Node cria_nodulo (GenT key, GenT value) {
 /* Retorna uma instância inválida ou não. Dependendo se a alocação foi bem
  * sucedidad. */
    nodulo_t* instancia = malloc (sizeof (nodulo_t));
@@ -64,48 +64,7 @@ static nodulo_t* cria_nodulo (generico_t key, generico_t value) {
    return instancia;
 }
 
-static void destroi_toda_lista_ligada (nodulo_t* lista) {
-   if (lista != NULL) {
-      // obtendo primeiro item, antes que ele possa ser "perdido".
-      nodulo_t* remocao = lista;
-      lista = lista->seta;
-
-      // resetando referências internas...
-      remocao->chave = NULL;
-      remocao->valor = NULL;
-
-      free (remocao);
-      // indo para remoção do outro nódulo ...
-      destroi_toda_lista_ligada (lista);
-      return;
-   }
-}
-
-static void desaloca_lista_ligada_e_dados_internos (nodulo_t* lista, 
-  Drop fc, Drop gv) 
-{
-   if (lista != NULL) {
-      // obtendo primeiro item, antes que ele possa ser "perdido".
-      nodulo_t* remocao = lista;
-      lista = lista->seta;
-
-      /* Desalocando dados de ambos tipos, com os respectivos 
-       * descontrutores de cada. */
-      fc(remocao->chave);
-      gv(remocao->valor);
-      // resetando referências internas...
-      remocao->chave = NULL;
-      remocao->valor = NULL;
-
-      // Livrando-se do 'nó'...
-      free (remocao);
-      // indo para remoção do outro nódulo ...
-      destroi_toda_lista_ligada (lista);
-      return;
-   }
-}
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
-
 struct tabela_de_dispersao {
    // array de containers dos dados:
    nodulo_t** locais;
@@ -153,25 +112,23 @@ bool adiciona_metodos ( HashTable m, Hash hash, Eq eq) {
 }
 
 HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
-   size_t size = sizeof(struct tabela_de_dispersao);
-   // HashTable mapa = malloc(sizeof(HashTable));
-    HashTable mapa = malloc(size);
-   size_t Q = capacidade;
-   const size_t node_sz = sizeof (nodulo_t*);
+/* Também serve de método genéricos para demais construturoes abaixo. Estes
+ * que recebem bem menos parâmetros, alguns até nenhum. 
+ */
+   const size_t size = sizeof(struct tabela_de_dispersao);
+   const size_t size_node = sizeof (Node);
+   HashTable mapa = malloc(size);
+   size_t Q = capacidade, k;
 
    if (mapa != NULL) {
-      #ifdef _CRIACAO_HT
-      puts ("'tabela' alocada com sucesso.");
-      #endif 
+      // Alocando a array de listas e registrando seu tamanho...
+      mapa->locais = calloc (Q, size_node);
 
-      // alocando a array de listas e registrando seu tamanho...
-      // mapa->locais = malloc (Q * SIZE_REF);
-      mapa->locais = calloc (Q, node_sz);
-      for (size_t k = 1; k <= Q; k++)
+      for (k = 1; k <= Q; k++)
          mapa->locais[k - 1] = NULL;
-      mapa->capacidade = Q;
 
-      // sem elementos inicialmente, por motivos óbvios.
+      mapa->capacidade = Q;
+      // Sem elementos inicialmente, por motivos óbvios.
       mapa->quantidade = 0;
 
       // referênciando funções que farão o cálculo hash internamente.
@@ -187,11 +144,6 @@ HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
          mapa->__eq__confirmada = true;
       } else
          mapa->__eq__confirmada = false;
-
-      #ifdef _CRIACAO_HT
-      assert (f != INVALIDA && g != INVALIDA);
-      puts ("ambas funções passadas são válidas.");
-      #endif 
    }
    return mapa;
 }
@@ -207,40 +159,56 @@ HashTable cria_branco_ht (void)
    { return cria_com_capacidade_ht (30, NULL, NULL); }
 
 bool destroi_ht(HashTable m) { 
-   if (m == INVALIDA) return false; 
+   const int CAPACIDADE = (*m).capacidade;
+   Node* array = (*m).locais, remocao = NULL;
+   int n;
 
-   size_t Q = m->capacidade, i = 1;
-   for (; i < Q; i++) {
-      nodulo_t* lista = m->locais[i - 1];
-      destroi_toda_lista_ligada (lista);
+   for (n = 0; n < CAPACIDADE; n++)
+   {
+      // Remove o primeiro item até acabar.
+      if (array[n] != NULL)
+      {
+         while (array[n] != NULL)
+         {
+            remocao = array[n];
+            array[n] = array[n]->seta;
+            // Desalaca apenas o nódulo.
+            free(remocao);
+         }
+      }
    }
-   free(m->locais);
-   free(m);
-
-   #ifdef _DESTRUICAO_HT 
-   printf ("todas %lu lista internas foram destruídas.\n", i);
-   puts ("a 'tabela' foi desalocada com sucesso.");
-   #endif
-
-   // confirma que tudo está liberado.
+   free(array); free(m);
    return true;
 }
 
-bool destroi_interno_ht(HashTable m, Drop fk, Drop gv) {
-   size_t Q = m->capacidade, i = 1;
+bool destroi_interno_ht(HashTable m, Drop fk, Drop gv) 
+{
+   const int CAPACIDADE = (*m).capacidade;
+   Node* array = (*m).locais, remocao = NULL;
+   int n;
 
-   if (m == INVALIDA) 
-      return false; 
+   for (n = 0; n < CAPACIDADE; n++)
+   {
+      // Remove o primeiro item até acabar.
+      if (array[n] != NULL)
+      {
+         while (array[n] != NULL)
+         {
+            remocao = array[n];
+            array[n] = array[n]->seta;
 
-   while (i < Q) {
-      nodulo_t* lista = m->locais[i - 1];
-      desaloca_lista_ligada_e_dados_internos(lista, fk, gv);
+            /* Desaloca o 'nódulo' e a 'chave' e 'valor', com as funções que
+             * foram fornecidas. A ordem tem que ser obviamente, chave ou 
+             * valor, e a aí o nódulo, que os contém. */
+            fk(remocao->chave);
+            gv(remocao->valor);
+            free(remocao);
+         }
+      }
    }
-   free(m->locais);
-   free(m);
-
-   // confirma que tudo está liberado.
+   free(array); free(m);
    return true;
+   return false;
 }
 
 // O resultado da função abaixo:
@@ -725,6 +693,15 @@ bool empty_ht (HashTable m) { return vazia_ht(m); }
 
 size_t len_ht (HashTable m) { return tamanho_ht(m); }
 
+void print_ht(HashTable m, ToString f, ToString g)
+   { imprime_ht(m, f, g); }
+
+bool drop_ht(HashTable m)
+   { return destroi_ht(m); }
+
+bool drop_i_ht(HashTable m, Drop f, Drop g)
+   { return destroi_interno_ht(m, f, g); }
+
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
  *
@@ -742,7 +719,7 @@ size_t len_ht (HashTable m) { return tamanho_ht(m); }
 #include "macros.h"
 #include <assert.h>
 #include <locale.h>
-#include "dados_testes.h"
+#include "dados-testes.h"
 // Constante que comfirma igualdade entre strings.
 #define STR_IGUAIS 0
 
