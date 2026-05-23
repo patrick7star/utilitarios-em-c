@@ -103,13 +103,15 @@
  * === === === === === === === === === === === === === === === === === ==*/
  HT      new_with_capacity_ht (size_t, Hash, Eq);
  HT      new_ht               (Hash, Eq);
+ bool    drop_ht              (HashTable);
+ bool    drop_i_ht            (HashTable, Drop, Drop);
  HT      default_ht           (void);
  bool    delete_ht            (HT);
- bool    add_ht               (HT, GNRC key, GNRC vl);
- bool    update_ht            (HT,  GNRC key,  GNRC nvl);
+ bool    add_ht               (HT, GenT key, GenT vl);
+ bool    update_ht            (HT, GenT key, GenT nvl);
  bool    remove_ht            (HT, GNRC key);
  bool    contains_ht          (HT, GNRC key);
- GNRC    get_ht               (HT, GNRC key);
+ GenT    get_ht               (HT, GNRC key);
  bool    empty_ht             (HT);
  size_t  len_ht               (HT);
  void    print_ht             (HT, ToString fk, ToString gv);
