@@ -644,6 +644,7 @@ obj-hashtable-ref:
 lib-hashtable-ref:
 	@$(CLANG) -std=gnu2x -I$(HEADERS) -fPIC -Wall -O3 \
 		-c -o build/hashtableref-lib.o $(SRC_HT_REF)
+	@echo "Compilado o objeto 'hashtableref-lib.o'."
 	@$(CLANG) -I$(HEADERS) -shared \
 		-o bin/shared/libhtref.so build/hashtableref-lib.o
 	@echo "Biblioteca compartilhada 'libhtref.so' compilada."
@@ -941,11 +942,11 @@ compila-testes-integrais: \
 	usando-iteradores-de-cada-colecao \
 	frequencia-de-letras-do-dicionario
 
-fatorizacao-com-hashtable:
+it-fatorizacao-com-hashtable:
 	$(CLANG) -O0 -I include/ -Wall \
-		tests/fatorizacao_com_hashtable.c \
-		-o bin/tests/it_fatorizacao_com_hashtable \
-		-L bin/shared -lhtref
+		tests/fatorizacao_com_hashtable.c build/primitivos.o \
+		-o bin/tests/it-fatorizacao-com-hashtable \
+		-L bin/shared -lhtref -lmemoria
 
 testando-todos-objetos-gerados:
 	$(CLANG) -O0 -I include/ -Wall \

@@ -7,6 +7,44 @@
 #include <time.h>
 #include <unistd.h>
 #include "hashtable_ref.h"
+#include "primitivos.h"
+#include "memoria.h"
+#include "macros.h"
+
+size_t localizacao(generico_t dt, size_t c); 
+bool igualdade(generico_t a, generico_t b);
+bool e_um_numero_primo(size_t n);
+void pausa();
+size_t dividir(size_t* n, size_t d, bool visualiza); 
+void pula_para_primo(size_t* P, bool visualiza); 
+HashTable fatoracao(size_t N, bool visualiza);
+
+int main(void) {
+   HashTable num_100 = fatoracao(100, true);
+   HashTable num_360 = fatoracao(360, true);
+   HashTable num_1024 = fatoracao(1024, true);
+
+   printf("Qtd. de primos(100): %zu\n", tamanho_ht(num_100));
+   printf("Qtd. de primos(360): %zu\n", tamanho_ht(num_360));
+
+   imprime_ht(num_100, debug_u64, debug_u64);
+   imprime_ht(num_360, debug_u64, debug_u64);
+   imprime_ht(num_1024, debug_u64, debug_u64);
+
+   HashTable num_a = fatoracao(365002, true);
+   imprime_ht(num_a, debug_u64, debug_u64);
+
+   HashTable num_b = fatoracao(1031324, false);
+   imprime_ht(num_b, debug_u64, debug_u64);
+
+   destroi_ht(num_100);
+   destroi_ht(num_360);
+   destroi_ht(num_1024);
+   destroi_ht(num_a);
+   destroi_ht(num_b);
+
+   return EXIT_SUCCESS;
+}
 
 size_t localizacao(generico_t dt, size_t c) {
    size_t n = *((size_t*)dt);
@@ -30,23 +68,6 @@ bool e_um_numero_primo(size_t n) {
    }
    return true;
 } 
-
-size_t* box(size_t x) {
-   size_t* dado;
-
-   dado = malloc(sizeof(size_t));
-   *dado = x;
-
-   return dado;
-}
-
-char* stringfy(generico_t dt) {
-   size_t vl = *((size_t*)dt);
-   char* fmt = malloc(15 * sizeof(char));
-
-   sprintf(fmt, "%zu", vl);
-   return fmt;
-}
 
 void pausa() {
    const size_t ms = 200000000;
@@ -98,36 +119,8 @@ HashTable fatoracao(size_t N, bool visualiza) {
 
       /* Coloca primo e sua potência no dicionário de fatoração ...*/
       if (e_um_numero_primo(prime) && freq > 0)
-         insere_ht(F, box(prime), box(freq));
+         insere_ht(F, box_sizet(prime), box_sizet(freq));
    } while(prime++ < N);
 
    return F;
-}
-
-int main(void) {
-
-   HashTable num_100 = fatoracao(100, true);
-   HashTable num_360 = fatoracao(360, true);
-   HashTable num_1024 = fatoracao(1024, true);
-
-   printf("Qtd. de primos(100): %zu\n", tamanho_ht(num_100));
-   printf("Qtd. de primos(360): %zu\n", tamanho_ht(num_360));
-
-   imprime_ht(num_100, stringfy, stringfy);
-   imprime_ht(num_360, stringfy, stringfy);
-   imprime_ht(num_1024, stringfy, stringfy);
-
-   HashTable num_a = fatoracao(365002, true);
-   imprime_ht(num_a, stringfy, stringfy);
-
-   HashTable num_b = fatoracao(1031324, false);
-   imprime_ht(num_b, stringfy, stringfy);
-
-   destroi_ht(num_100);
-   destroi_ht(num_360);
-   destroi_ht(num_1024);
-   destroi_ht(num_a);
-   destroi_ht(num_b);
-
-   return EXIT_SUCCESS;
 }
