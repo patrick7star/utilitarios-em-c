@@ -20,6 +20,7 @@
 #define HASHTABLE_H_REF
 // Tipo de dado genérico trabalhado e template de funções:
 #include "definicoes.h"
+#include "primitivos.h"
 
  // Todos apelidos dados para a 'tabela de dispersão':
  typedef struct tabela_de_dispersao

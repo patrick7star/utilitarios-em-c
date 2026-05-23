@@ -26,17 +26,11 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <assert.h>
-// Apenas incluindo para os testes:
-#if defined(_ATUALIZA_HD) || defined(_DELETA_HT) || defined (_OBTEM_HT)
-#include "teste.h"
-#endif
 
 // todos apelidos dados:
 typedef struct nodulo_do_hash nodulo_t, *Node; 
-
 // todas constantes:
 #define INVALIDA NULL
-// Eu preciso transformar isso table[key] = value, nisso: insere_ht(table, key, value), ou atualiza_ht(table, key, value)
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                Trecho do 'nódulo', embrulho que
@@ -714,14 +708,11 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
  * pode conflitar.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 #ifdef _UT_HASHTABLE
-// bibliotecas:
-#include "teste.h"
-#include "macros.h"
 #include <assert.h>
 #include <locale.h>
 #include "dados-testes.h"
-// Constante que comfirma igualdade entre strings.
-#define STR_IGUAIS 0
+#include "teste.h"
+#include "macros.h"
 
 void varias_entradas_genericas_diferentes (void) {
    puts ("criando simples instância de entry ...");
@@ -776,7 +767,7 @@ size_t hash_string (generico_t key, size_t cP) {
 } 
 
 bool iguais_string (generico_t a, generico_t b) { 
-   return wcscmp ((wchar_t*)a, (wchar_t*)b) == STR_IGUAIS; 
+   return wcscmp ((wchar_t*)a, (wchar_t*)b) == 0; 
 }
 
 void alocao_e_desacalocao_simples_instancia (void) {
