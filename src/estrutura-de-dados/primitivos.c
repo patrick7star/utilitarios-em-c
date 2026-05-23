@@ -268,4 +268,5 @@ char* debug_long(GenT x) { return debug_i64(x); }
 char* debug_short(GenT x) { return debug_i16(x); }
 char* debug_double(GenT x) { return debug_f64(x); }
 char* debug_float(GenT x) { return debug_f32(x); }
+char* debug_sizet(GenT x) { return debug_u64(x); }
 

@@ -50,7 +50,12 @@
  char* debug_f32     (GenT x);
  char* debug_f64     (GenT x);
  char* debug_string  (GenT x);
- // Algo mais idiomatico do C:
+
+/* Nomes mais apropriados do C. Será apenas um "embrulho" das chamadas acima.
+ * Logo, deixarei a implementação a mais compacta o possível. Nem todas terão,
+ * a medida que uso com frequência, ou terceiros usam tal biblioteca, irei
+ * colocando mais, por enquanto, só isto está ótimo!
+ */
  char* debug_char    (GenT x);
  char* debug_void    (GenT x);
  char* debug_int     (GenT x);
@@ -58,16 +63,6 @@
  char* debug_short   (GenT x);
  char* debug_double  (GenT x);
  char* debug_float   (GenT x);
-
-/* Nomes mais apropriados do C. Será apenas um "embrulho" das chamadas acima.
- * Logo, deixarei a implementação a mais compacta o possível. Nem todas terão,
- * a medida que uso com frequência, ou terceiros usam tal biblioteca, irei
- * colocando mais, por enquanto, só isto está ótimo!
- */
-char* debug_int(GenT x);
-char* debug_long(GenT x);
-char* debug_short(GenT x);
-char* debug_double(GenT x);
-char* debug_float(GenT x);
+ char* debug_sizet   (GenT x);
 
 #endif
