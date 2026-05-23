@@ -13,7 +13,7 @@ TESTADOR_DYLIB	= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
 TESTADOR_OBJ	= build/teste.o build/tempo.o build/terminal.o build/legivel.o
 TESTADOR_STLIB	= -Lbin/static -lteste -lvisualiza -lm
 HEADERS			= ./include/
-DLL				= bin/shared/
+DLL				= ./bin/shared
 # Isso está sendo coloca, pois o WSL(uso no Windows), apenas tem o
 # compilador GCC, não o Clang. Ambos 'clang' e 'gcc' podem ser igualados,
 # assim é possivel fazer-lo apenas com o 'gcc', respeitando o que já foi
@@ -626,7 +626,7 @@ run-memoria:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo HashTable Referência
 # === === ===  === === === === === === === === === === === === === === ====
-EXE_HT_REF 	 = bin/tests/ut_hashtable_ref
+EXE_HT_REF 	 = bin/tests/ut-hashtableref
 SRC_HT_REF	 = src/estrutura-de-dados/hashtable_ref.c
 BUILD_HT_REF = build/hashtable-ref-teste.o
 COMPILA_HT_REF = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
@@ -651,8 +651,8 @@ lib-hashtable-ref:
 test-hashtable-ref:
 	@$(CC) -I include/ $(COMPILA_HT_REF) $(FLAGS_HT_REF) -std=c18 -Wall \
 		-c -o $(BUILD_HT_REF) $(SRC_HT_REF)
-	@$(CC) -o $(EXE_HT_REF) $(BUILD_HT_REF) $(TESTADOR)
-	@echo "Teste 'ut_hashtable_ref' compilado."
+	@$(CC) -o $(EXE_HT_REF) $(BUILD_HT_REF) $(TESTADOR_STLIB)
+	@echo "Teste 'ut-hashtableref' compilado."
 
 check-hashtable-ref:
 	$(CC) -fanalyzer -Wall -std=c18 $(BUILD_HT_REF) $(TESTADOR)
@@ -967,11 +967,12 @@ usando-iteradores-de-cada-colecao:
 		tests/usando_iteradores_de_cada_colecao.c \
 		-L bin/shared -lhtref -lplref
 
-frequencia-de-letras-do-dicionario:
-	$(CLANG) -O0 -std=gnu2x -I$(HEADERS) -Wall \
-		-o bin/tests/it_frequencia_de_letras_do_dicionario \
+it-frequencia-de-letras-do-dicionario: lib-aleatorio
+	$(CLANG) -O0 -std=gnu2x -I$(HEADERS) \
+		-o bin/tests/it-frequencia-de-letras-do-dicionario \
 		tests/frequencia_de_letras_do_dicionario.c \
-		-L$(DLL) -lhtref -lplref -lprogresso -laleatorio
+		build/primitivos.o build/aleatorio.o \
+		-L./bin/shared -lhtref -lplref -lprogresso -lmemoria
 
 processo-de-desalocacao:
 	@$(CC) -O0 -std=gnu2x -I include/ -Wall \
