@@ -332,13 +332,17 @@ void destroi_iter_pl(IterPL a) {
 }
 // === === === === === === === === === === === === === === === === === ===
 
-char* stack_to_str_pl(PilhaLigada s, ToString f) {
+char* stack_to_str_pl(PilhaLigada s, ToString f)
+{
    size_t char_sz = sizeof(char);
    size_t t = comprimento_pl(s);
-   char* resultado_fmt, *dado_fmt;
+   char* resultado_fmt = NULL, 
+       * dado_fmt = NULL, 
+       * vazio_fmt = NULL;
+   const int MAX_BUFFER = 25;
 
    if (vazia_pl(s)) {
-      char* vazio_fmt = malloc(15 * char_sz);
+      vazio_fmt = malloc(MAX_BUFFER * char_sz);
 
       sprintf(vazio_fmt, "Pilha(%lu): []-[]", t);
       return vazio_fmt;
