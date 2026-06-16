@@ -41,16 +41,6 @@ constroi-raiz:
 listagem-compilacao:
 	exa --tree --sort=changed --reverse bin/ build/
 
-# Compila tudo acima, seguindo sua hieraquia copiada(cima para baixo):
-compila-tudo: \
-	constroi-raiz \
-	compila-objetos-principais \
-	compila-bibliotecas \
-	compila-bibliotecas-colecoes \
-	compila-testes-unitarios \
-	compila-testes-unitarios-colecoes \
-	compila-testes-integrais
-	@echo "Todas códigos das bibliotecas(testes e libs) foram compilados com sucesso."
 
 # roda todos testes unitários da biblioteca:
 roda-todos-testes-unitarios:
@@ -149,50 +139,60 @@ test-colecoes: test-conjunto-ref test-hashtable-ref \
 	test-pilha-ligada-ref test-lista-posicional-ref test-lista-array-ref \
 	test-fila-ligada-ref
 
+# ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~
+obj-visualizacao: obj-impressao obj-legivel obj-progresso
+
+obj-computacao: obj-ponto obj-memoria obj-combinatoria obj-aleatorio \
+					 obj-estringue obj-conversao
+
 # ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~~~ ~
 # Compilação focada em junção de bibliotecas estáticas.
 
-stlib-basic:
+stlib-all: constroi-raiz stlib-basic stlib-collections stlib-display \
+			  stlib-computing
+	@echo "Todos os pacotes de binários estáticos foram compilados."
+
+stlib-basic: obj-principais obj-lista-array-ref
 	@ar crs bin/static/libbasico.a \
 		build/legivel.o build/tempo.o  build/teste.o build/terminal.o \
 		build/aleatorio.o build/ponto.o build/progresso.o \
 		build/estringue.o build/lista-array-ref.o -lm
 	@echo "Biblioteca 'libbasico.a' criada com sucesso."
 
-stlib-collections:
+stlib-collections: obj-colecoes
 	@ar crs bin/static/libcolecoes.a \
 		build/deque-ligada-ref.o build/fila-ligada-ref.o  \
 		build/lista-array-ref.o  build/hashtable-ref.o \
-		build/fila-array-ref.o build/fila-circular-ref.o \
+		build/fila-array-ref.o build/filacircularref.o \
 		build/pilha-ligada-ref.o build/conjuntoref.o \
 		build/primitivos.o
 	@echo "Biblioteca 'libcolecoes.a' criada com sucesso."
 
-stlib-display:
+stlib-display: obj-lista-array-ref obj-visualizacao
 	@ar crs bin/static/libvisualiza.a \
 				build/impressao.o build/lista-array-ref.o \
 				build/legivel.o build/progresso.o
 	@echo "Biblioteca 'libvisualiza.a' criada com sucesso."
 
-stlib-computing:
+stlib-computing: obj-computacao
 	@ar crs bin/static/libcomputa.a \
 				build/aleatorio.o build/combinatoria.o build/memoria.o \
-				build/estringue.o build/conversao.o
+				build/estringue.o build/conversao.o build/ponto.o
 	@echo "Biblioteca 'libcomputa.a' criada com sucesso."
 
-stlib-everything:
+stlib-everything: obj-principais obj-colecoes obj-impressao \
+						obj-combinatoria obj-memoria obj-conversao
 	@ar crs bin/static/libutilitarios.a \
 			build/legivel.o build/tempo.o  build/teste.o build/terminal.o \
 			build/aleatorio.o build/ponto.o build/progresso.o \
-			build/estringue.o build/lista-array-ref.o -lm \
-				build/impressao.o build/lista-array-ref.o \
+			build/estringue.o build/lista-array-ref.o -lm build/impressao.o  \
 				build/legivel.o build/progresso.o \
 			build/aleatorio.o build/combinatoria.o build/memoria.o \
 			build/estringue.o build/conversao.o \
 				build/deque-ligada-ref.o build/fila-ligada-ref.o  \
 				build/lista-array-ref.o  build/hashtable-ref.o \
-				build/fila-array-ref.o build/fila-circular-ref.o \
-				build/pilha-ligada-ref.o build/conjunto-ref.o
+				build/fila-array-ref.o build/filacircularref.o \
+				build/pilha-ligada-ref.o build/conjuntoref.o
 	@echo "Biblioteca condensada 'libutilitarios.a' criada."
 
 # === === ===  === === === === === === === === === === === === === === ====
@@ -711,7 +711,7 @@ clean-conjunto-ref:
 # 						 	Modulo Lista-Array Referência
 # === === ===  === === === === === === === === === === === === === === ====
 SRC_LA_REF		  = src/estrutura-de-dados/listaarray_ref.c
-OBJ_LA_REF	     = build/lista-array-ref-teste.o
+OBJ_LA_REF	     = build/lista-array-ref.o
 OBJ_TEST_LA_REF  = ./build/listaarrayref-test.o
 OBJ_DYLIB_LA_REF = build/listaarrayref-dylib.o
 EXE_TEST_LA_REF  = bin/tests/ut-listaarrayref
