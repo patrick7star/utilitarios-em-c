@@ -7,6 +7,7 @@
 #include <wchar.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 // Biblioteca deste próprio repositório:
 #include "terminal.h"
 
@@ -591,7 +592,8 @@ char* captura_impressao_de_qualquer_array
    // Salva a saída padrão do processo antes de entubar ela em outro lugar.
    saida_padrao = dup(fileno(stdout));
    // Cria 'pipes', então conecta a saída padrão ao tubo de saída dos 'pipes'.
-   pipe(tubos);
+   if (pipe(tubos) == -1)
+      { perror(strerror(errno)); abort(); }
    dup2(tubos[Out], fileno(stdout));
 
    /* Executa função que utiliza do 'stdout', porém conecatada ao pipe, os
