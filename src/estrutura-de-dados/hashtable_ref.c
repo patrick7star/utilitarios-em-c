@@ -575,6 +575,39 @@ GenT clona_ht(HashTable m)
    return output;
 }
 
+struct ArrayHT hashtable_to_array(HashTable input)
+{
+/*   O algoritmo é bem simples. Calcula a quantidade de itens no mapa, então
+ * cria uma array dinâmica neste comprimento, cria um iterador, então vai
+ * iterando cada item e copiando a saída de cada iteração na array.
+ * 
+ * NOTA: o algoritmo deixa bem claro que ele não consome ou libera o
+ *       mapa depois desta operação, apenas faz copia das chaves e 
+ *       valores e coloca numa array. 
+ */
+   // Apelido local para ajudar na codificação.
+   typedef IterOutputHT Type;
+
+   HashTable mapa = input; 
+   // Array que será gerada.
+   const int size = sizeof(Type);
+   int quantia, n = 0;
+   IterHT iter = NULL;
+   struct ArrayHT output;
+
+   iter = new_iter_ht(mapa);
+   quantia = len_ht(mapa);
+   output.array = (Type*)malloc(quantia * size);
+
+   while (!consumido_iter_ht(iter))
+      output.array[n++] = next_ht(iter);
+   output.length = n;
+
+   drop_iter_ht(iter);
+   return output;
+}
+
+
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários 
  *                métodos e funções para os termos
@@ -630,13 +663,13 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
  IterHT clone_iter_ht(IterHT iter)
    { return clona_iter_ht(iter); }
 
- void drop_iter_ht(IterHT);
+ void drop_iter_ht(IterHT iter)
    { return destroi_iter_ht(iter); }
 
  size_t count_iter_ht(IterHT iter)
    { return contagem_iter_ht(iter); }
 
- bool exhausted_ht(IterHT)
+ bool exhausted_ht(IterHT iter)
    { return consumido_iter_ht(iter); }
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
@@ -650,7 +683,7 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
-#ifdef _UT_HASHTABLE
+#ifdef __unit_tests__
 #include <assert.h>
 #include <locale.h>
 #include "dados-testes.h"
@@ -658,6 +691,7 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
 #include "macros.h"
 #include "primitivos.h"
 #include "memoria.h"
+#include "aleatorio.h"
 
 TESTE varias_entradas_genericas_diferentes(void); 
 TESTE alocao_e_desacalocao_simples_instancia (void); 
@@ -673,7 +707,8 @@ TESTE metodo_de_clonagem(void);
 // ---...---...---...---... Testes dos iteradores ---...---...---...---...
 TESTE uso_simples_da_iteracao (void); 
 TESTE tentando_iterador_mapa_vazio (void);
-TESTE transporte_de_hashtable_para_array(void);
+TESTE transporte_de_hashtable_para_array(void); 
+
 
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
@@ -697,15 +732,68 @@ void main(void) {
    );
 
    // testes apenas do iteradores.
-   executa_testes_a (
-      false, 3, uso_simples_da_iteracao, true,
-         tentando_iterador_mapa_vazio, true,
-         transporte_de_hashtable_para_array, true
+   executa_testes_b (
+      true, 3, 
+         Unit(uso_simples_da_iteracao, true),
+         Unit(tentando_iterador_mapa_vazio, true),
+         Unit(transporte_de_hashtable_para_array, true)
    );
 }
 
-bool free_box_i8(GenT obj)
-   { free(obj); return true; }
+void alimenta_mapa_com_frutas_e_precos_aleatorios(HashTable InOut)
+{
+   HashTable mapa = InOut;
+   int inteiro, n;
+   float decimal;
+   char* chave = NULL;
+   
+   for (n = 0; n < FRUITS; n++)
+   {
+      inteiro = inteiro_positivo(1, 1e4);
+      decimal = (float)inteiro / 1000.0;
+      chave = (char*)fruits[n];
+
+      add_ht(mapa, chave, box_float(decimal));
+   }
+
+}
+
+TESTE transporte_de_hashtable_para_array(void)
+{
+   HashTable mapa = NULL; 
+   IterOutputHT * array = NULL;
+   const int size = sizeof(IterOutputHT);
+   int quantia, n = 0;
+   IterHT iter = NULL;
+   char* chave; float* valor;
+
+   mapa = new_ht(hash_string, eq_string); 
+
+   alimenta_mapa_com_frutas_e_precos_aleatorios(mapa);
+   print_ht(mapa, debug_string, debug_f32);
+
+   iter = new_iter_ht(mapa);
+   quantia = len_ht(mapa);
+   array = malloc(quantia * size);
+
+   while (!consumido_iter_ht(iter))
+      array[n++] = next_ht(iter);
+
+   printf("n: %d | quantia: %d\n", n, quantia);
+   assert(n == quantia);
+   drop_iter_ht(iter);
+
+   printf("\nVisualizando conteúdo da array[%d]...\n", quantia);
+
+   for (n = 0; n < quantia; n++)
+   {
+      chave = (char*)array[n].key;
+      valor = (float*)array[n].value;
+      printf("\t\b\b\b%s ===> U$ %2.2f\n", chave, *valor);
+   }
+
+   drop_i_ht(mapa, NULL, free_box);
+}
 
 TESTE metodo_de_clonagem(void)
 {
@@ -737,7 +825,7 @@ TESTE metodo_de_clonagem(void)
    puts("Clone após modificação da original:");
    print_ht(copia, debug_string, debug_i8);
    drop_ht(mapa);
-   drop_i_ht(copia, NULL, free_box_i8);
+   drop_i_ht(copia, NULL, free_box);
 }
 
 TESTE varias_entradas_genericas_diferentes (void) {
@@ -1187,48 +1275,6 @@ void tentando_iterador_mapa_vazio (void) {
 
    puts ("não funcionou com nenhuma!");
    destroi_iter_ht(I);
-   destroi_ht (M);
-}
-
-void transporte_de_hashtable_para_array(void) {
-   HashTable M = cria_ht(hash_int, int_eq);
-   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
-   generico_t* array_of_values, *array_of_keys; size_t qtd;
-
-   for (size_t p = 1; p <= 9; p++) {
-      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)legumes[p - 1];
-      insere_ht (M, key, value);
-   }
-   for (size_t p = 9; p <= 19; p++) {
-      // insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)boys_names[p - 9 - 1];
-      insere_ht (M, key, value);
-   }
-   visualizacao_mapa_u16_e_str (M);
-   print_inner_u16_e_str (M);
-
-   array_of_values = valores_ht(M);
-   qtd = tamanho_ht(M);
-   puts("\nListagem em array dos valores...");
-
-   for (int p = 1; p <= qtd; p++) {
-      char* vl = (char*)array_of_values[p - 1];
-      printf("\t===> '%s'\n", vl);
-   }
-
-   array_of_keys = chaves_ht(M);
-   puts("\nListagem em array dos valores...");
-
-   for (int p = 1; p <= qtd; p++) {
-      uint16_t* ptr_key = (uint16_t*)array_of_keys[p - 1];
-      printf("\t===> %u\n", *ptr_key);
-   }
-
-   free(array_of_values);
-   free(array_of_keys);
    destroi_ht (M);
 }
 

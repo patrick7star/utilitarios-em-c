@@ -28,6 +28,15 @@
    hashtable_t,  HASHTABLE,
    // Ponteiros, ambas formas são comumente escritas:
    *Hashtable, *HashTable, *HT;
+ // Tipo do iterador criado(uma estrutura opaca).
+ typedef struct Iteracao_da_Hashtable_Ref *IterHT, *IteradorHT;
+ // Saída de cada iteração.
+ typedef struct Saida_da_Iteracao_da_Hashtable_Ref
+   { generico_t key; generico_t value; } IterOutputHT, IOutHT;
+ /* Tupla com uma 'array' com comprimento 'length' do tipo IterOutputHT, ou
+  * seja, com as chaves e valores da tabela passada. */
+ struct ArrayHT { IterOutputHT* array; size_t length; };
+
 
  /* Criação e alocação de várias formas possíveis. Alocação pode ser feita
   * com um buffer inicial, com um buffer definido de forma automática, e
@@ -67,16 +76,16 @@
   * na saída principal. */
  // char* hashtable_to_str(HashTable, ToString);
  void imprime_ht (HashTable, ToString fk, ToString gv);
+ /* Retorna uma array com  tuplas(IterOutputHT) contendo chaves-valor da 
+  * hashtable passada. A hashtable não é consumido no processo, portanto
+  * fique atento na liberação, as chaves-e-valores são apenas copiadas 
+  * dentro da array. */
+ struct ArrayHT hashtable_to_array (HashTable);
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Iteradores e seus
  *                         Métodos
  * === === === === === === === === === === === === === === === === === ==*/
- typedef struct Iteracao_da_Hashtable_Ref *IterHT, *IteradorHT;
-
- typedef struct Saida_da_Iteracao_da_Hashtable_Ref
-   { generico_t key; generico_t value; } IterOutputHT, IOutHT;
-
  // cédula em branco para indicar termino da iteração ou invalidação.
  extern const IterOutputHT NULO_HT;
 
@@ -86,6 +95,7 @@
  size_t        contagem_iter_ht  (IterHT);
  IterOutputHT  next_ht           (IterHT);
  bool          consumido_iter_ht (IterHT);
+
 
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários
