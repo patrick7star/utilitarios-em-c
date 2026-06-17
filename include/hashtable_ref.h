@@ -112,7 +112,7 @@
  bool    update_ht            (HT, GenT key, GenT nvl);
  bool    remove_ht            (HT, GNRC key);
  bool    contains_ht          (HT, GNRC key);
- GenT    get_ht               (HT, GNRC key);
+ GenT    get_ht               (HT, GenT key);
  bool    empty_ht             (HT);
  size_t  len_ht               (HT);
  void    print_ht             (HT, ToString fk, ToString gv);

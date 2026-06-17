@@ -166,7 +166,7 @@ bool destroi_ht(HashTable m) {
          {
             remocao = array[n];
             array[n] = array[n]->seta;
-            // Desalaca apenas o nódulo.
+            // Desaloca apenas o nódulo.
             free(remocao);
          }
       }
@@ -193,9 +193,13 @@ bool destroi_interno_ht(HashTable m, Drop fk, Drop gv)
 
             /* Desaloca o 'nódulo' e a 'chave' e 'valor', com as funções que
              * foram fornecidas. A ordem tem que ser obviamente, chave ou 
-             * valor, e a aí o nódulo, que os contém. */
-            fk(remocao->chave);
-            gv(remocao->valor);
+             * valor, e a aí o nódulo, que os contém. Caso tenha sido passado
+             * argumentos 'null', então quer dizer que tal desalocador
+             * não está ativado. */
+            if (fk != NULL)
+               fk(remocao->chave);
+            if (gv != NULL)
+               gv(remocao->valor);
             free(remocao);
          }
       }
@@ -261,13 +265,6 @@ bool insere_ht(HashTable m, generico_t ch, generico_t v) {
       // contabiliza inserção.
       m->quantidade += 1;
 
-      #ifdef _INSERCAO_HT
-      puts (
-         "container vázio, portanto o item a ser inserído será "
-         "o primeiro da lista, ou a própria lista"
-      );
-      #endif
-
       // confirma inserção como feita, se chegar até aqui.
       return true;
    } else {
@@ -294,18 +291,11 @@ bool contem_ht(HashTable m,  generico_t ch) {
  * função que da uma varrida na lista interna procurando pelo primeiro
  * item correspondente, manda o resultado e muito mais, porém apenas
  * estamos interessado na condição de "pertencimento" retornada. */
-
    /* computa posição na array baseada na chave e capacidade. A função
     * hash, por desenho da estrutura, já vem embutida. 
     */
    size_t posicao = m->__hash__ (ch, m->capacidade);
    nodulo_t* list = m->locais[posicao];
-   // bool (*funcao)(generico_t, generico_t) = m->__iguais__;
-
-   #ifdef _CONTIDO_HT
-   if (list == INVALIDA) 
-      puts ("container indexado está vázio.");
-   #endif
 
    result_t resultado = verifica_lista (list, ch, m->__iguais__);
    return resultado.contido;
@@ -318,22 +308,10 @@ bool atualiza_ht(HashTable m,  generico_t ch,  generico_t nv) {
  * atualização. */
    size_t posicao = m->__hash__ (ch, m->capacidade);
 
-   #ifdef _ATUALIZA_HD
-   printf ("hash: %lu\n", posicao);
-   #endif
-
    result_t outcome = verifica_lista (m->locais[posicao], ch, m->__iguais__);
    nodulo_t* item = outcome.item;
    if (item != NULL)
       item->valor = nv;
-
-   #ifdef _ATUALIZA_HD
-   printf (
-      "resultados: (%s, %luª, LISTA)\n",
-      bool_to_str (outcome.contido),
-      outcome.posicao
-   );
-   #endif
 
    return outcome.contido; 
 }
@@ -375,9 +353,6 @@ bool deleta_ht(HashTable m, generico_t ch) {
 
       // descontabiliza item removido.
       m->quantidade -= 1;
-      /* libera item(sucetível a erro), possivelmente comentado pois parte
-       * causa muitos problemas se não feito de maneira certa. */
-      // destroi_nodulo (atual);
    }
    return a_chave_existe;
 }
@@ -647,6 +622,27 @@ generico_t* chaves_ht(HashTable m) {
    return data_array;
 }
 
+GenT clona_ht(HashTable m)
+{
+   Hash f = (*m).__hash__; 
+   Eq g = (*m).__iguais__;
+   HashTable output = cria_ht(f, g);
+   IteradorHT iter = cria_iter_ht(m);
+   GenT key = NULL, value = NULL;
+   IterOutputHT result;
+
+   while (!consumido_iter_ht(iter))
+   {
+      result  = next_ht(iter);
+      key     = result.key;
+      value   = result.value;
+
+      if (!add_ht(output, key, value))
+         { perror("Não foi possível clonar!"); abort(); }
+   }
+   return output;
+}
+
 /* === === === === === === === === === === === === === === === === === ==
  *                      Renomeação de vários 
  *                métodos e funções para os termos
@@ -713,8 +709,91 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
 #include "dados-testes.h"
 #include "teste.h"
 #include "macros.h"
+#include "primitivos.h"
+#include "memoria.h"
 
-void varias_entradas_genericas_diferentes (void) {
+TESTE varias_entradas_genericas_diferentes(void); 
+TESTE alocao_e_desacalocao_simples_instancia (void); 
+TESTE visualiza_interna (HashTable m); 
+TESTE aplicacao_de_simples_insercoes (void); 
+TESTE verifica_operacao_de_pertencimento(void); 
+TESTE ascii_code_de_wide_strings (void);
+TESTE simples_atualizacoes_de_alguns_valores(void); 
+TESTE algumas_remocoes_feitas (void); 
+TESTE operacoes_negadas (void); 
+TESTE metodo_get_verificacao_basica (void); 
+TESTE metodo_de_clonagem(void);
+// ---...---...---...---... Testes dos iteradores ---...---...---...---...
+TESTE uso_simples_da_iteracao (void); 
+TESTE tentando_iterador_mapa_vazio (void);
+TESTE transporte_de_hashtable_para_array(void);
+
+void main(void) {
+   setlocale (LC_CTYPE, "en_US.UTF-8");
+
+   executa_testes_b(
+      true, 1, 
+        Unit(metodo_de_clonagem, true)
+   );
+   executa_testes_a (
+      false, 9, 
+          varias_entradas_genericas_diferentes, true,
+          alocao_e_desacalocao_simples_instancia, true,
+          aplicacao_de_simples_insercoes, true,
+          verifica_operacao_de_pertencimento, true,
+          metodo_get_verificacao_basica, true,
+          operacoes_negadas, true, 
+          algumas_remocoes_feitas, true,
+          simples_atualizacoes_de_alguns_valores, true,
+          // verificação de features do C.
+          ascii_code_de_wide_strings, true
+   );
+
+   // testes apenas do iteradores.
+   executa_testes_a (
+      false, 3, uso_simples_da_iteracao, true,
+         tentando_iterador_mapa_vazio, true,
+         transporte_de_hashtable_para_array, true
+   );
+}
+
+bool free_box_i8(GenT obj)
+   { free(obj); return true; }
+
+TESTE metodo_de_clonagem(void)
+{
+   HashTable mapa = cria_ht(hash_string, eq_string);
+   HashTable copia = NULL;
+   char* key = NULL; int8_t* value = NULL;
+   const int Y = sizeof(char*);
+   int i = 0;
+
+   for (i = 0; i < GIRLS_NAMES; i++)
+   {
+      key = (char*)girls_names[i];
+      add_ht(mapa, key, box_i8(i));
+   }
+
+   printf("Total de elementos: %zu\n", len_ht(mapa));
+   puts("Original:");
+   print_ht(mapa, debug_string, debug_i8);
+   copia = clona_ht(mapa);
+   puts("Clonado com sucesso.");
+
+   for (i = 0; i < GIRLS_NAMES / 2; i += 2)
+   {
+      key = (char*)girls_names[i];
+      value = obtem_ht(mapa, key);
+      *value += 10;
+   }
+
+   puts("Clone após modificação da original:");
+   print_ht(copia, debug_string, debug_i8);
+   drop_ht(mapa);
+   drop_i_ht(copia, NULL, free_box_i8);
+}
+
+TESTE varias_entradas_genericas_diferentes (void) {
    puts ("criando simples instância de entry ...");
 
    // chaves das entradas de todos tipos:
@@ -756,15 +835,6 @@ void varias_entradas_genericas_diferentes (void) {
       *((int32_t*)c.valor)
    );
 }
-
-size_t hash_string (generico_t key, size_t cP) { 
-   wchar_t* k = key;
-   size_t T = wcslen (key);
-   size_t code = (uint8_t)k[T / 2] * (uint8_t)k[0] * (uint8_t)k[T - 1];
-    size_t mA = (size_t)k;
-   return (T * code * mA) % cP; 
-   // return (T * code) % cP; 
-} 
 
 bool iguais_string (generico_t a, generico_t b) { 
    return wcscmp ((wchar_t*)a, (wchar_t*)b) == 0; 
@@ -1215,28 +1285,5 @@ void transporte_de_hashtable_para_array(void) {
    destroi_ht (M);
 }
 
-void main(void) {
-   setlocale (LC_CTYPE, "en_US.UTF-8");
-
-   executa_testes_a (
-      true, 9, varias_entradas_genericas_diferentes, true,
-          alocao_e_desacalocao_simples_instancia, true,
-          aplicacao_de_simples_insercoes, true,
-          verifica_operacao_de_pertencimento, true,
-          metodo_get_verificacao_basica, true,
-          operacoes_negadas, true, 
-          algumas_remocoes_feitas, true,
-          simples_atualizacoes_de_alguns_valores, true,
-          // verificação de features do C.
-          ascii_code_de_wide_strings, true
-   );
-
-   // testes apenas do iteradores.
-   executa_testes_a (
-      true, 3, uso_simples_da_iteracao, true,
-         tentando_iterador_mapa_vazio, true,
-         transporte_de_hashtable_para_array, true
-   );
-}
 #endif
 
