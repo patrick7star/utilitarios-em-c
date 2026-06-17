@@ -185,6 +185,14 @@ void alterna(void* a, void* b, int sz)
    ptr_b += sz;
 }
 
+bool free_box(GenT obj)
+/* Como são tudos primitivas, a liberação de uma simples bloco alocado é,
+ * facilmente liberado com o free. Aquie e coloco retornar verdadeiro, e
+ * não uso o free diretamente, pois fiz uma API que retorna um valor lógico
+ * do sucesso ou não da função.
+ */
+   { free(obj); return true; }
+
 #ifdef __unit_tests__
 /* == == == == == == == == == == == == == == == == == == == == == == == == =
  *                         Testes Unitários 

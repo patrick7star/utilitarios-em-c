@@ -15,6 +15,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+// Tipo genérico aqui usado, precisa disso.
+#include <definicoes.h>
 
  // Para os tipos primitivos mais básicos:
  bool*    box_bool   (bool    vl);
@@ -44,6 +46,8 @@
  uint8_t* clona_array (void* array, int sz, int n);
  // Alterna de dois valores genéricos, dado eles, e o seu tipo(tanto em bytes).
  void alterna (void* a, void* b, int sz);
+ // Liberação de qualquer um das primitivas alocadas na 'heap'.
+ bool free_box(GenT obj);
 
  // Apelidos que as funções principais acima também podem ser chamadas:
  // Wide strings(Unicode):
