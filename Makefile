@@ -629,6 +629,7 @@ run-memoria:
 EXE_HT_REF 	 = bin/tests/ut-hashtableref
 SRC_HT_REF	 = src/estrutura-de-dados/hashtable_ref.c
 BUILD_HT_REF = build/hashtable-ref-teste.o
+OBJ_TST_HT_REF = build/hashtableref-test.o
 COMPILA_HT_REF = -D_UT_HASHTABLE -D_INSERCAO_HT -D_CRIACAO_HT \
 					-D_DESTRUICAO_HT -D_CONTIDO_HT \
 					-D_ATUALIZA_HT -D_DELETA_HT -D_OBTEM_HT
@@ -651,8 +652,9 @@ lib-hashtable-ref:
 
 test-hashtable-ref:
 	@$(CC) -I include/ $(COMPILA_HT_REF) $(FLAGS_HT_REF) -std=c18 -Wall \
-		-c -o $(BUILD_HT_REF) $(SRC_HT_REF)
-	@$(CC) -o $(EXE_HT_REF) $(BUILD_HT_REF) $(TESTADOR_STLIB)
+		-c -o $(OBJ_TST_HT_REF) $(SRC_HT_REF)
+	@$(CC) -o $(EXE_HT_REF) $(OBJ_TST_HT_REF) build/primitivos.o \
+			 -L./bin/static/ -lbasico -lm -lcolecoes -lcomputa
 	@echo "Teste 'ut-hashtableref' compilado."
 
 check-hashtable-ref:
