@@ -68,14 +68,6 @@
  // char* hashtable_to_str(HashTable, ToString);
  void imprime_ht (HashTable, ToString fk, ToString gv);
 
- /* Método clássico de iteração, gera arrays e colocas todos suas 'chaves'
-  * ou 'valores' nesta, sendo seu tamanho o mesmo que a quantia de itens
-  * da tabela.
-  *
-  * Nota: ainda estão instaveis, portanto o uso vem com possíveis clashes
-  * no programa. */
- generico_t*  valores_ht (HashTable);
- generico_t*  chaves_ht  (HashTable);
 /* === === === === === === === === === === === === === === === === === ==
  *                      Iteradores e seus
  *                         Métodos
@@ -83,7 +75,7 @@
  typedef struct Iteracao_da_Hashtable_Ref *IterHT, *IteradorHT;
 
  typedef struct Saida_da_Iteracao_da_Hashtable_Ref
-   { generico_t key; generico_t value; } IterOutputHT;
+   { generico_t key; generico_t value; } IterOutputHT, IOutHT;
 
  // cédula em branco para indicar termino da iteração ou invalidação.
  extern const IterOutputHT NULO_HT;
@@ -116,5 +108,12 @@
  bool    empty_ht             (HT);
  size_t  len_ht               (HT);
  void    print_ht             (HT, ToString fk, ToString gv);
+ // Métodos referentes aos iteradores.
+ IterHT  new_iter_ht   (HashTable);
+ void    drop_iter_ht  (IterHT);
+ IterHT  clone_iter_ht (IterHT);
+ IOutHT  next_ht       (IterHT);
+ size_t  count_iter_ht (IterHT);
+ bool    exhausted_ht  (IterHT);
 
 #endif

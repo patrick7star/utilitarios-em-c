@@ -554,74 +554,6 @@ void imprime_ht(HashTable m, ToString fk, ToString gv) {
    destroi_iter_ht(iter);
 }
 
-generico_t* valores_ht(HashTable m) {
-/* Que uma array dinâmica, contendo todos genéricos dos valores dos itens
- * na tabela; isso tudo seguindo a ordem de iteração. A array terá o 
- * tamanho da quantia de itens da tabela de dispersão, obviamente! Se 
- * tal tabela estiver vázia, o retorno é NULL ao invés do primeiro 
- * objeto da array. */
-   size_t total = tamanho_ht(m); 
-   size_t size_g = sizeof(generico_t);
-   // Computando total de bytes que 'n' desta estrutura ocupa.
-   generico_t* data_array;
-   size_t p = 0;
-
-   /* Não continuar se não houver nenhum item no 'dicionário'. */
-   if (vazia_ht(m)) return NULL;
-
-   // Se chegou até aqui, então, alocar a array e criar o iterador...
-   data_array = malloc (total * size_g);
-   IterHT i = cria_iter_ht(m);
-
-   // Para a execução em caso de erro na alocação.
-   if (data_array == NULL) { 
-      perror("erro alocação de ArrayHT*");
-      abort();
-   }
-
-   while (!consumido_iter_ht(i)) 
-   {
-      IterOutputHT a = next_ht(i);
-      data_array[p++] = a.value;
-   }
-
-   destroi_iter_ht(i);
-   // Criando a estrutura array, colocando a array dinâmica(na heap), e
-   // copiando o total de itens nela.
-   return data_array;
-}
-
-generico_t* chaves_ht(HashTable m) {
-/* Exatamente o mesmo que acima, porém que para chaves ao invés dos
- * valores. */
-   size_t total = tamanho_ht(m); 
-   size_t size_g = sizeof(generico_t);
-   // Computando total de bytes que 'n' desta estrutura ocupa.
-   generico_t* data_array = malloc (total * size_g);
-   IterHT i = cria_iter_ht(m);
-   size_t p = 0;
-
-   /* Não continuar se não houver nenhum item no 'dicionário'. Aqui também
-    * liberar a array alocada acima. */
-   if (vazia_ht(m)) {
-      free(data_array);
-      return NULL;
-   }
-
-   if (data_array == NULL) { 
-      perror("erro alocação de ArrayHT*");
-      abort();
-   }
-
-   while (!consumido_iter_ht(i)) 
-   {
-      IterOutputHT a = next_ht(i);
-      data_array[p++] = a.key;
-   }
-   destroi_iter_ht(i);
-   return data_array;
-}
-
 GenT clona_ht(HashTable m)
 {
    Hash f = (*m).__hash__; 
@@ -691,6 +623,21 @@ bool drop_ht(HashTable m)
 
 bool drop_i_ht(HashTable m, Drop f, Drop g)
    { return destroi_interno_ht(m, f, g); }
+
+ IterHT new_iter_ht (HashTable m)
+   { return cria_iter_ht(m); }
+
+ IterHT clone_iter_ht(IterHT iter)
+   { return clona_iter_ht(iter); }
+
+ void drop_iter_ht(IterHT);
+   { return destroi_iter_ht(iter); }
+
+ size_t count_iter_ht(IterHT iter)
+   { return contagem_iter_ht(iter); }
+
+ bool exhausted_ht(IterHT)
+   { return consumido_iter_ht(iter); }
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
