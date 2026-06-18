@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
+#include <linux/limits.h>
 #endif
 
 // Número em que os bits internos são sempre modificados.
@@ -108,21 +110,31 @@ char* palavra_aleatoria(void) {
     * palavras no começo e no final do arquivo, digo, literalmente, a
     * primeira e a última palavra. O algoritmo apresentado não cuida deste
     * caso. */
-   #ifdef _DEBUG_PALAVRA_ALEATORIA
-   puts("a função 'palavra_aleatoria' iniciou.");
-
-   void letra_lida_e_onde(size_t p, char _char) {
-      printf("cursor: %lu\tcaractére: '%c'\n", p, _char);
-      sleep(1);
-   }
-   #endif
-
-   const char caminho[] = "/usr/share/dict/american-english";
-   FILE* arquivo = fopen(caminho, "rt");
+   const char CAMINHO[] = "/usr/share/dict/american-english";
+   FILE* arquivo = fopen(CAMINHO, "rt");
    size_t inicio = SIZE_MAX, fim =SIZE_MAX, nl = 0;
    size_t cursor = inteiro_positivo(0, 900000);
-   char letra;
+   int byte, qtd, lido;
+   char letra, mensagem_erro[PATH_MAX], *erro_msg;
    bool bloco_executado = false;
+   const char* const VAR_NOME = "DICIONARIO_UTILITARIOS";
+   const char* ALTERNATIVO = getenv(VAR_NOME);
+
+   #ifdef __debug__
+   printf("%s: '%s'\n", VAR_NOME, ALTERNATIVO);
+   #endif
+
+   // Interrompe o programa se não houver o dicionário instalado.
+   if (arquivo == NULL && ALTERNATIVO == NULL) 
+   { 
+      erro_msg = strerror(errno);
+
+      sprintf(mensagem_erro, "%s(%s)\n", erro_msg, CAMINHO);
+      perror(mensagem_erro); 
+      abort(); 
+
+   } else if (ALTERNATIVO != NULL)
+      arquivo = fopen(ALTERNATIVO, "rt");
 
    // sorteio um byte aleatoriamente no arquivo.
    fseek(arquivo, cursor, SEEK_SET);
@@ -130,9 +142,6 @@ char* palavra_aleatoria(void) {
    // buscando dois caractéres de quebra-de-linha.
    while (nl  < 2) {
       letra = getc(arquivo);
-      #ifdef _DEBUG_PALAVRA_ALEATORIA
-      letra_lida_e_onde(ftell(arquivo), letra);
-      #endif
 
       if (letra == '\n') {
          if (!bloco_executado) {
@@ -148,25 +157,18 @@ char* palavra_aleatoria(void) {
    }
 
    // extraindo o conteúdo entre tais posições...
-   size_t byte = sizeof(char);
-   /* como estamos tratando de palavras aqui, cinquenta bytes é mais do que 
+   byte = sizeof(char);
+   /* Como estamos tratando de palavras aqui, cinquenta bytes é mais do que 
     * o necessário,... ou você conhece uma palavra(em inglês) que necessite
     * mais do que isso. 
     */
    char* buffer = malloc(50 * byte);
+   qtd = fim - (inicio + 1);
+
    memset(buffer, '\0', 50);
-   size_t qtd = fim - (inicio + 1);
-
-   #ifdef _DEBUG_PALAVRA_ALEATORIA
-   printf("serão lidos %lu caractéres\n", qtd);
-   #endif
-   // lendo entre o que foi marcado pelas iterações...
+   // Lendo entre o que foi marcado pelas iterações...
    fseek(arquivo, inicio, SEEK_SET);
-   size_t lido = fread(buffer, byte, qtd, arquivo);
-
-   #ifdef _DEBUG_PALAVRA_ALEATORIA
-   printf("o que foi lido: '%s'\n", buffer);
-   #endif
+   lido = fread(buffer, byte, qtd, arquivo);
 
    if (lido != qtd) {
       perror ("não leu-se todos bytes demandados.");
@@ -262,6 +264,51 @@ void embaralha_array(generico_t seq, int n, int sz)
 #include "impressao.h"
 #include "macros.h"
 #endif
+
+void tempo_do_primeiro_inteiro_positivo_sorteado(void);
+void sorteio_de_caracteres_ascii(void); 
+void sorteio_de_letras_do_alfabeto(void); 
+void amostra_pequena_inteiros_positivos(void);
+void amostra_gigante_inteiros_positivos(void);
+void distribuicao_de_valores_logicos(void);
+void obtendo_tempo_de_sorteio_da_palavra(void);
+void verifica_pertenciamento_na_array_int(void);
+void cuspidor_de_numeros_distintos(void);
+void embalharamento_de_arrays_genericas(void);
+void embaralhamento_repetido_milhares_de_vezes(void);
+TESTE sorteio_de_palavra(void);
+
+int main(int qtd, char* args[], char* vars[]) 
+{
+   #ifdef _WIN64
+   puts("funções compatíveis com o Windows.");
+
+   #elif __linux__
+   puts ("Testes apenas para Linux:");
+   executa_testes_a(
+      true, 8, 
+         tempo_do_primeiro_inteiro_positivo_sorteado, false,
+         sorteio_de_caracteres_ascii, true,
+         sorteio_de_letras_do_alfabeto, true,
+         amostra_pequena_inteiros_positivos, false,
+         amostra_gigante_inteiros_positivos, false,
+         distribuicao_de_valores_logicos, false,
+         sorteio_de_palavra, true,
+         obtendo_tempo_de_sorteio_da_palavra, false
+   );
+
+   executa_testes_a(
+   // Testes de todos componentes do embaralhamento de array.
+      false, 4,
+         verifica_pertenciamento_na_array_int, true,
+         cuspidor_de_numeros_distintos, true,
+         embalharamento_de_arrays_genericas, true,
+         embaralhamento_repetido_milhares_de_vezes, true
+   );
+   #endif
+
+   return EXIT_SUCCESS;
+}
 
 void tempo_do_primeiro_inteiro_positivo_sorteado(void) {
    size_t total = 45000000;
@@ -360,20 +407,15 @@ void distribuicao_de_valores_logicos(void)
    assert (variacao < MINIMO);
 }
 
-static void todos_caracteres(char* texto)
+TESTE sorteio_de_palavra(void)
 {
-   int t = strlen(texto);
+   char* result; size_t i;
 
-   for (int k = 1; k <= t; k++)
-      printf("\t\b\b - %c\n", texto[k - 1]);
-}
-
-void sorteio_de_palavra(void)
-{
-   for (size_t i = 1; i <= 10; i++) {
-      char* resultado = palavra_aleatoria();
-      printf("\nConteúdo: \"%s\"\n", resultado);
-      todos_caracteres(resultado);
+   for (i = 1; i <= 10; i++) 
+   {
+      result = palavra_aleatoria();
+      printf("\nConteúdo: \"%s\"\n", result);
+      free(result);
    }
 }
 
@@ -491,35 +533,4 @@ void embaralhamento_repetido_milhares_de_vezes(void)
    imprime_array(seq, n);
 }
 
-int main(int qtd, char* args[], char* vars[]) 
-{
-   #ifdef _WIN64
-   puts("funções compatíveis com o Windows.");
-
-   #elif __linux__
-   puts ("Testes apenas para Linux:");
-   executa_testes_a(
-      false, 8, 
-         tempo_do_primeiro_inteiro_positivo_sorteado, false,
-         sorteio_de_caracteres_ascii, true,
-         sorteio_de_letras_do_alfabeto, true,
-         amostra_pequena_inteiros_positivos, true,
-         amostra_gigante_inteiros_positivos, false,
-         distribuicao_de_valores_logicos, true,
-         sorteio_de_palavra, false,
-         obtendo_tempo_de_sorteio_da_palavra, false
-   );
-
-   executa_testes_a(
-   // Testes de todos componentes do embaralhamento de array.
-      true, 4,
-         verifica_pertenciamento_na_array_int, true,
-         cuspidor_de_numeros_distintos, true,
-         embalharamento_de_arrays_genericas, true,
-         embaralhamento_repetido_milhares_de_vezes, true
-   );
-   #endif
-
-   return EXIT_SUCCESS;
-}
 #endif

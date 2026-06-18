@@ -21,11 +21,13 @@
  // Sorteia um caractére(imprível) da tabela ASCII.
  char ascii_char_aleatorio (void);
 
- #ifdef __linux__
  /* Sorteia uma palavra randômica do dicionário, este geralmente nativo do
-  * sistema operacional. */
+  * sistema operacional. Se não houver um dicionário(usa como padrão o do 
+  * Linux), e você tem algum dicionário com palavras(uma palavra por linha),
+  * você pode adiciona-lo definindo a variável DICIONARIO_UTILITARIOS como 
+  * o tal caminho para o arquivo. 
+  */
  char* palavra_aleatoria (void);
- #endif
   
  /* Embaralha arrays de qualquer tipo, claro, dado seu tamanho e tamanho
   * em bytes do tipo. */

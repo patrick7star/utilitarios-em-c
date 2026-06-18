@@ -307,8 +307,7 @@ clean-ponto:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Módulo Aleatório
 # === === ===  === === === === === === === === === === === === === === ====
-EXE_RANDOM = bin/tests/ut_aleatorio
-DEPS_RANDOM = $(TESTADOR_ST) build/impressao.o build/lista-array-ref.o -lm
+EXE_RANDOM = bin/tests/ut-aleatorio
 
 all-aleatorio: obj-aleatorio test-aleatorio lib-aleatorio
 
@@ -317,12 +316,12 @@ obj-aleatorio:
 		-c -o build/aleatorio.o src/aleatorio.c
 	@echo "Gerou o arquivo objeto 'aleatorio.o' em 'build'."
 
-test-aleatorio: obj-impressao obj-lista-array-ref
-	@$(CC) -I$(HEADERS) -Wall -O0 -DUT_ALEATORIO \
+test-aleatorio:
+	@$(CC) -I$(HEADERS) -Wall -O0 -D__debug__ -DUT_ALEATORIO \
 		-c -o build/aleatorio-test.o src/aleatorio.c
 	@echo "Gerado o objeto aleatorio-test.o em 'build'."
 	@$(CC) -I$(HEADERS) -o $(EXE_RANDOM) build/aleatorio-test.o \
-			$(DEPS_RANDOM)
+			 $(TESTADOR_STLIB)
 	@echo "Compilado os testes-unitários de 'aleatorio' em bin/tests."
 
 lib-aleatorio:
