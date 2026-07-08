@@ -555,8 +555,8 @@ lib-impressao: obj-lista-array-ref lib-lista-array-ref
 test-impressao:
 	@$(CLANG) -Iinclude/ -g3 -O0 -Wall -D__unit_tests__ -D__debug__ \
 		-c -o build/impressao-teste.o src/impressao.c
-	@$(CLANG) -o bin/tests/ut_impressao build/impressao-teste.o \
-					$(TESTADOR_ST) build/lista-array-ref.o -lm
+	@$(CLANG) -o bin/tests/ut-impressao build/impressao-teste.o \
+					$(TESTADOR_STLIB)  -lm -lcolecoes
 	@echo "Compilado os testes-unitários de 'impressao' em bin/tests."
 
 run-impressao:
@@ -925,6 +925,18 @@ test-deque-ligada-ref:
 		-o bin/tests/ut_dequeligada_ref build/deque-ligada-ref-teste.o \
 			-Lbin/shared/ -lteste -laleatorio
 	@echo "Teste de 'fila-ligada-ref' compilada."
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Extendendo Código para Python
+# === === ===  === === === === === === === === === === === === === === ====
+PY_HEADERS = /usr/include/python3.12
+PY_LIB = /usr/bin
+
+interpola-debug:
+	@$(CLANG) -g -I$(PY_HEADERS) -I./include/ -shared \
+		-o bin/interpola.so src/interpola.c build/aleatorio.o \
+		-L$(PY_LIB) -lpython3.12
+	@echo "Compilado interpola.so em 'bin'."
 
 # === === ===  === === === === === === === === === === === === === === ===
 #
