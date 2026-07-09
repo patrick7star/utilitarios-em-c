@@ -13,10 +13,14 @@ pprint(dir(interpola))
 print("\n\nAs {} palavras sorteadas:\n".format(QUANTIA))
 
 for numero in range(QUANTIA):
-
    if (numero + 1) % COLUNA == 0:
       print('')
    result = interpola.palavra_aleatoria()
    print("{:<20s}".format(result), end=' ')
+
 else:
    print('\n')
+
+
+print("Frases coloridas:")
+print(interpola.colori_string("Maçã", 0x1f))

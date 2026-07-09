@@ -934,7 +934,9 @@ PY_LIB = /usr/bin
 
 interpola-debug:
 	@$(CLANG) -g -I$(PY_HEADERS) -I./include/ -shared \
-		-o bin/interpola.so src/interpola.c build/aleatorio.o \
+				 -o bin/interpola.so src/interpola.c \
+					 build/aleatorio.o build/terminal-dylib.o \
+					 build/impressao-dylib.o build/listaarrayref-dylib.o \
 		-L$(PY_LIB) -lpython3.12
 	@echo "Compilado interpola.so em 'bin'."
 
