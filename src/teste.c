@@ -83,7 +83,48 @@ CROSSLIB void debug_aqui(void) {
  * e incluído aqui, não faz a menor diferença, e por cima deixa tal arquivo
  * mais limpo.
  * === === === === === === === === === === === === === === === === === ===*/
-void converte_strings_de_valores_logicos() {
+UNIT_TEST converte_strings_de_valores_logicos(void); 
+UNIT_TEST testes_tal_declaracao_de_loop(void); 
+UNIT_TEST primeiro_executor_datado(void);
+UNIT_TEST macro_de_debugs_de_variaveis(void);
+
+
+int main(int qtd, char* argumentos[], char* env_vars[]) {
+   executa_testes_a(
+      false, 4,
+         // iteração para gerar máscaras funciona!
+         stringficacao_de_valores_primitivos, false,
+         converte_strings_de_valores_logicos, false,
+         primeiro_executor_datado, true,
+         // consome bastante tempo...
+         testes_tal_declaracao_de_loop, false
+   );
+
+   executa_testes_b(
+     true, 2,
+         Unit(processo_de_construcao_do_executa_testes_b, true),
+         Unit(macro_de_debugs_de_variaveis, true)
+   );
+
+   return EXIT_SUCCESS;
+}
+
+UNIT_TEST macro_de_debugs_de_variaveis(void)
+{
+   char* fruta = "Abacaxi";
+   const char* Carro = "BWM or SUV";
+   int Quantia_de_Digitos = 1523;
+   bool luaDoSolApareceu = false;
+   char genero = 'F';
+
+   debug_string(fruta);
+   debug_string(Carro);
+   debug_int(Quantia_de_Digitos);
+   debug_bool(luaDoSolApareceu);
+   debug_char(genero);
+}
+
+UNIT_TEST converte_strings_de_valores_logicos(void) {
    struct par {
       char* entrada;
       bool saida;
@@ -108,7 +149,7 @@ void converte_strings_de_valores_logicos() {
    }
 }
 
-void testes_tal_declaracao_de_loop(void) {
+UNIT_TEST testes_tal_declaracao_de_loop(void) {
    Temporizador timer = cria_temporizador(Segundo, 3);
    loop_infinito {
       puts("mensagem fica se repetindo.");
@@ -122,7 +163,7 @@ void testes_tal_declaracao_de_loop(void) {
    destroi_temporizador(timer);
 }
 
-void primeiro_executor_datado(void) {
+UNIT_TEST primeiro_executor_datado(void) {
    // Teste da função interna sem nada com atual módulo:
    executa_testes(
       4, percorrendo_string, true,
@@ -132,24 +173,6 @@ void primeiro_executor_datado(void) {
    );
 }
 
-int main(int qtd, char* argumentos[], char* env_vars[]) {
-   executa_testes_a(
-      false, 4,
-         // iteração para gerar máscaras funciona!
-         stringficacao_de_valores_primitivos, false,
-         converte_strings_de_valores_logicos, false,
-         primeiro_executor_datado, true,
-         // consome bastante tempo...
-         testes_tal_declaracao_de_loop, false
-   );
-
-   executa_testes_a(
-     true, 1,
-         processo_de_construcao_do_executa_testes_b, true
-   );
-
-   return EXIT_SUCCESS;
-}
 #elif defined(__unit_tests__) && defined(_WIN32)
 #include <locale.h>
 

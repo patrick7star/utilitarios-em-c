@@ -95,5 +95,14 @@ struct TesteConfig { const char* nome; Fn rotina; bool ativado; };
  #define TESTE_UNITARIO TESTE
  #define UNITARIO       TESTE
 
+ /* Debug algumas tipos primitivos na linguagem. */
+ #define debug_string(VARIAVEL) ({ \
+   printf("[linha %d |  %s: \"%s\"]\n", __LINE__, #VARIAVEL, VARIAVEL); \
+      })
+ #define debug_int(VAR) (printf("[linha %d | %s: %d]\n", __LINE__, #VAR, VAR))
+ #define debug_bool(VAR) (printf("[linha %d | %s: %s]\n", __LINE__, #VAR, bool_to_str(VAR)))
+ #define debug_char(VAR) (printf("[linha %d | %s: '%c']\n", __LINE__, #VAR, VAR))
+
+
 #endif //TESTE_H
 
