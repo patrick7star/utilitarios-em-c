@@ -200,7 +200,7 @@ stlib-everything: obj-principais obj-colecoes obj-impressao \
 # === === ===  === === === === === === === === === === === === === === ====
 COMPILA_TST = -D__unit_tests__ -D__debug__ -D__debug__executa_testes_b
 DEPS_TST 	= build/tempo.o build/legivel.o build/terminal.o
-EXE_TST 		= bin/tests/ut_teste
+EXE_TST 		= bin/tests/ut-teste
 
 all-teste: obj-teste test-teste lib-teste
 
