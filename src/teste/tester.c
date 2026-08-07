@@ -301,8 +301,7 @@ void executa_testes_b(bool execucao_do_suite, int total, ...)
  *                         Testes Unitários
  * === === === === === === === === === === === === === === === === === ===*/
 #include "amostras.h"
-
-void primeira_versao_alternativa_de_executa_testes(void)
+UNIT_TEST primeira_versao_alternativa_de_executa_testes(void)
 {
    puts(
       "Testando a função 'executa_testes_a', configuração básica, "
@@ -339,7 +338,7 @@ void primeira_versao_alternativa_de_executa_testes(void)
    );
 }
 
-void teste_interruptor_renomeado(void)
+UNIT_TEST teste_interruptor_renomeado(void)
 {
    puts(
       "A função que executava tal testes simples foi renomeada, agora "
@@ -360,7 +359,7 @@ void teste_interruptor_renomeado(void)
    executa_tst(SEM_MENSAGEM, percorrendo_string, false);
 }
 
-void processo_de_construcao_do_executa_testes_b(void) {
+UNIT_TEST processo_de_construcao_do_executa_testes_b(void) {
    struct TesteConfig a = Unit(percorrendo_string, false);   
    struct TesteConfig b = Unit(transforma_toda_string_em_minuscula, true);   
 
