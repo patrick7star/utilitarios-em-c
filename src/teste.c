@@ -75,6 +75,7 @@ CROSSLIB void debug_aqui(void) {
 
 
 #if defined(__unit_tests__) && defined(__linux__)
+#include <locale.h>
 /* === === === === === === === === === === === === === === === === === ===+
  *                         Testes Unitários
  *
@@ -90,6 +91,8 @@ UNIT_TEST macro_de_debugs_de_variaveis(void);
 
 
 int main(int qtd, char* argumentos[], char* env_vars[]) {
+   setlocale(LC_ALL, "en_US.UTF-8");
+
    executa_testes_a(
       false, 4,
          // iteração para gerar máscaras funciona!
@@ -116,12 +119,20 @@ UNIT_TEST macro_de_debugs_de_variaveis(void)
    int Quantia_de_Digitos = 1523;
    bool luaDoSolApareceu = false;
    char genero = 'F';
+   ssize_t valorA = -123456789;
+   size_t Valor_b = 987654321;
+   wchar_t* FRUTA = L"Maçã(\U0001f34e)";
+   const wchar_t* Objects = L"\u231a \U0001f52d \U0001f37c";
 
    debug_string(fruta);
    debug_string(Carro);
    debug_int(Quantia_de_Digitos);
    debug_bool(luaDoSolApareceu);
    debug_char(genero);
+   debug_isize(valorA);
+   debug_usize(Valor_b);
+   debug_unicode_string(FRUTA);
+   debug_ustr(Objects);
 }
 
 UNIT_TEST converte_strings_de_valores_logicos(void) {
