@@ -33,7 +33,7 @@
  Generico  remove_al        (Vetor); 
  Generico  remove_indice_al (Vetor, size_t);
  Generico  indexa_al        (Vetor, size_t); 
- bool      insere_al        (Vetor, generico_t); 
+ bool      insere_al        (Vetor, GenT); 
  /* NOTA: O retorno de todas operações de remoção é NULL, caso estejam sem 
   *       itens. O caso de indexação de índices já removidos ou inexistente,
   *       também revolvem no mesmo tipo de retorno. */
@@ -51,7 +51,7 @@
   * itens tal operação é permitida. Se você deseja fazer isso com centenas 
   * de milhares, milhões ou bilhões(ou mais), é preciso ativar o macro que 
   * permite tal operação, pois por padrão é desativado. */
- char* to_string_al     (ArrayLista L, ToString fn);
+ char* to_string_al     (Vetor l, ToString f);
  void imprime_lista_al  (Vetor l, ToString f);
 
 /* === === === === === === === === === === === === === === === === === ===
@@ -70,6 +70,12 @@
  size_t        contagem_iter_al  (IterRefAL);
  bool          consumido_iter_al (IterRefAL);
 
+ /* Observações:
+  *   A clonagem do iterador, parte do seu estado(consumido ou não), no mesmo estágio que 
+  * está em uso no momento desta operação. Já o método 'contagem', conta os itens que 
+  * faltam a consumir, portanto ele varia de acordo com a iteração.
+  */
+
 /* === === === === === === === === === === === === === === === === === ===
  *                     Métodos em Inglês
  * === === === === === === === === === === === === === === === === === ==*/
@@ -86,12 +92,5 @@
  size_t  length_al            (Vetor);
  size_t  gap_al               (Vector);
  void    print_al             (Vec, ToString);
-
- /* Observações:
-  *   A clonagem do iterador, parte do seu estado(consumido ou não), no 
-  * mesmo estágio que está em uso no momento desta operação.
-  *   O método 'contagem', conta os itens que faltam a consumir, portanto 
-  * ele varia de acordo com a iteração.
-  */
 
 #endif 
