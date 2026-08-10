@@ -97,20 +97,20 @@ struct TesteConfig { const char* nome; Fn rotina; bool ativado; };
  #define UNITARIO       TESTE
 
  /* Debug algumas tipos primitivos na linguagem. */
- #define debug_string(VARIAVEL) ({ \
+ #define dbg_string(VARIAVEL) ({ \
    fprintf(stderr, "[linha %d |  %s: \"%s\"]\n", __LINE__, #VARIAVEL, VARIAVEL); \
       })
- #define debug_unicode_string(VARIAVEL) ({ \
+ #define dbg_unicode_string(VARIAVEL) ({ \
    fprintf(stderr, "[linha %d |  %s: \"%ls\"]\n", __LINE__, #VARIAVEL, VARIAVEL); \
       })
- #define debug_ustr debug_unicode_string
- #define debug_int(VAR)  (fprintf(stderr, "[linha %d | %s: %d]\n", __LINE__, #VAR, VAR))
- #define debug_bool(VAR) (\
+ #define dbg_ustr dbg_unicode_string
+ #define dbg_int(VAR)  (fprintf(stderr, "[linha %d | %s: %d]\n", __LINE__, #VAR, VAR))
+ #define dbg_bool(VAR) (\
    fprintf(stderr, "[linha %d | %s: %s]\n", __LINE__, #VAR, bool_to_str(VAR))\
  )
- #define debug_char(VAR) (fprintf(stderr, "[linha %d | %s: '%c']\n", __LINE__, #VAR, VAR))
- #define debug_usize(VAR)  (fprintf(stderr, "[linha %d | %s: %zu]\n", __LINE__, #VAR, VAR))
- #define debug_isize(VAR)  (fprintf(stderr, "[linha %d | %s: %ld]\n", __LINE__, #VAR, VAR))
+ #define dbg_char(VAR) (fprintf(stderr, "[linha %d | %s: '%c']\n", __LINE__, #VAR, VAR))
+ #define dbg_usize(VAR)  (fprintf(stderr, "[linha %d | %s: %zu]\n", __LINE__, #VAR, VAR))
+ #define dbg_isize(VAR)  (fprintf(stderr, "[linha %d | %s: %ld]\n", __LINE__, #VAR, VAR))
 
 #endif //TESTE_H
 
