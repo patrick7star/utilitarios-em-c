@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 /* Sem específicar a capacidade, será o valor abaixo que será
  * automaticamente redimensionado para o arranjo de dados. */
@@ -46,11 +47,6 @@ ArrayLista cria_com_capacidade_al(size_t n) {
       lista->array = containers;
       lista->capacidade = n;
       lista->quantia = 0;
-
-
-      #ifdef _ALOCACAO_E_DESALOCACAO
-      puts("a instância foi criada com sucesso.");
-      #endif
    }
    return lista;
 }
@@ -344,7 +340,7 @@ void destroi_todas_al(int qtd, ...) {
    va_end(LISTAS);
 }
 
-/* === === === === === === === === === === === === === === === === === ==
+/* === === === === === === === === === === === === === === === === === === === === === === =
  *                      Iterador e seus métodos
  *
  * Observação: todo código foi copiada da implementação de pilha, e apenas
@@ -353,88 +349,9 @@ void destroi_todas_al(int qtd, ...) {
  * na "array interna" é diferente aqui. Comentários foram retirados,
  * justamente, para nota-se que aqui não é um código original. Busque o
  * original para qualquer outro problema não sintático.
- * === === === === === === === === === === === === === === === === === ==*/
+ * === === === === === === === === === === === === === === === === === === === === === == */
+ #include "lista-array/iteration.c"
 
-// Constante para comparações.
-const IterOutputAL NULO_AL = { .item = NULL };
-
-struct iterador_da_lista_ligada_al {
-   ArrayLista instancia;
-
-   size_t inicial;
-   size_t contagem;
-};
-
-IterAL cria_iter_al(ArrayLista a) {
-   IterAL iter;
-
-   iter.inicial = tamanho_al(a);
-   iter.contagem = 0;
-   iter.instancia = a;
-
-   return iter;
-}
-
-static bool iterador_esta_invalido(IteradorRefAL iter) {
-   if (iter == NULL) {
-      perror("Não foi passado um iterador válido.");
-      return false;
-   } else if (iter->instancia == NULL) {
-      perror("O iterador não tem uma instância.");
-      return false;
-   } else if (iter->instancia->array == NULL) {
-      perror("Erro na estrutura da lista.");
-      return false;
-   } else {
-      size_t t = tamanho_al(iter->instancia);
-      size_t T = iter->inicial;
-      return  t != T ;
-   }
-}
-
-size_t contagem_iter_al (IteradorRefAL iter) {
-   if (iterador_esta_invalido(iter)) {
-      const char* msg_erro = {
-         "não é possível determinar o tamanho "
-         "de um iterador inválido!"
-      };
-      // se chegar até aqui é erro na certa.
-      perror (msg_erro); abort();
-   }
-   return (iter->inicial - iter->contagem);
-}
-
-IterOutputAL next_al (IteradorRefAL iter) {
-   bool nao_e_possivel_iterar = {
-      consumido_iter_al(iter) ||
-      iterador_esta_invalido(iter)
-   };
-
-   if (nao_e_possivel_iterar)
-      return NULO_AL;
-
-   size_t I = iter->inicial;
-   size_t c = iter->contagem;
-   Vetor e = iter->instancia;
-   generico_t dado = indexa_al(e, I - c - 1);
-
-   iter->contagem += 1;
-   return (IterOutputAL){ .item=dado };
-}
-
-bool consumido_iter_al(IteradorRefAL iter)
-   { return iter->contagem == iter->inicial; }
-
-IterAL clona_iter_al(IteradorRefAL iter) {
-   IterAL novo;
-
-   novo.instancia = iter->instancia;
-   novo.contagem = iter->contagem;
-   novo.inicial = tamanho_al(iter->instancia);
-
-   return novo;
-}
-// === === === === === === === === === === === === === === === === === ===
 
 bool destroi_interno_al(Vetor l, Drop g) {
 /* Desalocador da lista, mas que também desaloca memória interna alocada
@@ -484,8 +401,16 @@ void imprime_lista_al(Vetor l, ToString f) {
    printf("\b\b]\n");
 }
 
+/* === === === === === === === === === === === === === === === === === === === === === === =
+ *                         Tradução pra Interface em Inglês.
+ *
+ *   Nome dos principais métodos e estruturas em inglês. Na verdade, todas funções são 
+ * apenas encapsulações(wrappers) dos métodos originais.
+ * === === === === === === === === === === === === === === === === === === === === === == */
+ #include "lista-array/translate.c"
+
 #if defined(__unit_tests__)
-/* === === === === === === === === === === === === === === === === === === =
+/* === === === === === === === === === === === === === === === === === === === === === === =
  *                         Testes Unitários
  *
  * Testando todos métodos, funções, e dados abstratos acima. Deixando
@@ -495,308 +420,6 @@ void imprime_lista_al(Vetor l, ToString f) {
  * futuramente, for colocada num subdiretório, e os tipos serem trocados
  * apenas comentar tal declaração pré-processada para não incluir o que
  * pode conflitar.
- * === === === === === === === === === === === === === === === === === === */
-#include <assert.h>
-#include "teste.h"
-#include "dados_testes.h"
-#include "memoria.h"
-
-TESTE visualizacao_array_list_char(vetor_t* l) {
-   size_t t = tamanho_al(l);
-   char* caractere;
-
-   if (vazia_al(l)) {
-      puts("array-lista: []");
-      return;
-   }
-
-   if (l->quantia > 7)
-      // só fica difícil de contar valores maiores que sete.
-      printf ("array-lista(%lu): [", l->quantia);
-   else
-      printf ("array-lista: [");
-
-   for (size_t i = t; i > 0; i--) {
-      caractere = l->array[t - i];
-      printf ("%c, ", *caractere);
-   }
-   puts ("\b\b]");
-}
-TESTE visualizacao_array_list_int(vetor_t* l) {
-   size_t t = tamanho_al(l);
-   int* caractere;
-
-   if (vazia_al(l)) {
-      puts("array-lista: []");
-      return;
-   }
-
-   if (l->quantia > 7)
-      // só fica difícil de contar valores maiores que sete.
-      printf ("array-lista(%lu): [", l->quantia);
-   else
-      printf ("array-lista: [");
-
-   for (size_t i = t; i > 0; i--) {
-      caractere = l->array[t - i];
-      printf ("%d, ", *caractere);
-   }
-   puts ("\b\b]");
-}
-
-TESTE demonstracao_com_caracteres() {
-   vetor_t* lista = cria_com_capacidade_al(15);
-   char m = 'x', n = 'A', p = 'J';
-   puts("alocação ocorreu1!!!");
-
-   insere_al(lista, &p);
-   insere_al(lista, &n);
-   insere_al(lista, &m);
-   visualizacao_array_list_char(lista);
-
-   char* removido = remove_al(lista);
-   printf ("removido: '%c'\n", *removido);
-   removido = remove_al(lista);
-   printf ("removido: '%c'\n", *removido);
-
-   assert (tamanho_al(lista) == 1);
-   assert (*((char*)remove_al(lista)) == 'J');
-   assert (vazia_al(lista));
-
-   destroi_al(lista);
-}
-
-TESTE demonstracao_com_inteiros() {
-   ArrayLista outra_lista = cria_al();
-   int entradas[] = {39, 73, 15, 101};
-
-   for (size_t k = 1; k <= 4; k++)
-      insere_al (outra_lista, &entradas[k - 1]);
-
-   while (!vazia_al(outra_lista)) {
-      printf ("removido: %d\n", *((int*)remove_al(outra_lista)));
-      visualizacao_array_list_int(outra_lista);
-   }
-
-   destroi_al(outra_lista);
-}
-
-TESTE demonstracao_com_strings() {
-   ArrayLista lista = cria_al();
-   char* entradas[] = { "cerca", "porta", "cadeado", "mala"};
-
-   for (size_t k = 1; k <= 4; k++)
-      insere_al (lista, entradas[k - 1]);
-
-   while (!vazia_al(lista)) {
-      char* string = remove_al(lista);
-      printf ("removido: '%s'\n", string);
-   }
-   destroi_al(lista);
-}
-
-TESTE visualiza_array_list_string(vetor_t* l) {
-   size_t t = tamanho_al(l);
-   char* string;
-
-   if (vazia_al(l)) {
-      puts("array-lista: []");
-      return;
-   }
-
-   // só fica difícil de contar valores maiores que sete.
-   printf ("array-lista(%lu): [", l->quantia);
-
-   for (size_t i = 1; i <= t; i++) {
-      string = l->array[i - 1];
-      printf ("%s, ", string);
-   }
-   puts ("\b\b]");
-}
-
-TESTE remocao_em_pontos_criticos (void) {
-   ArrayLista lista = cria_al();
-   char* entradas[] = { "cerca", "porta", "cadeado", "mala", "bolsa"};
-
-   for (size_t k = 1; k <= 5; k++)
-      insere_al (lista, entradas[k - 1]);
-   visualiza_array_list_string (lista);
-
-   puts ("removendo o terceiro(cadeado) ...");
-   remove_indice_al (lista, 2);
-   visualiza_array_list_string (lista);
-
-   puts ("removendo o primeiro(cerca) ...");
-   remove_indice_al (lista, 0);
-   visualiza_array_list_string (lista);
-
-   destroi_al(lista);
-}
-
-TESTE redimensionamento_automatico_da_capacidade(void) {
-   vetor_t* L = cria_com_capacidade_al(4);
-
-   puts("observação da expansão da capacidade ...");
-   for (size_t k = 1; k <= 5; k++) {
-      size_t t = tamanho_al(L);
-      // coputando a capacidade.
-      size_t C = vacuo_al(L) + t;
-      printf("\tcapacidade: %lu\ttotal de itens: %lu\n", C, t);
-
-      char* input = (char*)objetos[k - 1];
-      insere_al (L, input);
-   }
-   putchar('\t'); visualiza_array_list_string(L);
-
-   for (size_t p = 1; p <= 5; p++) {
-      size_t t = tamanho_al(L);
-      // coputando a capacidade.
-      size_t C = vacuo_al(L) + t;
-      printf("\tcapacidade: %lu\ttotal de itens: %lu\n", C, t);
-
-      char* input = (char*)frutas[p - 1];
-      insere_al (L, input);
-   }
-   putchar('\t'); visualiza_array_list_string(L);
-
-   puts("\nverificando o encolhimento dela...");
-   for (size_t i = 10; i > 0; i--) {
-      size_t t = tamanho_al(L);
-      // coputando a capacidade.
-      size_t C = vacuo_al(L) + t;
-      printf("\tcapacidade: %lu\ttotal de itens: %lu\n", C, t);
-      if (t % 3 == 0)
-         { putchar('\t'); visualiza_array_list_string(L); }
-      assert (remove_al (L) != INVALIDA);
-   }
-
-   putchar('\t'); visualiza_array_list_string(L);
-   destroi_al(L);
-}
-
-char* stringfy_str(generico_t X) {
-   char* fmt = malloc(6 * sizeof(char));
-   uint16_t* pointer = X;
-   sprintf(fmt, "%u", *pointer);
-   return fmt;
-}
-
-TESTE conversao_em_string(void) {
-   Vetor v = cria_al();
-   uint16_t* array = (uint16_t*)valores_padronizados_i;
-
-   for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
-      insere_al(v, &array[i - 1]);
-
-
-   char* string_vetor = to_string_al(v, stringfy_str);
-   puts(string_vetor);
-   free(string_vetor);
-
-   destroi_al(v);
-}
-
-TESTE novo_tipo_de_criacao_da_lista(void) {
-   ArrayLista L = cria_de_al(
-      4, &valores_padronizados_i[0],
-         &valores_padronizados_i[5],
-         &valores_padronizados_i[10],
-         &valores_padronizados_i[15]
-   );
-
-   printf("Total de itens: %lu\n", tamanho_al(L));
-   char* lista_str = to_string_al(L, stringfy_str);
-   puts(lista_str);
-
-   free(lista_str);
-   destroi_al(L);
-}
-
-TESTE uso_para_chacagem_do_funcionmanento_do_iterador(void) {
-   ArrayLista v = cria_al();
-   uint16_t* array = (uint16_t*)valores_padronizados_i;
-
-   for (size_t i = 1; i <= VALORES_PADRONIZADOS_I; i++)
-      insere_al(v, &array[i - 1]);
-   assert (!vazia_al(v));
-   IterAL I = cria_iter_al(v);
-
-   printf("Restantes: %lu\n", contagem_iter_al(&I));
-   puts("\nIterando cada item do iterador ...");
-
-   do {
-      IterOutputAL saida = next_al(&I);
-      uint16_t* ptr = saida.item;
-      uint16_t dado = *ptr;
-      size_t count = contagem_iter_al(&I);
-      printf("\t>>> iterador(faltam %lu): %u\n", count, dado);
-   } while (!consumido_iter_al(&I));
-
-   destroi_al(v);
-}
-
-static bool free_str(generico_t e)
-   { free((char*)e); return true; }
-
-TESTE desalocador_interno(void) {
-   Vetor lista = cria_al();
-
-   for (int i = 1; i <= BOYS_NAMES; i++)
-      insere_al(lista, box_str((char*)boys_names[i - 1]));
-
-   assert(tamanho_al(lista) == BOYS_NAMES);
-   bool result = destroi_interno_al(lista, free_str);
-   assert(result);
-   puts("A liberação, com destruição de dados, foi sucedida.");
-
-   assert(!destroi_interno_al(NULL, free_str));
-   puts("Liberação não ocorre quando não há uma lista.");
-   lista = cria_al();
-   assert(!destroi_interno_al(lista, NULL));
-   puts("Liberação também não acontence quando não há um 'desconstrutor'.");
-   assert(destroi_al(lista));
-}
-
-static char* generico_to_str(Generico a)
-   { return (char*)a; }
-
-TESTE impressao_de_lista(void) {
-   Vetor v = cria_al();
-
-   for (size_t i = 1; i <= FRUITS; i++) {
-      char* clone = box_str((char*)fruits[i - 1]);
-      insere_al(v, clone);
-   }
-
-   imprime_lista_al(v, generico_to_str);
-   destroi_interno_al(v, free_str);
-}
-
-int main(int total, char* argumentos[], char* variaveis[]) {
-   executa_testes_a (
-     false, 4,
-         remocao_em_pontos_criticos, false,
-         redimensionamento_automatico_da_capacidade, false,
-         conversao_em_string, true
-   );
-
-   executa_testes_b(
-   // Testes sobre as alocações e desalocações, todas as modalidades é claro.
-      true, 5,
-         Unit(demonstracao_com_inteiros, true),
-         Unit(demonstracao_com_caracteres, false),
-         Unit(demonstracao_com_strings, false),
-         Unit(novo_tipo_de_criacao_da_lista, true),
-         Unit(desalocador_interno, true)
-   );
-
-   executa_testes_b(
-   // Testes específico dos iterador da estrutura:
-      true, 2,
-         Unit(uso_para_chacagem_do_funcionmanento_do_iterador, true),
-         Unit(impressao_de_lista, true)
-   );
-
-   return EXIT_SUCCESS;
-}
+ * === === === === === === === === === === === === === === === === === === === === === == */
+ #include "lista-array/tests.c"
 #endif

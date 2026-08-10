@@ -13,8 +13,9 @@
 #include <stdarg.h>
 #include "definicoes.h"
 
- // todos os apelidos desta estrutura fornecidos:
+ // todos os apelidos desta estrutura fornecidos(e em Inglês):
  typedef struct array_lista *ArrayLista, *Vetor, vetor_t;
+ typedef struct array_lista *ArrayList, *Vec, *Vector;
  
  /* Criação e destruição de tal lista. Você pode criar-la com capacidade, ou
   * ou seja, um buffer do tamanho específico; assim como um valor automático
@@ -68,6 +69,23 @@
  IterAL        clona_iter_al     (IterRefAL);
  size_t        contagem_iter_al  (IterRefAL);
  bool          consumido_iter_al (IterRefAL);
+
+/* === === === === === === === === === === === === === === === === === ===
+ *                     Métodos em Inglês
+ * === === === === === === === === === === === === === === === === === ==*/
+ Vector  new_al               (void);
+ Vetor   new_with_capacity_al (size_t);
+ Vector  from_al              (int, ...);
+ bool    drop_al              (Vec);
+ bool    drop_with_al         (Vec, Drop);
+ GenT    pop_al               (Vetor);
+ GenT    remove_index_al      (Vec, size_t);
+ GenT    get_al               (Vec, size_t);
+ bool    push_al              (Vec, GenT);
+ bool    empty_al             (Vector);
+ size_t  length_al            (Vetor);
+ size_t  gap_al               (Vector);
+ void    print_al             (Vec, ToString);
 
  /* Observações:
   *   A clonagem do iterador, parte do seu estado(consumido ou não), no 

@@ -411,7 +411,7 @@ test-estringue:
 	@$(CC) -I$(HEADERS) \
 		-o bin/tests/ut_estringue \
 			build/estringue-teste.o \
-			build/lista-array-ref.o \
+			build/lista-array-ref.o
 		$(TESTADOR_ST) -lm
 	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
 
@@ -733,7 +733,8 @@ test-lista-array-ref:
 		-c -o $(OBJ_TEST_LA_REF) $(SRC_LA_REF)
 	@echo "Objeto 'listarrayref-test.o' compilado."
 	@$(CC) -I$(HEADERS) -o $(EXE_TEST_LA_REF) $(OBJ_TEST_LA_REF) \
-		-Lbin/static -lteste -lm -lcomputa
+		build/primitivos.o \
+		-Lbin/static -lbasico -lm -lcomputa
 	@echo "Teste 'ut-listaarrayref' compilado."
 
 clean-lista-array-ref:
