@@ -11,11 +11,13 @@
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 // Própria biblioteca:
 #include "progresso.h"
 #include "teste.h"
 #include "dados_testes.h"
 #include "macros.h"
+#include "primitivos.h"
 
 // Funções auxiliares nos testes abaixos:
 size_t computa_tamanho_da_pilha (PilhaLigada s);
@@ -33,6 +35,7 @@ TESTE verificando_vazamento_de_memoria_i (void);
 TESTE amostra_simples_de_todos_seus_metodos(void); 
 TESTE processo_de_inversao_da_lista_ligada(void); 
 TESTE metodo_de_clonagem_da_pilha(void);
+TESTE transforma_a_pilha_numa_array(void);
 
 int main(int total, char* args[], char* vars[]) 
 {
@@ -43,12 +46,13 @@ int main(int total, char* args[], char* vars[])
    executa_testes_b(false, 1, Unit(estruturas_tamanhos, true));
 
    executa_testes_b(
-      true, 5,
+      true, 6,
          Unit(pilha_com_i32s, true),
          Unit(pilha_de_strings, true),
          Unit(amostra_simples_de_todos_seus_metodos, true),
          Unit(processo_de_inversao_da_lista_ligada, true),
-         Unit(metodo_de_clonagem_da_pilha, true)
+         Unit(metodo_de_clonagem_da_pilha, true),
+         Unit(transforma_a_pilha_numa_array, true)
    );
 
    // Desativada pois consome bastante CPU e memória:
@@ -59,6 +63,50 @@ int main(int total, char* args[], char* vars[])
    );
    // fim do programa.
    return EXIT_SUCCESS;
+}
+
+TESTE transforma_a_pilha_numa_array(void)
+{
+   LStack pilha = new_pl();
+   char In[] = "aeiou";
+   int In_a[] = {7777777, 666666, 55555, 4444, 333, 22, 1};
+   int sz = sizeof(char), N;
+   char* Output = NULL;
+   int* Out = NULL, k;
+   const int Na = sizeof(In_a) / sizeof(int);
+
+   push_pl(pilha, &In[0]);
+   push_pl(pilha, &In[1]);
+   push_pl(pilha, &In[2]);
+   push_pl(pilha, &In[3]);
+   push_pl(pilha, &In[4]);
+
+   N = length_pl(pilha);
+   print_pl(pilha, debug_char);
+   printf("\tTopo: '%c'\n\n", *((char*)top_pl(pilha)));
+   Output = into_array_pl(pilha, sz);
+
+   for (k = 0; k < N; k++)
+      printf("\t%c ---- %c\n", In[k], Output[k]);
+
+   pilha = new_pl();
+
+   for (k = 0; k < Na; k++)
+      push_pl(pilha, &In_a[k]);
+
+   print_pl(pilha, debug_int);
+   Out = into_array_pl(pilha, sizeof(int));
+
+   for (k = 0; k < Na; k++)
+      printf("\t%-9d ---- %9d\n", In_a[k], Out[k]);
+
+   printf("Valor do meio(original): %d\n", In_a[Na / 2]);
+   printf("Valor do meio(copia): %d\n", Out[Na / 2]);
+   In_a[Na / 2] += 5;
+   puts("Após modificação na array original ...");
+   printf("Valor do meio(original): %d\n", In_a[Na / 2]);
+   printf("Valor do meio(copia): %d\n", Out[Na / 2]);
+   puts("Mostra que realmente é uma cópia.");
 }
 
 TESTE pilha_com_i32s (void) {

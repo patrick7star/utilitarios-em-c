@@ -5,30 +5,38 @@
  * exatamente onde foi recortado.
  */
 
-PilhaLigada new_pl (void)
+LinkedStack new_pl (void)
    { return cria_pl(); }
 
-bool delete_pl (PilhaLigada s)
+bool delete_pl (LinkedStack s)
    { return destroi_pl(s); }
 
-bool push_pl(PilhaLigada s, generico_t e)
+bool push_pl(LinkedStack s, generico_t e)
    { return coloca_pl(s, e); }
 
-generico_t pop_pl(PilhaLigada s)
+generico_t pop_pl(LinkedStack s)
    { return retira_pl(s); }
 
-size_t len_pl (PilhaLigada s)
+size_t length_pl (LinkedStack s)
    { return comprimento_pl(s); }
+// Nome mais curto, porque um monte de funções já usam tal definição.
+size_t len_pl (LinkedStack s)
+   { return length_pl(s); }
 
-bool empty_pl (PilhaLigada s)
+bool empty_pl (LinkedStack s)
    { return vazia_pl(s); }
 
-void* top_pl (PilhaLigada s)
+void* top_pl (LinkedStack s)
    { return topo_pl(s); }
 
-void print_pl (PilhaLigada s, ToString f)
+void print_pl (LinkedStack s, ToString f)
    { imprime_pl(s, f);  }
 
-generico_t* stack_to_array_pl(PilhaLigada S)
-   { return pilha_to_array_pl(S); }
+void extend_pl(LStack a, LStack b)
+   { extende_pl(a, b); }
 
+void reverse_pl(LStack In)
+   { inverte_pl(In); }
+
+bool destroy_pl(LStack In)
+   { return destroi_pl(In); }

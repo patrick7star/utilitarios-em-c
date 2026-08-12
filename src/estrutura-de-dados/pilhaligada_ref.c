@@ -1,4 +1,3 @@
-
 // Declaração de todas tipos de dados e seus métodos abaixo:
 #include "pilhaligada_ref.h"
 // Biblioteca padrão do C:
@@ -8,6 +7,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
+#include <errno.h>
 // Apenas para os testes:
 
 /* === === === === === === === === === === === === === === === === === ==
@@ -275,25 +275,66 @@ void extende_pl(PilhaLigada s, PilhaLigada p) {
    destroi_pl(aux);
 }
 
-generico_t* pilha_to_array_pl(PilhaLigada S) {
-/* Faz uma cópia da pilha, e a transforma numa array, seguindo é claro a
- * propriedade de uma(LIFO). */
-   bool nenhum_item_na_pilha = vazia_pl(S);
+Generico to_array_pl(PilhaLigada Input, int size) {
+/* Pega todas referências colocadas na pilha, então copia suas referências para uma array.
+ * A pilha continua intacta, se for liberada, os elementos perterenceram apenas aos que
+ * foram copiados para array. O tamanho da array, como fica a cargo do chamador computar 
+ * fora desta função, apenas realiza as cópias. Fica a cargo do chamador liberar a memória
+ * alocada(array).
+ */
+   bool nenhum_item_na_pilha = vazia_pl(Input);
 
    if (nenhum_item_na_pilha)
    // Com uma pilha vázia não será preciso alocar nada.
       return NULL;
 
-   IterPL i = cria_iter_pl(S);
-   size_t sz = sizeof(generico_t), p = 0;
-   generico_t* the_array = malloc(sz);
+   IterPL i = cria_iter_pl(Input);
+   size_t tamanho = size * length_pl(Input);
+   uint8_t* output = malloc(tamanho);
+   IterOutputPL item;
+   uint8_t* pointer = NULL;
+   size_t cursor = 0;
 
    while (!consumido_iter_pl(i)) {
-      IterOutputPL a = next_pl(i);
-      the_array[p] = a.item;
-      p++;
+      item = next_pl(i);
+      pointer = output + cursor * size;
+      memmove(pointer, item.item, size);
+      cursor++;
    }
-   return the_array;
+   return output;
+}
+
+Generico into_array_pl(PilhaLigada input, int size) 
+{
+/* Pega a pilha, retira cada elemento, então faz uma cópia na array. Sendo a ponta esquerda
+ * o topo da pilha na array. A array conta com alocação de memória, que seria o bastante 
+ * para colocar todos itens da pilha, sendo cada um com 'size' do objeto interno. A pilha
+ * é limpada durante o processo, e destruida ainda dentro do escopo da função, portanto o
+ * objeto passado não existirá mais pós execução. Como é pedido o tamanho, o comprimento da
+ * array também fica á cargo do chamador da função. Fica a cargo do chamador liberar a 
+ * memória alocada(array).
+ */
+   size_t quantia = length_pl(input);
+   size_t total = quantia * size;
+   uint8_t* output = malloc(total);
+   size_t cursor = 0; 
+   GenT removido = NULL;
+   uint8_t* pointer = NULL;
+
+   if (output == NULL)
+      // É para supostamente parar a aplicação.
+      { perror(strerror(errno)); abort(); }
+
+   while (!empty_pl(input))
+   {
+      removido = pop_pl(input);
+      pointer = output + (cursor * size);
+      memmove(pointer, removido, size);
+      cursor++;
+   }
+   destroy_pl(input);
+   input = NULL;
+   return output;
 }
 
 void inverte_pl(PilhaLigada s)

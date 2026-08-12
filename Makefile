@@ -767,7 +767,7 @@ test-pilha-ligada-ref:
 	@$(CLANG) -D__debug__ -D__unit_tests__ -I./include -Wall \
 		-c -o $(BUILD_PL_REF) $(SRC_PL_REF)
 	echo "Compilado objeto 'pilhaligadaref' de teste."
-	@$(CLANG) -Iinclude/ -O0 -o $(EXE_PL) $(BUILD_PL_REF) -lm $(DEPS_PL)
+	@$(CLANG) -Iinclude/ -O0 -o $(EXE_PL) $(BUILD_PL_REF) build/primitivos.o -lm $(DEPS_PL)
 	@echo "Teste 'ut-pilhaligadaref' compilado."
 
 clean-pilha-ligada-ref:
