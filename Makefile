@@ -11,7 +11,7 @@
 # vez isso no final de cada teste, apenas usar a variável.
 TESTADOR_DYLIB	= -Lbin/shared -lteste -ltempo -llegivel -lterminal -lm
 TESTADOR_OBJ	= build/teste.o build/tempo.o build/terminal.o build/legivel.o
-TESTADOR_STLIB	= -Lbin/static -lteste -lvisualiza -lm
+TESTADOR_STLIB	= -Lbin/static -lbasico -lvisualiza -lm
 HEADERS			= ./include/
 DLL				= ./bin/shared
 # Isso está sendo coloca, pois o WSL(uso no Windows), apenas tem o
@@ -744,10 +744,9 @@ clean-lista-array-ref:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Pilha-Ligada Referência
 # === === ===  === === === === === === === === === === === === === === ====
-EXE_PL 	 	 = bin/tests/ut_pilha_ligada
-MOSTRA_PL 	 = -D_UT_PILHA_LIGADA -D_DESTROI_PL -D__debug__
-DEPS_PL 	 	 = $(TESTADOR) -lprogresso
-BUILD_PL_REF = build/pilha-ligada-ref-teste.o
+EXE_PL 	 	 = bin/tests/ut-pilhaligadaref
+DEPS_PL 	 	 = $(TESTADOR_STLIB)
+BUILD_PL_REF = build/pilhaligadaref-test.o
 SRC_PL_REF 	 = src/estrutura-de-dados/pilhaligada_ref.c
 
 all-pilha-ligada-ref: obj-pilha-ligada-ref lib-pilha-ligada-ref test-pilha-ligada-ref
@@ -765,9 +764,11 @@ lib-pilha-ligada-ref:
 	@echo "Biblioteca compartilhada 'libplref.so' compilada."
 
 test-pilha-ligada-ref:
-	@$(CLANG) $(MOSTRA_PL) -Iinclude -Wall -c -o $(BUILD_PL_REF) $(SRC_PL_REF)
+	@$(CLANG) -D__debug__ -D__unit_tests__ -I./include -Wall \
+		-c -o $(BUILD_PL_REF) $(SRC_PL_REF)
+	echo "Compilado objeto 'pilhaligadaref' de teste."
 	@$(CLANG) -Iinclude/ -O0 -o $(EXE_PL) $(BUILD_PL_REF) -lm $(DEPS_PL)
-	@echo "Teste 'ut_pilha_ligada_ref' compilado."
+	@echo "Teste 'ut-pilhaligadaref' compilado."
 
 clean-pilha-ligada-ref:
 	@rm -v -f $(EXE_PL) $(BUILD_PL_REF) bin/shared/libplref.so \
