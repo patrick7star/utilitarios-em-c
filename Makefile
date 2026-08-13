@@ -407,20 +407,18 @@ lib-estringue: obj-lista-array-ref
 
 test-estringue:
 	@$(CC) -I$(HEADERS) -ggdb -O0 -Wall $(COMPILAR_STR) \
-      -c -o build/estringue-teste.o src/estringue.c
+      -c -o build/estringue-test.o src/estringue.c
 	@$(CC) -I$(HEADERS) \
-		-o bin/tests/ut_estringue \
-			build/estringue-teste.o \
-			build/lista-array-ref.o
-		$(TESTADOR_ST) -lm
+		-o bin/tests/ut-estringue \
+			build/estringue-test.o \
+		$(TESTADOR_STLIB) -lm -lcolecoes
 	@echo "Compilado os testes-unitários de 'estringue' em bin/tests."
 
 run-estringue:
-	./bin/tests/ut_estringue
+	./bin/tests/ut-estringue
 
 clean-estringue:
-	@rm -vf $(BUILD_STR_I) $(BUILD_STR)  $(EXE_STR) $(EXE_STR_I) \
-		bin/static/libestringue.a
+	@rm -vf	build/estringue-test.o bin/static/libestringue.a bin/tests/ut-estringue
 
 
 # === === ===  === === === === === === === === === === === === === === ====
