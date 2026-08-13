@@ -90,8 +90,8 @@
  /* Retorna uma string concatenando todas strings passadas.*/
  char*   concatena_strings      (int, ...);
  // Retorna uma nova cópia das strings, com alguma das pontas aparadas(nomes possíveis).
- char*   strip                  (char* In, char* pattern);
- char*   rstrip                 (char* In, char* pattern);
- char*   strip_suffix           (char* In, char* pattern);
- char*   strip_prefix           (char* In, char* pattern);
+ char*   strip                  (char* In, char* ptt);
+ char*   rstrip                 (char* In, char* ptt);
+ char*   strip_suffix           (char* In, char* ptt);
+ char*   strip_prefix           (char* In, char* ptt);
 #endif
