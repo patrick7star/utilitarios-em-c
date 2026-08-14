@@ -945,6 +945,11 @@ interpola-debug:
 #						Compilação dos Testes Integrais
 #
 # === === ===  === === === === === === === === === === === === === === ===
+it-algoritmo-de-trimming-via-pilha:
+	gcc -I./include -O0 -ggdb -o bin/tests/$@ -Wall \
+		tests/algoritmo_de_trimming_via_pilha.c build/primitivos.o \
+	-Lbin/static -lcolecoes
+
 compila-testes-integrais: \
 	constroi-raiz \
 	fatorizacao-com-hashtable \
