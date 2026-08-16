@@ -927,6 +927,15 @@ test-deque-ligada-ref:
 	@echo "Teste de 'fila-ligada-ref' compilada."
 
 # === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Pilha-Array (Referência)
+# === === ===  === === === === === === === === === === === === === === ====
+test-pilha-array:
+	gcc -I./include -ggdb -O0 -D__unit_tests__ \
+		-c -o build/pilhaarray-test.o \
+				src/estrutura-de-dados/pilhaarray.c
+	gcc -I./include -o bin/tests/ut-pilhaarray build/pilhaarray-test.o build/primitivos.o \
+		-Lbin/static -lbasico -lm	
+# === === ===  === === === === === === === === === === === === === === ====
 # 						 	Extendendo Código para Python
 # === === ===  === === === === === === === === === === === === === === ====
 PY_HEADERS = /usr/include/python3.12

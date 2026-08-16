@@ -34,6 +34,8 @@
 #define VALORES_PADRONIZADOS 10llu
 #define VALORES_PADRONIZADOS_I 16llu
 #define VEICULOS 16llu
+#define VOGAIS 10llu
+#define ALFABETO 52llu
 /* Computados de forma automática pelo compilador:
  *    - LIVROS_DIDATICOS_GENEROS
  *    - OBJETOS
@@ -41,6 +43,8 @@
 // Tamanho padrão do pointeiro de caractéres.
 #define StrSz sizeof(char*)
 
+const char* alfabeto = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char* vogais = "aeiouAEIOU";
 
 // contei 9 frutas.
 const char* frutas[] = {
