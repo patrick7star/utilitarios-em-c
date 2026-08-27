@@ -27,8 +27,6 @@
 #include <wchar.h>
 #include <assert.h>
 
-// todos apelidos dados:
-typedef struct nodulo_do_hash nodulo_t, *Node; 
 // todas constantes:
 #define INVALIDA NULL
 
@@ -36,27 +34,7 @@ typedef struct nodulo_do_hash nodulo_t, *Node;
  *                Trecho do 'nódulo', embrulho que
  *                   transporta os 'itens'
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
-struct nodulo_do_hash { 
-   // Valores genéricos tanto da chave como do valor:
-   GenT chave; 
-   GenT valor;
-
-   // referência para próximo item.
-   Node seta;
-};
-
-static Node cria_nodulo (GenT key, GenT value) {
-/* Retorna uma instância inválida ou não. Dependendo se a alocação foi bem
- * sucedidad. */
-   nodulo_t* instancia = malloc (sizeof (nodulo_t));
-
-   if (instancia != INVALIDA) {
-      instancia->chave = key;
-      instancia->valor = value;
-      instancia->seta = NULL;
-   }
-   return instancia;
-}
+#include "hashtable/nodulo.c"
 
 // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- 
 struct tabela_de_dispersao {
@@ -84,6 +62,9 @@ struct tabela_de_dispersao {
    bool __hash__confirmada;
 };
 
+// O resultado da função abaixo:
+typedef struct { bool contido; size_t posicao; nodulo_t* item; } result_t;
+
 bool adiciona_metodos ( HashTable m, Hash hash, Eq eq) {
    if (m == INVALIDA)
       return false;
@@ -105,22 +86,17 @@ bool adiciona_metodos ( HashTable m, Hash hash, Eq eq) {
    return m->__hash__confirmada && m->__eq__confirmada;
 }
 
-HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g){
+HashTable cria_com_capacidade_ht(size_t capacidade, Hash f, Eq g)
+{
 /* Também serve de método genéricos para demais construturoes abaixo. Estes
  * que recebem bem menos parâmetros, alguns até nenhum. 
  */
    const size_t size = sizeof(struct tabela_de_dispersao);
-   const size_t size_node = sizeof (Node);
    HashTable mapa = malloc(size);
-   size_t Q = capacidade, k;
+   size_t Q = capacidade;
 
    if (mapa != NULL) {
-      // Alocando a array de listas e registrando seu tamanho...
-      mapa->locais = calloc (Q, size_node);
-
-      for (k = 1; k <= Q; k++)
-         mapa->locais[k - 1] = NULL;
-
+      mapa->locais = array_nodulo(Q);
       mapa->capacidade = Q;
       // Sem elementos inicialmente, por motivos óbvios.
       mapa->quantidade = 0;
@@ -167,11 +143,13 @@ bool destroi_ht(HashTable m) {
             remocao = array[n];
             array[n] = array[n]->seta;
             // Desaloca apenas o nódulo.
-            free(remocao);
+            // free(remocao);
+            destroi_nodulo(remocao);
          }
       }
    }
-   free(array); free(m);
+   // free(array); free(m);
+   destroi_array_nodulo(array); free(m);
    return true;
 }
 
@@ -200,17 +178,16 @@ bool destroi_interno_ht(HashTable m, Drop fk, Drop gv)
                fk(remocao->chave);
             if (gv != NULL)
                gv(remocao->valor);
-            free(remocao);
+            // free(remocao); Trocado pelo método próprio.
+            destroi_nodulo(remocao);
          }
       }
    }
-   free(array); free(m);
+   // free(array); free(m);
+   destroi_array_nodulo(array); free(m);
    return true;
    return false;
 }
-
-// O resultado da função abaixo:
-typedef struct { bool contido; size_t posicao; nodulo_t* item; } result_t;
 
 static result_t verifica_lista (
   // lista ligada que será pecorrida e comparada.
@@ -322,10 +299,11 @@ bool deleta_ht(HashTable m, generico_t ch) {
  * apenas realinhar das 'entradas' na array, tipo chaves-em-branco
  * no fim dela, 'entradas' não vázia no começo, não importando a ordem.
  */
-   size_t posicao = m->__hash__ (ch, m->capacidade);
+   size_t capacity = (*m).capacidade;
+   size_t posicao = m->__hash__ (ch, capacity);
    result_t outcome = verifica_lista (
-      m->locais[posicao], 
-      ch, m->__iguais__
+      (*m).locais[posicao], 
+      ch, (*m).__iguais__
    );
    nodulo_t* item = outcome.item;
    bool a_chave_existe = outcome.contido;
@@ -392,121 +370,7 @@ generico_t obtem_ht(HashTable m,  generico_t ch) {
  * este separador entre eles. Assim fica de fácil localização, e os métodos
  * de cada um não serão confundidos.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
-struct Iteracao_da_Hashtable_Ref {
-   // contador de itens iterados.
-   size_t contagem;
-   // posição atual na array.
-   size_t indice;
-
-   // referência ao atual item da 'tabela' referenciado.
-   nodulo_t* cursor;
-
-   // garantidor de que a 'tabela' não foi alterada.
-   size_t inicialmente;
-   HashTable instancia;
-
-};
-
-// O valor da iteração, quando não é mais possível consumir, será este.
-const IterOutputHT NULO_HT = {NULL, NULL};
-
-IterHT cria_iter_ht (HashTable m) {
-   const int sz_iter = sizeof(struct Iteracao_da_Hashtable_Ref);
-   nodulo_t* no = m->locais[0];
-   IterHT self = malloc (sz_iter);
-
-   if (self != NULL) {
-      self->contagem = 0;
-      self->indice = 0;
-      self->cursor = no;
-      self->inicialmente = tamanho_ht (m);
-      // referência ao próprio mapa, dicio, table,... como quiser chamar.
-      self->instancia = m;
-   }
-   return self;
-}
-
-static bool iterador_valido (IterHT iter) {
-/* Para realizar qualquer uma das operações abaixo, é necessário
- * que a instância seja válida, ou seja, ainda existe, ou tem o mesmo
- * tamanho que na criação da instância. */
-   size_t T = tamanho_ht(iter->instancia);
-   bool referencia_existe = (iter->instancia != NULL);
-   return (iter->inicialmente == T && referencia_existe);
-}
-
-size_t contagem_iter_ht (IterHT iter) {
-/* O restante de iterações é calculado na seguinte forma: total de itens 
- * na "lista" menos os já iterados. */
-   if (iterador_valido (iter))
-      return iter->inicialmente - iter->contagem;
-
-   // se chegar até aqui é erro na certa.
-   perror ("não é possível determinar o tamanho de um iterador inválido!");
-   abort();
-}
-
-IterOutputHT next_ht (IterHT iter) {
-/* O algoritmo que pega o próximo item da iteração. Seu modo de funcionar
- * é o seguinte; vai iterando o cada posição na array de listas-ligadas,
- * se não houver nada nela(sem lista), ele pula para o próximo índice 
- * nela, se houver um nó, seguir a lista ligada. Cada iteração com um
- * item válido(nó) é contabilizado. */
-   if (!iterador_valido(iter))
-      return NULO_HT;
-   else if (contagem_iter_ht(iter) == 0)
-      return NULO_HT;
-
-   nodulo_t* atual = iter->cursor;
-   if (atual != INVALIDA) {
-      // colhendo dados necessários ...
-      generico_t vl = atual->valor;
-      generico_t ch = atual->chave;
-
-      // movendo pela lista ...
-      iter->cursor = iter->cursor->seta;
-      // contabiliza iteração.
-      iter->contagem++;
-
-      // retorna item "cholido".
-      return (IterOutputHT){.key = ch, .value=vl };
-   } else  {
-      iter->indice += 1;
-      /* primeiro 'nódulo' da lista abaixo. */
-      iter->cursor = iter->instancia->locais[iter->indice];
-      // chama a função recursivamente novamente...
-      return next_ht (iter);
-   }
-}
-
-bool consumido_iter_ht(IterHT iter) 
-// Diz se o iterador se esgotou(contagem atingiu valor inicial).
-   { return iter->contagem == iter->inicialmente; }
-
-IterHT clona_iter_ht(IterHT iter) {
-/* Clona o iterador passado, à partir do estágio que está. A alteração 
- * deste novo clone, ou do original, não alteram a iteração de cada, más 
- * sim, a mudança da estrutura original, que não permite ambos realizar 
- * mais iterações. */ 
-   IterHT novo = cria_iter_ht(iter->instancia);
-
-   // Copiando informações:
-   if (novo != NULL) {
-      novo->instancia = iter->instancia;
-      novo->contagem = iter->contagem;
-      novo->inicialmente = tamanho_ht(iter->instancia);
-      // Camos internos para iteração(até mais importante que os acimas):
-      novo->cursor = iter->cursor;
-      novo->indice = iter->indice;
-   }
-   return novo;
-}
-
-void destroi_iter_ht(IterHT iter) {
-   iter->cursor = NULL;
-   iter->instancia = NULL;
-   free(iter);
-}
+ #include "hashtable/iteracao.c"
 
 void imprime_ht(HashTable m, ToString fk, ToString gv) {
 /* Usa o iterador para pegar cada entrada, transforma a chave e o valor em
@@ -617,60 +481,7 @@ struct ArrayHT hashtable_to_array(HashTable input)
  * blocos de instruções apenas fazem chamadas das originais, retornando
  * o mesmo valor.
  * === === === === === === === === === === === === === === === === === ==*/
-HashTable new_with_capacity_ht (size_t cP, Hash f, Eq g)
-   { return cria_com_capacidade_ht(cP, f, g); }
-
-HashTable new_ht (Hash f, Eq g)
-   { return cria_ht(f, g); }
-
-HashTable default_ht (void)
-   { return cria_branco_ht(); }
-
-bool delete_ht (HashTable m) 
-   { return destroi_ht(m); }
-
-bool add_ht (HashTable m, generico_t key, generico_t vl) 
-   { return insere_ht(m, key, vl); }
-
-bool update_ht (HashTable m,  generico_t key,  generico_t nvl)
-   { return atualiza_ht(m, key, nvl); }
-
-bool remove_ht (HashTable m, generico_t key)
-   { return deleta_ht(m, key); }
-
-bool contains_ht (HashTable m, generico_t key)
-   { return contem_ht(m, key); }
-
-generico_t get_ht (HashTable m, generico_t key)
-   { return obtem_ht(m, key); }
-
-bool empty_ht (HashTable m) { return vazia_ht(m); }
-
-size_t len_ht (HashTable m) { return tamanho_ht(m); }
-
-void print_ht(HashTable m, ToString f, ToString g)
-   { imprime_ht(m, f, g); }
-
-bool drop_ht(HashTable m)
-   { return destroi_ht(m); }
-
-bool drop_i_ht(HashTable m, Drop f, Drop g)
-   { return destroi_interno_ht(m, f, g); }
-
- IterHT new_iter_ht (HashTable m)
-   { return cria_iter_ht(m); }
-
- IterHT clone_iter_ht(IterHT iter)
-   { return clona_iter_ht(iter); }
-
- void drop_iter_ht(IterHT iter)
-   { return destroi_iter_ht(iter); }
-
- size_t count_iter_ht(IterHT iter)
-   { return contagem_iter_ht(iter); }
-
- bool exhausted_ht(IterHT iter)
-   { return consumido_iter_ht(iter); }
+ #include "hashtable/ingles.c"
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --
  *                      Testes Unitários 
@@ -684,26 +495,8 @@ bool drop_i_ht(HashTable m, Drop f, Drop g)
  * pode conflitar.
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --*/
 #ifdef __unit_tests__
-#include <assert.h>
-#include <locale.h>
-#include "dados-testes.h"
-#include "teste.h"
-#include "macros.h"
-#include "primitivos.h"
-#include "memoria.h"
-#include "aleatorio.h"
+#include "hashtable/testes.c"
 
-TESTE varias_entradas_genericas_diferentes(void); 
-TESTE alocao_e_desacalocao_simples_instancia (void); 
-TESTE visualiza_interna (HashTable m); 
-TESTE aplicacao_de_simples_insercoes (void); 
-TESTE verifica_operacao_de_pertencimento(void); 
-TESTE ascii_code_de_wide_strings (void);
-TESTE simples_atualizacoes_de_alguns_valores(void); 
-TESTE algumas_remocoes_feitas (void); 
-TESTE operacoes_negadas (void); 
-TESTE metodo_get_verificacao_basica (void); 
-TESTE metodo_de_clonagem(void);
 // ---...---...---...---... Testes dos iteradores ---...---...---...---...
 TESTE uso_simples_da_iteracao (void); 
 TESTE tentando_iterador_mapa_vazio (void);
@@ -738,456 +531,6 @@ void main(void) {
          Unit(tentando_iterador_mapa_vazio, true),
          Unit(transporte_de_hashtable_para_array, true)
    );
-}
-
-void alimenta_mapa_com_frutas_e_precos_aleatorios(HashTable InOut)
-{
-   HashTable mapa = InOut;
-   int inteiro, n;
-   float decimal;
-   char* chave = NULL;
-   
-   for (n = 0; n < FRUITS; n++)
-   {
-      inteiro = inteiro_positivo(1, 1e4);
-      decimal = (float)inteiro / 1000.0;
-      chave = (char*)fruits[n];
-
-      add_ht(mapa, chave, box_float(decimal));
-   }
-
-}
-
-TESTE transporte_de_hashtable_para_array(void)
-{
-   HashTable mapa = NULL; 
-   IterOutputHT * array = NULL;
-   const int size = sizeof(IterOutputHT);
-   int quantia, n = 0;
-   IterHT iter = NULL;
-   char* chave; float* valor;
-
-   mapa = new_ht(hash_string, eq_string); 
-
-   alimenta_mapa_com_frutas_e_precos_aleatorios(mapa);
-   print_ht(mapa, debug_string, debug_f32);
-
-   iter = new_iter_ht(mapa);
-   quantia = len_ht(mapa);
-   array = malloc(quantia * size);
-
-   while (!consumido_iter_ht(iter))
-      array[n++] = next_ht(iter);
-
-   printf("n: %d | quantia: %d\n", n, quantia);
-   assert(n == quantia);
-   drop_iter_ht(iter);
-
-   printf("\nVisualizando conteúdo da array[%d]...\n", quantia);
-
-   for (n = 0; n < quantia; n++)
-   {
-      chave = (char*)array[n].key;
-      valor = (float*)array[n].value;
-      printf("\t\b\b\b%s ===> U$ %2.2f\n", chave, *valor);
-   }
-
-   drop_i_ht(mapa, NULL, free_box);
-}
-
-TESTE metodo_de_clonagem(void)
-{
-   HashTable mapa = cria_ht(hash_string, eq_string);
-   HashTable copia = NULL;
-   char* key = NULL; int8_t* value = NULL;
-   const int Y = sizeof(char*);
-   int i = 0;
-
-   for (i = 0; i < GIRLS_NAMES; i++)
-   {
-      key = (char*)girls_names[i];
-      add_ht(mapa, key, box_i8(i));
-   }
-
-   printf("Total de elementos: %zu\n", len_ht(mapa));
-   puts("Original:");
-   print_ht(mapa, debug_string, debug_i8);
-   copia = clona_ht(mapa);
-   puts("Clonado com sucesso.");
-
-   for (i = 0; i < GIRLS_NAMES / 2; i += 2)
-   {
-      key = (char*)girls_names[i];
-      value = obtem_ht(mapa, key);
-      *value += 10;
-   }
-
-   puts("Clone após modificação da original:");
-   print_ht(copia, debug_string, debug_i8);
-   drop_ht(mapa);
-   drop_i_ht(copia, NULL, free_box);
-}
-
-TESTE varias_entradas_genericas_diferentes (void) {
-   puts ("criando simples instância de entry ...");
-
-   // chaves das entradas de todos tipos:
-   wchar_t* string_chave = L"minha_chave";
-   uint32_t inteiro_chave = 12;
-   unsigned char char_chave = 'F';
-   float decimal_chave = 2.73f;
-   // valores da entrada:
-   float decimal_valor = 3.14159;
-   bool logico_valor = false;
-   wchar_t* string_valor = L"feminino";
-   int32_t inteiro_valor = -1000000;
-
-   nodulo_t e = { string_chave, &decimal_valor };
-   nodulo_t a = { &inteiro_chave, &logico_valor };
-   nodulo_t b = { &char_chave, string_valor };
-   nodulo_t c = { &decimal_chave, &inteiro_valor };
-
-   puts ("imprimindo para confirmar:");
-   printf (
-      "#===>%12ls: %f\n\n", 
-      (wchar_t*)e.chave, 
-      *((float*)e.valor)
-   );
-   printf (
-      "#===>%3u: %s\n\n", 
-      *((uint32_t*)a.chave), 
-      bool_to_str(*((bool*)a.valor))
-   );
-   printf (
-      "#===>%2c: %ls\n\n", 
-      *((unsigned char*)b.chave), 
-      (wchar_t*)b.valor
-   );
-
-   printf (
-      "#===>%9f: %i\n\n",
-      *((float*)c.chave),
-      *((int32_t*)c.valor)
-   );
-}
-
-bool iguais_string (generico_t a, generico_t b) { 
-   return wcscmp ((wchar_t*)a, (wchar_t*)b) == 0; 
-}
-
-void alocao_e_desacalocao_simples_instancia (void) {
-   HashTable mapa = cria_ht (hash_string, iguais_string);
-   destroi_ht (mapa);
-}
-
-void visualiza_interna (HashTable m) {
-   puts ("\nHashTable visualização interna:");
-   size_t C = m->capacidade;
-
-   for (size_t i = 1; i <= C; i++) {
-      nodulo_t* lista = m->locais[i - 1];
-      if (lista == INVALIDA)
-         printf ("\t---\n");
-      else {
-         nodulo_t* atual = lista;
-         printf ("\t<");
-         do {
-            float* vl = atual->valor;
-            wchar_t* key = atual->chave;
-            printf ("'%ls': %0.3f, ", key, *vl);
-            atual = atual->seta;
-         } while (atual != NULL);
-         puts ("\b\b>");
-      }
-   }
-}
-
-struct chave_valor { wchar_t* key; float value; };
-
-struct chave_valor entradas[] = {
-   {L"laranja", 1.59}, {L"uva", 3.85},
-   {L"pêssego", 5.99}, {L"melância", 10.15},
-   {L"banana", 4.31}, {L"abacate", 0.80},
-   {L"maçã", 2.50}
-};
-
-void aplicacao_de_simples_insercoes (void) {
-   HashTable mapa = cria_ht (hash_string, iguais_string);
-
-   assert (vazia_ht (mapa));
-   for (size_t i = 1; i <= 7; i++) {
-      float* ptr_value = &entradas[i - 1].value;
-      wchar_t* ptr_key = entradas[i - 1].key;
-      assert (insere_ht (mapa, ptr_key, ptr_value));
-   }
-   assert (tamanho_ht (mapa) == 7);
-   visualiza_interna (mapa);
-
-   destroi_ht (mapa);
-}
-
-void verifica_operacao_de_pertencimento (void) {
-   HashTable mapa = cria_ht (hash_string, iguais_string);
-
-   for (size_t i = 1; i <= 7; i++) {
-      float* ptr_value = &entradas[i - 1].value;
-      wchar_t* ptr_key = entradas[i - 1].key;
-      assert (insere_ht (mapa, ptr_key, ptr_value));
-   }
-   visualiza_interna (mapa);
-
-   uint8_t indices[] = { 5, 1, 4, 6, 3, 2 };
-
-   for (size_t i = 1; i <= 7; i++) {
-      size_t p = indices[i - 1];
-      wchar_t* ptr_key = entradas[i - 1].key;
-      printf ("atual chave '%ls' ...", ptr_key);
-      assert (contem_ht (mapa, ptr_key));
-      puts ("tem.");
-   }
-
-   destroi_ht (mapa);
-}
-
-void ascii_code_de_wide_strings (void) {
-   wchar_t string[] = L"ármario";
-   for (size_t i = 1; i <= 7; i++) 
-      printf ("'%lc' -- %u\n", string[i - 1], (uint32_t)*(string + i - 1));
-}
-
-void simples_atualizacoes_de_alguns_valores (void) {
-   HashTable mapa = cria_ht (hash_string, iguais_string);
-
-   for (size_t i = 1; i <= 7; i++) {
-      float* ptr_value = &entradas[i - 1].value;
-      wchar_t* ptr_key = entradas[i - 1].key;
-      assert (insere_ht (mapa, ptr_key, ptr_value));
-   }
-   size_t total = tamanho_ht (mapa);
-   visualiza_interna (mapa);
-
-   puts ("dobrando os preços...");
-   for (size_t i = 1; i <= 7; i++) {
-      size_t p = i - 1;
-      struct chave_valor E = entradas[p];
-      wchar_t* key = E.key;
-      float* value = malloc (sizeof (float));
-      *value = 2 * E.value;
-
-      assert (atualiza_ht (mapa, key, value));
-      puts ("atualização ocorreu corretamente!");
-   }
-   visualiza_interna (mapa);
-
-   // a quantia interna não mudou.
-   assert (tamanho_ht (mapa) == total);
-   destroi_ht (mapa);
-}
-
-void visualiza_mapa_wchar_e_float (HashTable m) {
-   size_t cP = m->capacidade;
-
-   printf ("{..");
-   for (size_t p = 1; p <= cP; p++) {
-      nodulo_t* lista = m->locais[p - 1];
-
-      while (lista != NULL) {
-         wchar_t* k = lista->chave;
-         float* v = lista->valor;
-
-         printf ("%ls: %2.1f, ", k, *v);
-
-         lista = lista->seta;
-      }
-   }
-   puts ("\b\b}");
-}
-
-void algumas_remocoes_feitas (void) {
-   HashTable mapa = cria_ht (hash_string, iguais_string);
-
-   for (size_t i = 1; i <= 7; i++) {
-      float* ptr_value = &entradas[i - 1].value;
-      wchar_t* ptr_key = entradas[i - 1].key;
-      assert (insere_ht (mapa, ptr_key, ptr_value));
-   }
-   puts ("\n .. .. .....antes .. .. .. ......");
-   visualiza_interna (mapa);
-
-   size_t antes = tamanho_ht (mapa);
-   wchar_t* key = entradas[3].key;
-   printf ("removendo a chave: '%ls'\n", key);
-   assert (deleta_ht (mapa, key));
-   assert (antes > tamanho_ht(mapa));
-   visualiza_interna (mapa);
-
-   /* Observação: Está com dificuldade de remover itens na primeira
-    * casa da lista encadeada. */
-   puts ("\n .. .. ... depois .. .. .. ......");
-   antes = tamanho_ht (mapa);
-   key = entradas[6].key;
-   printf ("removendo a chave: '%ls'\n", key);
-   assert (deleta_ht (mapa, key));
-   assert (antes > tamanho_ht(mapa));
-   visualiza_interna (mapa);
-
-   antes = tamanho_ht (mapa);
-   key = entradas[4].key;
-   assert (deleta_ht (mapa, key));
-   visualiza_mapa_wchar_e_float (mapa);
-   key = entradas[1].key;
-   assert (deleta_ht (mapa, key));
-   visualiza_mapa_wchar_e_float (mapa);
-   key = entradas[2].key;
-   assert (deleta_ht (mapa, key));
-   visualiza_mapa_wchar_e_float (mapa);
-   assert (antes == 3 + tamanho_ht(mapa));
-
-   destroi_ht (mapa);
-}
-
-size_t hash_int (generico_t dt, size_t cp) {
-   uint16_t* ptr = dt;
-   uint16_t chave = *ptr;
-   // este não leva em conta o endereço virtual de memória do argumento.
-   return  chave * (chave - chave / 2) % cp;
-}
-
-bool int_eq (generico_t a, generico_t b) 
-   { return *((uint16_t*)a) == *((uint16_t*)b); }
-
-void visualizacao_mapa_u16_e_str (HashTable m) {
-   size_t cP = m->capacidade;
-
-   printf ("{..");
-   for (size_t p = 1; p <= cP; p++) {
-      nodulo_t* lista = m->locais[p - 1];
-
-      while (lista != NULL) {
-         uint16_t* k = lista->chave;
-         char* v = lista->valor;
-
-         printf ("%u: '%s', ", *k, v);
-         lista = lista->seta;
-      }
-   }
-   puts ("\b\b}");
-}
-
-void operacoes_negadas (void) {
-   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
-   // inserer, resgatar, e remover até não poder mais...
-   HashTable M = cria_ht(hash_int, int_eq);
-   assert (vazia_ht(M));
-
-   for (size_t p = 1; p <= 8; p++) {
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)legumes[p - 1];
-      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
-      insere_ht (M, key, value);
-   }
-
-   visualizacao_mapa_u16_e_str (M);
-   assert (tamanho_ht(M) == 8);
-
-   puts ("novo lotes de inserções, com mesmas chaves negados:");
-   for (size_t p = 1; p <= 8; p++) {
-      char* value = (char*)frutas[p - 1];
-      uint16_t* key =  &amostras[p - 1];
-      insere_ht (M, key, value);
-   }
-   assert (tamanho_ht(M) == 8);
-
-   puts ("agora, apesar de negações, inserindo algumas...");
-   size_t negacoes = 0;
-   for (size_t p = 5; p <= 13; p++) {
-      uint16_t* key =  amostras + p;
-      char* vl = (char*)frutas[p - 5];
-      // bool foi_inserido = insere_ht (M, &amostras[p], frutas[p - 5]);
-      bool foi_inserido = insere_ht (M, key, vl);
-      if (!foi_inserido)
-         negacoes++;
-   }
-   printf ("houves %lu negações de inserção.\n",negacoes);
-   printf ("há agora %lu items.\n", tamanho_ht (M));
-   visualizacao_mapa_u16_e_str (M);
-
-    
-   // tentando obter chaves inexistentes ...
-   uint16_t chaves_inexistentes[] = {
-      918, 9,  380,  88, 832, 
-      111, 22, 44, 100, 56, 3
-   };
-
-   puts ("\ntestando método 'obter(get)' valores de algumas 'chaves'.");
-   for (size_t p = 1; p <= 10; p++) {
-      size_t q = p - 1;
-      uint16_t* key = &chaves_inexistentes[q];
-      char* vl = obtem_ht (M, key);
-
-      if (vl != NULL)
-         printf ("chave %u existe, e tem valor '%s'.\n", *key, vl);
-      else 
-         printf ("chave %u não existe!\n", *key);
-   }
-
-   // tentando deletar todas chaves, e muito mais.
-   negacoes = 0;
-   puts ("\nlimpando a 'tabela'...");
-   for (size_t p = 36; p >= 1; p--) {
-      uint16_t* key = &amostras[p - 1];
-      bool removido = deleta_ht (M, key);
-
-      if (removido)
-         visualizacao_mapa_u16_e_str (M);
-      else {
-         printf ("não foi possível remover %u.\n", *key);
-         negacoes++;
-      }
-   }
-   printf ("%lu foram negadas.\n", negacoes);
-
-   destroi_ht (M);
-}
-
-void metodo_get_verificacao_basica (void) {
-   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
-   // inserer, resgatar, e remover até não poder mais...
-   HashTable M = cria_ht(hash_int, int_eq);
-   assert (vazia_ht(M));
-
-   for (size_t p = 1; p <= 8; p++) {
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)legumes[p - 1];
-      insere_ht (M, key, value);
-      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
-   }
-
-   visualizacao_mapa_u16_e_str (M);
-   assert (tamanho_ht(M) == 8);
-
-   uint16_t chave = 1;
-   char* valor_i = obtem_ht (M, &chave);
-   chave = 9;
-   char* valor_ii = obtem_ht (M, &chave);
-
-   printf ("valores pegos: '%s' e '%s'\n", valor_i, valor_ii);
-
-   // tentando acessar valores inválidos ...
-   chave = 37;
-   assert (obtem_ht (M, &chave) == NULL);
-   chave = 43;
-   assert (obtem_ht (M, &chave) == NULL);
-   char* valor_iii; 
-   chave = 99;
-   valor_iii = obtem_ht (M, &chave);
-   assert ( valor_iii != NULL);
-   printf ("último pego(key=%u): '%s'\n", chave, valor_iii);
-   chave = 98;
-   assert (obtem_ht (M, &chave) == NULL);
-   puts ("chaves inválidas produziram um valor 'null'.");
-
-   destroi_ht (M);
 }
 
 // ---...---...---...---... Testes dos iteradores ---...---...---...---...

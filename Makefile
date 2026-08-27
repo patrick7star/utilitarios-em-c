@@ -935,6 +935,21 @@ test-pilha-array:
 				src/estrutura-de-dados/pilhaarray.c
 	gcc -I./include -o bin/tests/ut-pilhaarray build/pilhaarray-test.o build/primitivos.o \
 		-Lbin/static -lbasico -lm	
+
+# === === ===  === === === === === === === === === === === === === === ====
+# 						 	Modulo Árvore-Ligada
+# === === ===  === === === === === === === === === === === === === === ====
+test-arvore-ligada:
+	@gcc -std=c11 -I./include -ggdb -O0 -D__debug__ -D__unit_tests__ \
+		-Winfinite-recursion -Wall \
+		-c -o build/arvoreligada-test.o \
+				src/estrutura-de-dados/arvoreligada.c
+	@echo "Objeto do teste de arvore-ligada compilado em 'build'."
+	@gcc -I./include \
+		-o bin/tests/ut-arvoreligada \
+			build/arvoreligada-test.o build/primitivos.o \
+		-Lbin/static -lbasico -lm	
+	@echo "Testes unitários de árvore-ligada compilado em 'bin/tests'."
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Extendendo Código para Python
 # === === ===  === === === === === === === === === === === === === === ====
