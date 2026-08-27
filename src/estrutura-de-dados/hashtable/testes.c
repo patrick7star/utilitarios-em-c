@@ -9,60 +9,6 @@
 #include "memoria.h"
 #include "aleatorio.h"
 
-void alimenta_mapa_com_frutas_e_precos_aleatorios(HashTable InOut)
-{
-   HashTable mapa = InOut;
-   int inteiro, n;
-   float decimal;
-   char* chave = NULL;
-   
-   for (n = 0; n < FRUITS; n++)
-   {
-      inteiro = inteiro_positivo(1, 1e4);
-      decimal = (float)inteiro / 1000.0;
-      chave = (char*)fruits[n];
-
-      add_ht(mapa, chave, box_float(decimal));
-   }
-
-}
-
-TESTE transporte_de_hashtable_para_array(void)
-{
-   HashTable mapa = NULL; 
-   IterOutputHT * array = NULL;
-   const int size = sizeof(IterOutputHT);
-   int quantia, n = 0;
-   IterHT iter = NULL;
-   char* chave; float* valor;
-
-   mapa = new_ht(hash_string, eq_string); 
-
-   alimenta_mapa_com_frutas_e_precos_aleatorios(mapa);
-   print_ht(mapa, debug_string, debug_f32);
-
-   iter = new_iter_ht(mapa);
-   quantia = len_ht(mapa);
-   array = malloc(quantia * size);
-
-   while (!consumido_iter_ht(iter))
-      array[n++] = next_ht(iter);
-
-   printf("n: %d | quantia: %d\n", n, quantia);
-   assert(n == quantia);
-   drop_iter_ht(iter);
-
-   printf("\nVisualizando conteúdo da array[%d]...\n", quantia);
-
-   for (n = 0; n < quantia; n++)
-   {
-      chave = (char*)array[n].key;
-      valor = (float*)array[n].value;
-      printf("\t\b\b\b%s ===> U$ %2.2f\n", chave, *valor);
-   }
-
-   drop_i_ht(mapa, NULL, free_box);
-}
 
 TESTE metodo_de_clonagem(void)
 {
@@ -144,7 +90,7 @@ bool iguais_string (generico_t a, generico_t b) {
    return wcscmp ((wchar_t*)a, (wchar_t*)b) == 0; 
 }
 
-void alocao_e_desacalocao_simples_instancia (void) {
+UNIT_TEST alocao_e_desacalocao_simples_instancia (void) {
    HashTable mapa = cria_ht (hash_string, iguais_string);
    destroi_ht (mapa);
 }
@@ -195,7 +141,7 @@ void aplicacao_de_simples_insercoes (void) {
    destroi_ht (mapa);
 }
 
-void verifica_operacao_de_pertencimento (void) {
+UNIT_TEST verifica_operacao_de_pertencimento (void) {
    HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
@@ -218,13 +164,13 @@ void verifica_operacao_de_pertencimento (void) {
    destroi_ht (mapa);
 }
 
-void ascii_code_de_wide_strings (void) {
+UNIT_TEST ascii_code_de_wide_strings (void) {
    wchar_t string[] = L"ármario";
    for (size_t i = 1; i <= 7; i++) 
       printf ("'%lc' -- %u\n", string[i - 1], (uint32_t)*(string + i - 1));
 }
 
-void simples_atualizacoes_de_alguns_valores (void) {
+UNIT_TEST simples_atualizacoes_de_alguns_valores (void) {
    HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
@@ -272,7 +218,7 @@ void visualiza_mapa_wchar_e_float (HashTable m) {
    puts ("\b\b}");
 }
 
-void algumas_remocoes_feitas (void) {
+UNIT_TEST algumas_remocoes_feitas (void) {
    HashTable mapa = cria_ht (hash_string, iguais_string);
 
    for (size_t i = 1; i <= 7; i++) {
@@ -315,16 +261,6 @@ void algumas_remocoes_feitas (void) {
    destroi_ht (mapa);
 }
 
-size_t hash_int (generico_t dt, size_t cp) {
-   uint16_t* ptr = dt;
-   uint16_t chave = *ptr;
-   // este não leva em conta o endereço virtual de memória do argumento.
-   return  chave * (chave - chave / 2) % cp;
-}
-
-bool int_eq (generico_t a, generico_t b) 
-   { return *((uint16_t*)a) == *((uint16_t*)b); }
-
 void visualizacao_mapa_u16_e_str (HashTable m) {
    size_t cP = m->capacidade;
 
@@ -343,10 +279,10 @@ void visualizacao_mapa_u16_e_str (HashTable m) {
    puts ("\b\b}");
 }
 
-void operacoes_negadas (void) {
+UNIT_TEST operacoes_negadas (void) {
    uint16_t* amostras = (uint16_t*)valores_padronizados_i;
    // inserer, resgatar, e remover até não poder mais...
-   HashTable M = cria_ht(hash_int, int_eq);
+   HashTable M = cria_ht(hash_u16, eq_u16);
    assert (vazia_ht(M));
 
    for (size_t p = 1; p <= 8; p++) {
@@ -419,10 +355,10 @@ void operacoes_negadas (void) {
    destroi_ht (M);
 }
 
-void metodo_get_verificacao_basica (void) {
+UNIT_TEST metodo_get_verificacao_basica (void) {
    uint16_t* amostras = (uint16_t*)valores_padronizados_i;
    // inserer, resgatar, e remover até não poder mais...
-   HashTable M = cria_ht(hash_int, int_eq);
+   HashTable M = cria_ht(hash_u16, eq_u16);
    assert (vazia_ht(M));
 
    for (size_t p = 1; p <= 8; p++) {
@@ -458,3 +394,4 @@ void metodo_get_verificacao_basica (void) {
 
    destroi_ht (M);
 }
+

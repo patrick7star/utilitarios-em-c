@@ -498,10 +498,6 @@ struct ArrayHT hashtable_to_array(HashTable input)
 #include "hashtable/testes.c"
 
 // ---...---...---...---... Testes dos iteradores ---...---...---...---...
-TESTE uso_simples_da_iteracao (void); 
-TESTE tentando_iterador_mapa_vazio (void);
-TESTE transporte_de_hashtable_para_array(void); 
-
 
 void main(void) {
    setlocale (LC_CTYPE, "en_US.UTF-8");
@@ -532,94 +528,5 @@ void main(void) {
          Unit(transporte_de_hashtable_para_array, true)
    );
 }
-
-// ---...---...---...---... Testes dos iteradores ---...---...---...---...
-void print_item_ht_u16_e_str (IterOutputHT x) {
-   printf (" ==> %u: %s\n", *((uint16_t*)x.key), (char*)x.value);
-}
-
-void print_inner_u16_e_str (HashTable m) {
-   puts ("\nHashTable visualização interna:");
-   size_t C = m->capacidade;
-
-   for (size_t i = 1; i <= C; i++) {
-      nodulo_t* lista = m->locais[i - 1];
-      if (lista == INVALIDA)
-         printf ("\t---\n");
-      else {
-         nodulo_t* atual = lista;
-         printf ("\t<");
-         do {
-            char* vl = atual->valor;
-            uint16_t* key = atual->chave;
-            printf ("%u: '%s', ", *key, vl);
-            atual = atual->seta;
-         } while (atual != NULL);
-         puts ("\b\b>");
-      }
-   }
-}
-
-void uso_simples_da_iteracao (void) {
-   HashTable M = cria_ht(hash_int, int_eq);
-   uint16_t* amostras = (uint16_t*)valores_padronizados_i;
-
-   for (size_t p = 1; p <= 9; p++) {
-      // insere_ht (M, &amostras[p - 1], legumes[p - 1]);
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)legumes[p - 1];
-      insere_ht (M, key, value);
-   }
-   for (size_t p = 9; p <= 19; p++) {
-      // insere_ht (M, &amostras[p - 1], boys_names[p - 9 - 1]);
-      uint16_t* key = (uint16_t*)&amostras[p - 1]; 
-      char* value = (char*)boys_names[p - 9 - 1];
-      insere_ht (M, key, value);
-   }
-   visualizacao_mapa_u16_e_str (M);
-   print_inner_u16_e_str (M);
-
-   IterHT I = cria_iter_ht (M);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
-
-   for (size_t count = contagem_iter_ht(I); count > 0; count--) {
-      IterOutputHT i = next_ht (I);
-      assert (i.key != NULL && i.value != NULL);
-      print_item_ht_u16_e_str (i);
-      printf ("contagem em %lu ...\n", contagem_iter_ht(I));
-   }
-
-   printf ("tetando iterar mesmo esgotado ...");
-   IterOutputHT i = next_ht (I);
-   assert (i.key == NULL && i.value == NULL);
-   i = next_ht (I);
-   assert (i.key == NULL && i.value == NULL);
-   i = next_ht (I);
-   assert (i.key == NULL && i.value == NULL);
-   puts ("não funcionou!");
-   destroi_ht (M);
-}
-
-void tentando_iterador_mapa_vazio (void) {
-   HashTable M = cria_ht(hash_int, int_eq);
-   IterHT I = cria_iter_ht (M);
-
-   IterOutputHT i = next_ht (I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
-   assert (i.key == NULL && i.value == NULL);
-
-   i = next_ht (I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
-   assert (i.key == NULL && i.value == NULL);
-
-   i = next_ht (I);
-   printf ("contagem em %lu ...\n", contagem_iter_ht(I));
-   assert (i.key == NULL && i.value == NULL);
-
-   puts ("não funcionou com nenhuma!");
-   destroi_iter_ht(I);
-   destroi_ht (M);
-}
-
 #endif
 
