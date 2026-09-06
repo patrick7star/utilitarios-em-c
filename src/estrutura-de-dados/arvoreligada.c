@@ -1,5 +1,5 @@
 /*   Implementação mais básica de uma arvore binária em C, baseando-se no
- * que já foi feito em Python. Existes algoritmos mais simples para a 
+ * que já foi feito em Python. Existes algoritmos mais simples para a
  * linguagem, entretanto, este aqui é bem mais intuitivo e organizado.
  */
 
@@ -20,7 +20,7 @@
  *
  * Métodos e definições de partes não importantes, foram realocadas em outros
  * arquivos, então "importadas" prá cá. No caso aqui, 'estruturas.c' ficam
- * as definições, já 'cursor.c' e 'nodulo.c' os métodos referentes aos 
+ * as definições, já 'cursor.c' e 'nodulo.c' os métodos referentes aos
  * respectivas definições.
  * === === === === === === === === === === === === === === === === === === */
 #include "arvore-ligada/estruturas.c"
@@ -62,10 +62,10 @@ static void preorder_traversal_indexacao
 }
 
 bool tree_destroi(Tree self)
-{ 
+{
 /* Há uma travessia 'preorder', então todos nós são depositados numa lista
  * alocada exatamente para este tamanho. Depois os 'nódulos' são desalocados
- * um por um. 
+ * um por um.
  */
    Tree a = self;
    size_t qtd = tree_quantidade(a), q = 0;
@@ -75,7 +75,7 @@ bool tree_destroi(Tree self)
 
    if (todos == NULL)
       return false;
-   else 
+   else
    /* Colocando todos 'nódulos' numa lista, assim fica mais fácil a
     * desalocação de cada. */
     preorder_traversal_indexacao(a, tree_raiz(a), todos, &q);
@@ -86,31 +86,31 @@ bool tree_destroi(Tree self)
       q--;
       destroi_node(atual);
    }
-   free(self); 
+   free(self);
    free(todos);
-   return true; 
+   return true;
 }
 
 Cursor tree_raiz(Tree self)
    { return cursor_novo(self, (*self).raiz); }
 
-Cursor tree_pai(Tree self, Cursor p) 
+Cursor tree_pai(Tree self, Cursor p)
    { return cursor_novo(self, validacao(self, p)); }
 
-Cursor tree_direita(Tree self, Cursor p) 
+Cursor tree_direita(Tree self, Cursor p)
 {
    Node nodulo = validacao(self, p);
 
    if (nodulo == NULL)
       return CURSOR_NULL;
    else
-      return cursor_novo(self, (*nodulo).direito); 
+      return cursor_novo(self, (*nodulo).direito);
 }
 
-Cursor tree_esquerda(Tree self, Cursor p) 
+Cursor tree_esquerda(Tree self, Cursor p)
 {
    Node nodulo = validacao(self, p);
-   return cursor_novo(self, nodulo->esquerdo); 
+   return cursor_novo(self, nodulo->esquerdo);
 }
 
 int tree_numero_de_criancas(Tree self, Cursor p)
@@ -131,8 +131,8 @@ Cursor tree_adiciona_raiz(Tree self, GenT data)
    Node objeto;
 
    objeto = cria_node(data);
-   (*self).raiz = objeto; 
-   (*self).quantia = 1; 
+   (*self).raiz = objeto;
+   (*self).quantia = 1;
 
    printf("Valor inserido na raíz com sucesso.\n");
    return cursor_novo(self, objeto);
@@ -146,7 +146,7 @@ Cursor tree_adiciona_esquerda(Tree self, Cursor p, GenT e)
    if ((*nodulo).esquerdo != NULL)
       { perror("Lado 'esquerdo' já existe!"); abort(); }
 
-   (*self).quantia += 1; 
+   (*self).quantia += 1;
    (*novo).pai = nodulo;
    (*nodulo).esquerdo = novo;
 
@@ -161,7 +161,7 @@ Cursor tree_adiciona_direita(Tree self, Cursor p, GenT e)
    if ((*nodulo).direito != NULL)
       { perror("Lado 'direito' já existe!"); abort(); }
 
-   (*self).quantia += 1; 
+   (*self).quantia += 1;
    (*novo).pai = nodulo;
    (*nodulo).direito = novo;
 
@@ -176,13 +176,13 @@ GenT tree_remove(Tree self, Cursor p)
    GenT dado = NULL;
 
    if (tree_numero_de_criancas(self, p) == 2)
-      INTERROMPE("'p' tem duas crianças!"); 
+      INTERROMPE("'p' tem duas crianças!");
 
    crianca = (nodulo->esquerdo == NULL) ? nodulo->direito: nodulo->esquerdo;
 
    if (crianca == NULL)
       crianca->pai = nodulo->pai;
-      
+
    if (nodulo == raiz)
       raiz = crianca;
    else {
@@ -240,19 +240,19 @@ void tree_impressao_preorder(Tree a, ToString fmt)
 }
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
- *                      Testes Unitários 
+ *                      Testes Unitários
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
 #ifdef __unit_tests__
 #include "arvore-ligada/unitarios.c"
 
-int main(int total, char* args[], char* vars[]) 
+int main(int total, char* args[], char* vars[])
 {
    executa_testes_b(
       true, 6,
          Unit(instancia_insere_depois_conta, true),
          Unit(percorrimento_manual_de_uma_arvore_simetrica_pequena, true),
          Unit(preorder_traversal_algoritmo, true),
-         Unit(insercao_simetrica_seriada_na_arvore, true), 
+         Unit(insercao_simetrica_seriada_na_arvore, true),
          Unit(trabalho_no_metodo_de_destruicao, true),
          Unit(ramificacao_da_arvore_binaria_visualmente, true)
       );
