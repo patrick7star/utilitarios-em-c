@@ -939,6 +939,12 @@ test-pilha-array:
 # === === ===  === === === === === === === === === === === === === === ====
 # 						 	Modulo Árvore-Ligada
 # === === ===  === === === === === === === === === === === === === === ====
+obj-arvore-ligada:
+	@$(CLANG) -O3 -Oz -I include/ -Wall -c \
+		-o build/arvore-ligada.o \
+		src/estrutura-de-dados/arvoreligada.c
+	@echo "Gerou o arquivo objeto 'arvoreligada.o', em 'build'."
+
 test-arvore-ligada:
 	@gcc -std=c11 -I./include -ggdb -O0 -D__debug__ -D__unit_tests__ \
 		-Winfinite-recursion -Wall \
@@ -969,6 +975,15 @@ interpola-debug:
 #						Compilação dos Testes Integrais
 #
 # === === ===  === === === === === === === === === === === === === === ===
+it-preenchendo-arvore-binaria-com-alfabeto:
+	$(CLANG) -I ./tests/adjunct -I./include -O0 -ggdb \
+		-o bin/tests/it-preenchendo-arvore-binaria-com-alfabeto \
+			tests/preenchendo_arvore_binaria_com_alfabeto.c \
+			tests/adjunct/reveste-arvore.c \
+			tests/adjunct/captura-stdout.c \
+			build/arvore-ligada.o \
+		-Lbin/static -lcomputa -lcolecoes
+
 it-algoritmo-de-trimming-via-pilha:
 	gcc -I./include -O0 -ggdb -o bin/tests/$@ -Wall \
 		tests/algoritmo_de_trimming_via_pilha.c build/primitivos.o \
