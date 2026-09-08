@@ -31,6 +31,9 @@
  bool    tree_vazia              (Tree self);
  bool    tree_e_folha            (Tree, Cursor);
 
+ // Impressão e formatação dela.
+ void tree_impreme_preorder(Tree, ToString);
+
  // Métodos referentes aos acessos do cursor.
  bool cursor_e_nulo    (Cursor);
  GenT cursor_elemento  (Cursor);
