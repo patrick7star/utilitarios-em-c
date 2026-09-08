@@ -975,6 +975,14 @@ interpola-debug:
 #						Compilação dos Testes Integrais
 #
 # === === ===  === === === === === === === === === === === === === === ===
+it-tempo-para-preencher-arvore-com-milhoes:
+	#$(CLANG) -I./include -O0 -fsanitize=address -g -ggdb 
+	$(CLANG) -I./include -O0 -ggdb \
+		-o bin/tests/$@ \
+			tests/tempo_para_preencher_arvore_com_milhoes.c \
+			build/arvore-ligada.o \
+		-Lbin/static -lcomputa -lcolecoes -lvisualiza -lm
+
 it-preenchendo-arvore-binaria-com-alfabeto:
 	$(CLANG) -I ./tests/adjunct -I./include -O0 -ggdb \
 		-o bin/tests/it-preenchendo-arvore-binaria-com-alfabeto \
