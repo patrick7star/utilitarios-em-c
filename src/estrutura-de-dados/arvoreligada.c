@@ -231,7 +231,7 @@ static void recursao_preorder(Tree a, Cursor p, ToString fmt)
    recursao_preorder(a, direito, fmt);
 }
 
-void tree_impressao_preorder(Tree a, ToString fmt)
+void tree_impreme_preorder(Tree a, ToString fmt)
 {
 // Imprime a árvore dado ela e seu formatador, no percorrimento 'preorder'.
    printf("Arvore-Binária(%zu) [", tree_quantidade(a));
