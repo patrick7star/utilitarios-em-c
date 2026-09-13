@@ -262,21 +262,8 @@ static Set conjunto_variado_de_strings(void)
    Set output = new_set(hash_string, eq_string);
    int p = 0xabc;
 
-   for (p = 0; p < GIRLS_NAMES; p++)
-      add_set(output, (char*)girls_names[p]);
    for (p = 0; p < BOYS_NAMES; p++)
       add_set(output, (char*)boys_names[p]);
-   for (p = 0; p < OBJETOS; p++)
-      add_set(output, (char*)objetos[p]);
-   for (p = 0; p < VEICULOS; p++)
-      add_set(output, (char*)veiculos[p]);
-   for (p = 0; p < FRUTAS; p++)
-      add_set(output, (char*)frutas[p]);
-   for (p = 0; p < FRUITS; p++)
-      add_set(output, (char*)fruits[p]);
-   for (p = 0; p < NOMES_DE_MENINOS; p++)
-      add_set(output, (char*)nomes_de_meninos[p]);
-   for (p = 0; p < NOMES_DE_MENINAS; p++)
-      add_set(output, (char*)nomes_de_meninas[p]);
+
    return output;
 }
