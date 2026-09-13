@@ -25,10 +25,6 @@
 
 // tamanho de cada array abaixo:
 #define FRUTAS 9llu
-#define NOMES_DE_MENINOS 14llu
-#define NOMES_DE_MENINAS 15llu
-#define GIRLS_NAMES 9llu
-#define BOYS_NAMES 11llu
 #define LEGUMES 9llu
 #define SEXO 3llu
 #define VALORES_PADRONIZADOS 10llu
@@ -46,37 +42,72 @@
 const char* alfabeto = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const char* vogais = "aeiouAEIOU";
 
-// contei 9 frutas.
 const char* frutas[] = {
    "morango", "banana", "pêra", "uva", "mamão",
    "laranja", "abacaxi", "melância", "goiaba",
 };
 
-// eu contei 15 nomes.
 const char* nomes_de_meninas[] = {
-   "Júlia", "Amanda", "Sara", "Elisa", "Mariana", "Gabriela", "Maria",
-   "Joana", "Carol", "Maísa", "Rosana", "Larissa", "Geovana", "Alice",
-   "Marta"
+    "Júlia", "Amanda", "Sara", "Elisa", "Mariana", "Gabriela", "Maria",
+    "Joana", "Carol", "Maísa", "Rosana", "Larissa", "Geovana", "Alice",
+    "Isabel", "Leonor", "Luana", "Madalena", "Natália", "Olívia",
+    "Patrícia", "Rafaela", "Sofia", "Teresa", "Valentina", "Vitória",
+    "Adriana", "Bárbara", "Camila", "Daniela", "Emanuela", "Flávia",
+    "Gabrielle", "Heloísa", "Iara", "Jéssica", "Karina", "Lívia", "Marta", 
+    "Beatriz", "Clara", "Diana", "Eduarda", "Fernanda", "Helena", "Manuela", 
+    "Nádia", "Oceana", "Priscila", "Quitéria", "Renata", "Sílvia", "Tatiana",
+    "Úrsula", "Vanessa", "Wanda", "Ximena", "Yasmin", "Zélia", "Antônia", 
+    "Bruna", "Cecília", "Débora", "Érica", "Fátima", "Gisela", "Hilda", 
+    "Iolanda", "Inês"
 };
 
-// Eu contei 14 nomes.
-const char* nomes_de_meninos[] = {
-   "João", "César", "Maurício", "Júlio", "Marcos",
-   "Paulo", "Johnatan", "Mateus", "Pedro", "Ronaldo",
-   "Romeu", "Gilberto", "Carlos", "Ivan"
+const char *nomes_de_meninos[] = {
+   "João", "César", "Maurício", "Júlio", "Marcos", "Paulo", "Johnatan", 
+   "Mateus", "Pedro", "Ronaldo", "Romeu", "Gilberto", "Carlos", "Ivan",
+   "Igor", "Jorge", "Kauã", "Leonardo", "Miguel", "Natan", "Otávio",
+   "Antônio", "Bruno", "Davi", "Eduardo", "Felipe", "Gabriel", "Henrique",
+   "Yago", "Zaqueu", "Adriano", "Breno", "Caio", "Diego", "Elias",
+   "Rafael", "Samuel", "Thiago", "Uriel", "Vitor", "Wesley", "Xavier",
+   "Micael", "Nicolas", "Orlando", "Pablo", "Quirino", "Raul", "Sérgio",
+   "Fábio", "Guto", "Heitor", "Iago", "Joaquim", "Kaique", "Luan", "Thales",
+   "Ulysses", "Vinícius", "Wagner", "Xisto", "Yuri", "Zeno"
 };
 
-// eu contei 9 nomes.
 const char* girls_names[] = {
-   "Sarah", "Mayce", "Cristine", "Deborah", "Lauren",
-   "Samantha", "Jane", "Madison", "Megan"
+   "Denise", "Shirley", "Joan", "Paula", "Katherine", "Patricia",
+   "Alexandra", "Caroline", "Helen", "Michele", "Jillian", "Stacy", 
+   "Sarah", "Mayce", "Cristine", "Deborah", "Lauren", "Lillian", "Dorothy",
+   "Rose", "Hazel", "Evelyn", "Claire", "Julia", "Martha", "Betty", 
+   "Nicole", "Tracy", "Wendy", "Kylie", "Alison", "Sabrina", "Brooke", 
+   "Gwen", "Morgan", "Tara", "Vanessa", "Fiona", "Cindy", "Ruth", "Diana",
+   "Rachel", "Bonnie", "Elaine", "Heather", "Kathy", "Molly", "Sophie", 
+   "Samantha", "Jane", "Madison", "Megan", "Emily", "Olivia", "Emma", 
+   "Charlotte", "Grace", "Hannah", "Rebecca", "Rachel", "Laura", "Faith",
+   "Victoria", "Eleanor", "Elizabeth", "Anna", "Lucy", "Jenna", "Natalie", 
+   "Lydia", "Kayla", "Stella", "Margaret", "Susan", "Catherine", "Tiffany",
+   "Allison", "Hope", "Anita", "Carla", "Gloria", "Janet", "Leah", "Miriam"
 };
 
-// eu contei 11 nomes.
 const char* boys_names[] = {
-   "Peter", "Noah", "Matthew", "Dickson", "Carl",
-   "John", "Taylor", "Charlie", "Dave", "Thomas", "Jacob"
+   "Stephen", "Gregory", "Larry", "Roger", "Keith", "Dennis", "Gary", 
+   "Frank", "Ethan", "Ryan", "John", "Taylor", "Charlie", "Dave", "Thomas",
+   "Ralph", "Sidney", "Terrence", "Vincent", "Walter", "Warren", "Wesley", 
+   "Clinton", "Dean", "Donald", "Steven", "Mark", "Anthony", "Brian", 
+   "Kevin", "Darren", "Neil", "Aaron", "Zachary", "Tyler", "Jacob", 
+   "Caleb", "Evan", "Dylan", "Russell", "Wayne", "Murray", "Clifford", 
+   "Frederick", "Gordon", "Harold", "Leonard", "Martin", "Milton", "Norman",
+   "Phillip", "Edwin", "Glenn", "Howard", "Jesse", "Leon", "James", 
+   "William", "Robert", "Michael", "David", "Richard", "Joseph", "Edward", 
+   "George", "Henry", "Samuel", "Andrew", "Christopher", "Jonathan", 
+   "Patrick", "Peter", "Noah", "Matthew", "Dickson", "Carl", "Brian", 
+   "Jeremy", "Sean", "Neil", "Travis", "Miles", "Murphy", "Nigel", "Oscar", 
+   "Percy", "Quentin", "Rex", "Stanley", "Trent", "Vance"
 };
+
+ #define NOMES_DE_MENINAS sizeof(nomes_de_meninas) / StrSz
+ #define NOMES_DE_MENINOS sizeof(nomes_de_meninos) / StrSz
+ #define BOYS_NAMES sizeof(boys_names) / StrSz
+ #define GIRLS_NAMES sizeof(girls_names) / StrSz
 
 // eu contei 9 legumes.
 const char* legumes[] = {
