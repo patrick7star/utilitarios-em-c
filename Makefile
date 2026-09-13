@@ -1026,10 +1026,10 @@ distribuicao-de-numeros-gerados-randomicamente:
 		-L bin/shared -lprogresso -laleatorio -lhtref -lm
 
 usando-iteradores-de-cada-colecao:
-	$(CLANG) -O0 -std=gnu2x -I include/ -Wall \
-		-o bin/tests/it_usando_iteradores_de_cada_colecao \
+	$(CLANG) -std=gnu2x -I include/ -O0 -Wall \
+		-o bin/tests/it-usando-iteradores-de-cada-colecao \
 		tests/usando_iteradores_de_cada_colecao.c \
-		-L bin/shared -lhtref -lplref
+		-L bin/static -lcolecoes -lm -lcomputa
 
 it-frequencia-de-letras-do-dicionario: lib-aleatorio
 	$(CLANG) -O0 -std=gnu2x -I$(HEADERS) \
