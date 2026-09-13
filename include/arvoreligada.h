@@ -32,11 +32,41 @@
  bool    tree_e_folha            (Tree, Cursor);
 
  // Impressão e formatação dela.
- void tree_impreme_preorder(Tree, ToString);
+ void tree_imprime_preorder(Tree, ToString);
 
  // Métodos referentes aos acessos do cursor.
  bool cursor_e_nulo    (Cursor);
  GenT cursor_elemento  (Cursor);
  bool cursor_eq        (Cursor, Cursor);
+
+ /* Todos métodos acima em Inglês. Isso é uma tradução de interface, ou 
+  * melhor, um complemento, já que as demais não somem.
+  * 
+  * Nota: Os métodos 'length', 'total' e 'size' indicam a mesma coisa por
+  *       enquanto, que é o total de itens que a árvore tem no momento. 
+  *       Estou indecido com o que fazer. Todos são bons nomes para descrever  *       isso, entretanto, outros são ambiguos para o tipo de estrutura 
+  *       trabalhado, assim como uma função totalmente diferente. A escolha
+  *       mais adequada por enquanto foi manter elas como a mesma, porém
+  *       cuidado, que futuramente isso mudará. Portanto, precaução com o
+  *       uso das três arbritrariamente. Escolha apenas uma, então use ela
+  *       frequentemente.
+  */
+ Tree    tree_new_i           (void);
+ Tree    tree_new             (GenT);
+ bool    tree_drop            (Tree);
+ Cursor  tree_root            (Tree);
+ Cursor  tree_parent          (Tree, Cursor);
+ Cursor  tree_right           (Tree, Cursor);
+ Cursor  tree_left            (Tree, Cursor);
+ int     tree_num_children    (Tree, Cursor);
+ Cursor  tree_add_root        (Tree, GenT);
+ Cursor  tree_add_left        (Tree, Cursor, GenT);
+ Cursor  tree_add_right       (Tree, Cursor, GenT);
+ size_t  tree_size            (Tree);
+ size_t  tree_total           (Tree);
+ size_t  tree_length          (Tree);
+ bool    tree_empty           (Tree);
+ bool    tree_is_leaf         (Tree, Cursor);
+ void    tree_print_preorder  (Tree, ToString);
 
 #endif

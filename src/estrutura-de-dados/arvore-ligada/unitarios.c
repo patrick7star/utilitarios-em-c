@@ -5,6 +5,7 @@
 #include "dados-testes.h"
 #include "primitivos.h"
 #include "teste.h"
+#include "aleatorio.h"
 
 typedef const char** CharList;
 typedef const int CInt;
@@ -16,16 +17,50 @@ static void impressao_por_preorder_traversal(Tree, Cursor, int*);
 static void insercao_e_impressao_de_arvore_simetrica_simples(Tree);
 static void insercao_manual_de_arvore(Tree a);
 static void tabela_de_conteudo(Tree, Cursor, int depth);
+static Cursor captura_primeira_folha_preorder(Tree);
+
+UNIT_TEST remocao_de_elementos(void)
+{
+   Tree a = tree_new("Taylor");
+   Cursor r = tree_root(a), X;
+   char* remocao = NULL;
+   int n = 0xabc, length;
+
+   insercao_manual_de_arvore(a);
+   length = tree_size(a);
+   printf("Quantia: %d\n", length);
+
+   r = tree_root(a);
+   tabela_de_conteudo(a, r, 0);
+   X = captura_primeira_folha_preorder(a);
+   remocao = tree_remove(a, X);
+   length = tree_size(a);
+
+   printf("Quantia: %d\n", length);
+   printf("O que foi removido: '%s'\n", remocao);
+   tabela_de_conteudo(a, tree_root(a), 0);
+
+   for (n = 1; n <= 7; n++)
+   {
+      X = captura_primeira_folha_preorder(a);
+      remocao = tree_remove(a, X);
+      printf("Quantia: %zu\n", tree_size(a));
+      printf("O que foi removido: '%s'\n", remocao);
+      r = tree_raiz(a);
+   }
+   tabela_de_conteudo(a, tree_root(a), 0);
+   tree_drop(a);
+}
 
 UNIT_TEST ramificacao_da_arvore_binaria_visualmente(void)
 {
-   Tree a = tree_cria("Taylor");
-   Cursor r = tree_raiz(a);
+   Tree a = tree_new("Taylor");
+   Cursor r = tree_root(a);
 
    insercao_manual_de_arvore(a);
-   r = tree_raiz(a);
+   r = tree_root(a);
    tabela_de_conteudo(a, r, 0);
-   tree_destroi(a);
+   tree_drop(a);
 }
 
 UNIT_TEST trabalho_no_metodo_de_destruicao(void)
@@ -36,7 +71,7 @@ UNIT_TEST trabalho_no_metodo_de_destruicao(void)
    Cursor S[2] = { r, r };
 
    insercao_seriada_simetrica(a, S, boys_names, 0, BOYS_NAMES);
-   tree_impressao_preorder(a, debug_string);
+   tree_imprime_preorder(a, debug_string);
    tree_destroi(a);
 }
 
@@ -49,7 +84,7 @@ UNIT_TEST insercao_simetrica_seriada_na_arvore(void)
 
    printf("Quantia(antes): %zu\n", tree_quantidade(a));
    insercao_seriada_simetrica(a, S, girls_names, 0, GIRLS_NAMES);
-   tree_impressao_preorder(a, debug_string);
+   tree_imprime_preorder(a, debug_string);
    printf("Quantia(depois): %zu\n", tree_quantidade(a));
    tree_destroi(a);
 }
@@ -84,6 +119,34 @@ UNIT_TEST instancia_insere_depois_conta(void)
    quantia = tree_quantidade(arvore);
    printf("Número de folhas(depois): %zu\n", quantia);
    tree_destroi(arvore);
+}
+
+static void realiza_travessia_preorder
+  (Tree a, Cursor p, Cursor* out)
+{
+// Realiza uma travessia preorder da árvore até que a primeira folha seja
+// encontrada. Atigindo isso, o cursor é salvo, e a recursão para.
+   Cursor r, l;
+
+   if (cursor_e_nulo(p)) { return; }
+   if (tree_e_folha(a, p)) { *out = p; return; }
+
+   r = tree_direita(a, p);
+   l = tree_esquerda(a, p);
+
+   realiza_travessia_preorder(a, r, out);
+   realiza_travessia_preorder(a, l, out);
+}
+
+static Cursor captura_primeira_folha_preorder(Tree obj)
+{
+   Cursor root = tree_raiz(obj), out;
+   char* data = NULL;
+
+   realiza_travessia_preorder(obj, root, &out);
+   data = cursor_elemento(out);
+   printf("Obtido: '%s'\n", data);
+   return out;
 }
 
 static void preenche_folha(Tree a, Cursor* S, GenT x, GenT y)
@@ -220,7 +283,7 @@ static void tabela_de_conteudo(Tree a, Cursor p, int depth)
    cria_recuo(buffer, depth);
 
    if (depth == 0)
-      printf("%s(raíz)\n", dado); 
+      printf("[%s](raíz)\n", dado); 
    else
       printf("%s|__ %s\n", buffer, dado); 
 

@@ -178,9 +178,12 @@ GenT tree_remove(Tree self, Cursor p)
    if (tree_numero_de_criancas(self, p) == 2)
       INTERROMPE("'p' tem duas crianças!");
 
-   crianca = (nodulo->esquerdo == NULL) ? nodulo->direito: nodulo->esquerdo;
+   if ((*nodulo).esquerdo == NULL)
+      crianca = (*nodulo).direito;
+   else
+      crianca = (*nodulo).esquerdo;
 
-   if (crianca == NULL)
+   if (crianca != NULL)
       crianca->pai = nodulo->pai;
 
    if (nodulo == raiz)
@@ -231,13 +234,17 @@ static void recursao_preorder(Tree a, Cursor p, ToString fmt)
    recursao_preorder(a, direito, fmt);
 }
 
-void tree_impreme_preorder(Tree a, ToString fmt)
+void tree_imprime_preorder(Tree a, ToString fmt)
 {
 // Imprime a árvore dado ela e seu formatador, no percorrimento 'preorder'.
    printf("Arvore-Binária(%zu) [", tree_quantidade(a));
    recursao_preorder(a, tree_raiz(a), fmt);
    puts("\b\b]\n");
 }
+/* === === === === === === === === === === === === === === === === === === ==
+ *                   Tradução da Interface(complementar)
+ * === === === === === === === === === === === === === === === === === === */
+ #include "arvore-ligada/english.c"
 
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
  *                      Testes Unitários
@@ -248,13 +255,14 @@ void tree_impreme_preorder(Tree a, ToString fmt)
 int main(int total, char* args[], char* vars[])
 {
    executa_testes_b(
-      true, 6,
+      true, 7,
          Unit(instancia_insere_depois_conta, true),
          Unit(percorrimento_manual_de_uma_arvore_simetrica_pequena, true),
          Unit(preorder_traversal_algoritmo, true),
          Unit(insercao_simetrica_seriada_na_arvore, true),
          Unit(trabalho_no_metodo_de_destruicao, true),
-         Unit(ramificacao_da_arvore_binaria_visualmente, true)
+         Unit(ramificacao_da_arvore_binaria_visualmente, true),
+         Unit(remocao_de_elementos, true)
       );
    return EXIT_SUCCESS;
 }
