@@ -64,5 +64,6 @@
  char* debug_double  (GenT x);
  char* debug_float   (GenT x);
  char* debug_sizet   (GenT x);
+ char* debug_bool    (GenT x);
 
 #endif

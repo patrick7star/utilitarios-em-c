@@ -1,4 +1,5 @@
 #include "primitivos.h"
+#include "macros.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -256,6 +257,17 @@ char* debug_void(GenT x) {
    char* fmt = malloc(TAMANHO);
 
    sprintf(fmt, "%p", x);
+   return fmt;
+}
+
+char* debug_bool(GenT x) {
+   const int N = DIGITOS_BUFFER * size;
+   char* fmt = malloc(N);
+   bool* ptr = x;
+   const char* translate; 
+
+   translate = bool_to_str(*ptr);
+   sprintf(fmt, "%s", translate);
    return fmt;
 }
 /* Nomes mais apropriados do C. Será apenas um "embrulho" das chamadas acima.
