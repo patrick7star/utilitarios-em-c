@@ -8,16 +8,100 @@
 #include "aleatorio.h"
 
 typedef const char** CharList;
-typedef const int CInt;
+typedef const int ConstInt, CInt;
 
-static void preenche_folha(Tree, Cursor*, GenT, GenT);
-static void insercao_seriada_simetrica(Tree, Cursor*, CharList, int, CInt);
+static void insercao_seriada_simetrica(Tree, CharList, CInt);
 static void insere_nomes_na_arvore_vazia(Tree);
 static void impressao_por_preorder_traversal(Tree, Cursor, int*);
 static void insercao_e_impressao_de_arvore_simetrica_simples(Tree);
 static void insercao_manual_de_arvore(Tree a);
 static void tabela_de_conteudo(Tree, Cursor, int depth);
 static Cursor captura_primeira_folha_preorder(Tree);
+
+UNIT_TEST algoritmo_de_insercao_balanceada_generico(void)
+{
+   char* genero = (char*)sexo;
+   const int GENERO = SEXO;
+   void (*algoritmo)(Tree, GenT, int, int);
+   void (*algoritmo2)(Tree, GenT, int, int);
+   bool boolarray[] = {false, false, false, true, true, true};
+   const int BASZ = sizeof(boolarray) / sizeof(bool);
+
+   algoritmo = despeja_array_na_arvore;
+   algoritmo2 = despeja_array_na_arvore_list;
+   Tree a = tree_new_i();
+   Tree b = tree_new_i();
+   Tree c = tree_new_i(); 
+   Tree d = tree_new_i();
+
+   algoritmo2(a, legumes, sizeof(char*), LEGUMES);
+   tree_imprime_postorder(a, debug_string);
+
+   algoritmo(b, (GenT)valores_padronizados, sizeof(int), VALORES_PADRONIZADOS);
+   tree_imprime_postorder(b, debug_u8);
+
+   algoritmo(c, genero, sizeof(char), GENERO);
+   tree_imprime_postorder(c, debug_char);
+
+   printf("BoolArray: %d\n", BASZ);
+   algoritmo(d, boolarray, sizeof(bool), BASZ);
+   tree_imprime_postorder(d, debug_bool);
+
+   tree_destroi(b);
+   tree_destroi(a);
+   tree_destroi(c);
+   tree_destroi(d);
+}
+
+UNIT_TEST tamanho_dos_respecitivos_ponteiros(void)
+{
+   printf("(char*) %ld bytes.\n", sizeof(char*));
+   printf("(uint8_t*) %ld bytes.\n", sizeof(uint8_t*));
+   printf("(void*) %ld bytes.\n", sizeof(void*));
+   printf("(int*) %ld bytes.\n", sizeof(int*));
+   printf("(double*) %ld bytes.\n", sizeof(double*));
+   printf("(bool*) %ld bytes.\n", sizeof(bool*));
+}
+
+UNIT_TEST iterando_uma_array_de_raw_strings(void)
+{
+   int n = 0xbc; void* address = NULL;
+   char* string = NULL;
+   char** list = (char**)legumes; 
+
+   address = list;
+   printf("Endereço(legumes): %p | %p\n", address, *list);
+
+   for (n = 0; n < LEGUMES; n++)
+   {
+      address = (void*)(list + n);
+      string = *(list + n);
+
+      printf("\t[%p] %s\n", address, string);
+   }
+}
+
+UNIT_TEST iteracao_manual_da_list_ptrptr(void)
+{
+   for (int n = 0; n < LEGUMES; n++)
+      printf("\t- %s\n", *(legumes + n));
+}
+
+UNIT_TEST todos_tipos_de_impressao_da_arvore(void)
+{
+   Tree a = tree_cria("nada");   
+   CharList list = girls_names;
+   const int TOTAL = sizeof(girls_names) / sizeof(char*);
+   const int N = TOTAL / 4;
+
+   insercao_seriada_simetrica(a, list, N);
+   tabela_de_conteudo(a, tree_root(a), 0);
+   puts("\nImpressão em PostOrder:");
+   tree_imprime_postorder(a, debug_string);
+   puts("\nImpressão em PreOrder:");
+   tree_imprime_preorder(a, debug_string);
+   tree_destroi(a);
+}
 
 UNIT_TEST remocao_de_elementos(void)
 {
@@ -66,11 +150,8 @@ UNIT_TEST ramificacao_da_arvore_binaria_visualmente(void)
 UNIT_TEST trabalho_no_metodo_de_destruicao(void)
 {
    Tree a = tree_cria("Taylor");
-   Cursor r = tree_raiz(a);
-   // Stack para empilhar folhas iteradas.
-   Cursor S[2] = { r, r };
 
-   insercao_seriada_simetrica(a, S, boys_names, 0, BOYS_NAMES);
+   insercao_seriada_simetrica(a, boys_names, BOYS_NAMES);
    tree_imprime_preorder(a, debug_string);
    tree_destroi(a);
 }
@@ -78,12 +159,10 @@ UNIT_TEST trabalho_no_metodo_de_destruicao(void)
 UNIT_TEST insercao_simetrica_seriada_na_arvore(void)
 {
    Tree a = tree_cria_i();
-   Cursor r = tree_adiciona_raiz(a, "Kate");
-   // Stack para empilhar folhas iteradas.
-   Cursor S[2] = { r, r };
-
+   
+   tree_adiciona_raiz(a, "Kate");
    printf("Quantia(antes): %zu\n", tree_quantidade(a));
-   insercao_seriada_simetrica(a, S, girls_names, 0, GIRLS_NAMES);
+   insercao_seriada_simetrica(a, girls_names, GIRLS_NAMES);
    tree_imprime_preorder(a, debug_string);
    printf("Quantia(depois): %zu\n", tree_quantidade(a));
    tree_destroi(a);
@@ -149,27 +228,39 @@ static Cursor captura_primeira_folha_preorder(Tree obj)
    return out;
 }
 
-static void preenche_folha(Tree a, Cursor* S, GenT x, GenT y)
-{
-   S[0] = tree_adiciona_direita(a, S[0], x); 
-   S[1] = tree_adiciona_esquerda(a, S[1], y); 
-}
-
 static void insercao_seriada_simetrica
-  (Tree a, Cursor* S, const char** samples, int q, const int TOTAL)
+  (Tree out,  const char** input, const int N)
 {
-   bool nao_atingiu_o_total = tree_quantidade(a) < TOTAL;
-   bool nao_causa_overflow = (q + 1) < TOTAL;
-   GenT X, Y;
+   Cursor adicoes[N];
+   GenT X = NULL, Y = NULL;
+   int c = 0x00000001,
+       p = 0x00000000,
+       r = 0x00000000;
 
-   if (nao_atingiu_o_total && nao_causa_overflow)
+   X = (GenT)input[p];
+   adicoes[0] = tree_adiciona_raiz(out, X);
+   p++;
+
+   // Adiciona os dois primeiros elementos no único nó da árvore. Uma em 
+   // cada lado.
+   X = (GenT)input[p + 0];
+   Y = (GenT)input[p + 1];
+   adicoes[c + 0] = tree_adiciona_direita(out, adicoes[r], Y);
+   adicoes[c + 1] = tree_adiciona_esquerda(out, adicoes[r], X);
+   c += 2;
+   p += 2;
+   r++;
+
+   // Repete o último passo acima continuamente até que os pares se esgotem.
+   while (p < (N - 2))
    {
-      X = (GenT)samples[q + 0];
-      Y = (GenT)samples[q + 1];
-
-      preenche_folha(a, S, X, Y); 
-      insercao_seriada_simetrica
-         (a, S, samples, q + 1, TOTAL);
+      X = (GenT)input[p + 0];
+      Y = (GenT)input[p + 1];
+      adicoes[c + 0] = tree_adiciona_direita(out, adicoes[r], Y);
+      adicoes[c + 1] = tree_adiciona_esquerda(out, adicoes[r], X);
+      c += 2;
+      p += 2;
+      r++;
    }
 }
 

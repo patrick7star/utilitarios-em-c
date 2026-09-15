@@ -32,7 +32,8 @@
  bool    tree_e_folha            (Tree, Cursor);
 
  // Impressão e formatação dela.
- void tree_imprime_preorder(Tree, ToString);
+ void tree_imprime_preorder   (Tree, ToString);
+ void tree_imprime_postorder  (Tree, ToString);
 
  // Métodos referentes aos acessos do cursor.
  bool cursor_e_nulo    (Cursor);

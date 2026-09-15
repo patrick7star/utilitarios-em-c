@@ -241,11 +241,141 @@ void tree_imprime_preorder(Tree a, ToString fmt)
    recursao_preorder(a, tree_raiz(a), fmt);
    puts("\b\b]\n");
 }
+
+static void recursao_postorder(Tree a, Cursor p, ToString fmt)
+{
+   Cursor esquerdo, direito;
+   char* string = NULL;
+
+   if (cursor_e_nulo(p)) return;
+
+   esquerdo = tree_esquerda(a, p);
+   direito = tree_direita(a, p);
+   string = fmt(cursor_elemento(p));
+
+   recursao_postorder(a, esquerdo, fmt);
+   recursao_postorder(a, direito, fmt);
+   // Imprime formatação, então libera a string.
+   printf("%s, ", string); free(string);
+}
+
+void tree_imprime_postorder(Tree a, ToString fmt)
+{
+// Imprime a árvore dado ela e seu formatador, no percorrimento 'postorder'.
+   printf("Arvore-Binária(%zu) [", tree_quantidade(a));
+   recursao_postorder(a, tree_raiz(a), fmt);
+   puts("\b\b]\n");
+}
+
 /* === === === === === === === === === === === === === === === === === === ==
  *                   Tradução da Interface(complementar)
  * === === === === === === === === === === === === === === === === === === */
  #include "arvore-ligada/english.c"
 
+/* === === === === === === === === === === === === === === === === === === ==
+ *                      Algoritmos Relacionados
+ * === === === === === === === === === === === === === === === === === === */
+void despeja_array_na_arvore(Tree out,  GenT input, int size, const int N)
+{
+/*   Pega todos itens da array, então despeja-a na árvore binária, de forma 
+ * que ela sempre fica balanceada. Os parâmetros aqui são a árvore, que é 
+ * onde serão despejados. A array 'input', que é onde cada item está. O 
+ * tamanho dos dados nesta array 'size', isso porque o algoritmo aceita
+ * valores genéricos, e você precisa do tamanho de cada para iterar de forma
+ * certa. Por fim, o comprimento do array, ou seja, o números de itens que
+ * há nela.
+ *   Obs.: O algoritmo precisa que ela tenha mais de três elementos.
+ */
+   assert(tree_empty(out));
+
+   Cursor adicoes[N];
+   GenT X = NULL, Y = NULL;
+   int c = 1, p = 0, r = 0;
+   uint8_t* array = input;
+   bool UM_VALOR_PAR = (N % 2 == 0);
+
+   X = (GenT)(array + p);
+   adicoes[0] = tree_adiciona_raiz(out, X);
+   p++;
+
+   // Adiciona os dois primeiros elementos no único nó da árvore. Uma em 
+   // cada lado.
+   X = (GenT)(array + p + 0);
+   Y = (GenT)(array + p + 1);
+   adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+   adicoes[c + 1] = tree_add_left(out, adicoes[r], X);
+   c += 2;
+   p += 2;
+   r++;
+
+   // Repete o último passo acima continuamente até que os pares se esgotem.
+   while (((N - 1) - p) >= 2)
+   {
+      X = (GenT)(array + p + 0);
+      Y = (GenT)(array + p + 1);
+      adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+      adicoes[c + 1] = tree_add_left(out, adicoes[r], X);
+      c += 2;
+      p += 2;
+      r++;
+   }
+
+   // O algoritmo não funciona bem com valores pares, deixando sempre um
+   // restante. Este trecho resolve isso.
+   if (UM_VALOR_PAR)
+   {
+      Y = (GenT)(array + p + 0);
+      adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+      c++; p++; r++;
+   }
+}
+
+void despeja_array_na_arvore_list
+  (Tree out,  GenT input, int size, const int N)
+{
+   assert(tree_empty(out));
+
+   Cursor adicoes[N];
+   uint8_t* X = NULL, * Y = NULL;
+   int c = 1, p = 0, r = 0;
+   uint8_t** array = input;
+   bool UM_VALOR_PAR = (N % 2 == 0);
+
+   X = *(array + p + 0);
+   adicoes[0] = tree_adiciona_raiz(out, X);
+   p++;
+
+   // Adiciona os dois primeiros elementos no único nó da árvore. Uma em 
+   // cada lado.
+   X = *(array + p + 0);
+   Y = *(array + p + 1);
+   adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+   adicoes[c + 1] = tree_add_left(out, adicoes[r], X);
+   c += 2;
+   p += 2;
+   r++;
+
+   // Repete o último passo acima continuamente até que os pares se esgotem.
+   while (((N - 1) - p) >= 2)
+   {
+      X = *(array + p + 0);
+      Y = *(array + p + 1);
+      adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+      adicoes[c + 1] = tree_add_left(out, adicoes[r], X);
+      c += 2;
+      p += 2;
+      r++;
+   }
+
+   // O algoritmo não funciona bem com valores pares, deixando sempre um
+   // restante. Este trecho resolve isso.
+   if (UM_VALOR_PAR)
+   {
+      Y = *(array + p + 0);
+      adicoes[c + 0] = tree_add_right(out, adicoes[r], Y);
+      c++; p++; r++;
+   }
+}
 /* --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- -
  *                      Testes Unitários
  * --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- */
@@ -255,7 +385,7 @@ void tree_imprime_preorder(Tree a, ToString fmt)
 int main(int total, char* args[], char* vars[])
 {
    executa_testes_b(
-      true, 7,
+      false, 7,
          Unit(instancia_insere_depois_conta, true),
          Unit(percorrimento_manual_de_uma_arvore_simetrica_pequena, true),
          Unit(preorder_traversal_algoritmo, true),
@@ -263,6 +393,22 @@ int main(int total, char* args[], char* vars[])
          Unit(trabalho_no_metodo_de_destruicao, true),
          Unit(ramificacao_da_arvore_binaria_visualmente, true),
          Unit(remocao_de_elementos, true)
+      );
+
+   // Testes referentes a impressão somente.
+   executa_testes_b(
+      false, 2,
+         Unit(preorder_traversal_algoritmo, false),
+         Unit(todos_tipos_de_impressao_da_arvore, true)
+      );
+
+   // Série de testes reservadas para os algoritmos da árvore.
+   executa_testes_b(
+      true, 4,
+         Unit(tamanho_dos_respecitivos_ponteiros, true),
+         Unit(algoritmo_de_insercao_balanceada_generico, true),
+         Unit(iterando_uma_array_de_raw_strings, false),
+         Unit(iteracao_manual_da_list_ptrptr, false)
       );
    return EXIT_SUCCESS;
 }
