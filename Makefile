@@ -989,6 +989,7 @@ it-preenchendo-arvore-binaria-com-alfabeto:
 			tests/preenchendo_arvore_binaria_com_alfabeto.c \
 			tests/adjunct/reveste-arvore.c \
 			tests/adjunct/captura-stdout.c \
+			tests/adjunct/matrix.c \
 			build/arvore-ligada.o \
 		-Lbin/static -lcomputa -lcolecoes
 

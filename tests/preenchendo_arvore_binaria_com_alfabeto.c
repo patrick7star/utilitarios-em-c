@@ -17,6 +17,7 @@
 // Auxiliares:
 #include "reveste-arvore.h"
 #include "captura-stdout.h"
+#include "matrix.h"
 // API do Linux:
 #include <fcntl.h>
 #include <unistd.h>
@@ -24,23 +25,71 @@
 
 static Set computa_alfabeto(void);
 static void despeja_conjunto_na_arvore(Set, Tree);
-static void visualiza_arvore(Tree a);
 static Set conjunto_variado_de_strings(void);
+static Set converte_chararra_to_set(const char*);
+static Set from_rawstring_to_set(const char*);
 
-int main(int qtd, char* args[], char* envs[])
+void despeja_qualquer_palavra(const char* palavra)
 {
-   // Set input = computa_alfabeto();
+   Set input = from_rawstring_to_set(palavra);
+   Tree output = tree_cria_i();
+   char* formatacao = NULL;
+
+   printf("Palavra: '%s'\n", palavra);
+   despeja_conjunto_na_arvore(input, output);
+   drop_set(input);
+   tree_destroi(output);
+   formatacao = desenha_arvore();
+   puts(formatacao);
+}
+
+void despeja_alfabeto_na_arvore(void)
+{
+   Set input = computa_alfabeto();
+   Tree output = tree_cria_i();
+   char* formatacao = NULL;
+
+   despeja_conjunto_na_arvore(input, output);
+   drop_set(input);
+   tree_destroi(output);
+   formatacao = desenha_arvore();
+   puts(formatacao);
+}
+
+void despeja_strings_na_arvore(void)
+{
    Set input = conjunto_variado_de_strings();
    Tree output = tree_cria_i();
    char* formatacao = NULL;
 
    despeja_conjunto_na_arvore(input, output);
    printf("Árvore tem %zu elementos.\n", tree_quantidade(output));
-   visualiza_arvore(output);
    drop_set(input);
    tree_destroi(output);
    formatacao = desenha_arvore();
    printf("\n\nTrasnformação ... resultado:\n'''\n%s\n'''\n", formatacao);
+}
+
+void arvores_das_palavras(void)
+{
+   char* inputs[] = {
+      (char*)girls_names[GIRLS_NAMES / 2 - 4],
+      (char*)objects[OBJECTS / 3],
+      (char*)legumes[LEGUMES / 2 - 2]
+   };
+
+   for (int n = 0; n < 3; n++)
+   {
+      despeja_qualquer_palavra(inputs[n]);
+      matriz_print_debug();
+   }
+}
+
+int main(int qtd, char* args[], char* envs[])
+{
+   arvores_das_palavras();
+   // despeja_alfabeto_na_arvore();
+   // despeja_strings_na_arvore();
 
    return EXIT_SUCCESS;
 }
@@ -83,7 +132,6 @@ static void preorder_recursao(Tree a, Cursor p, int d)
    l = tree_esquerda(a, p);
 
    impressao_de_galho_string(a, p, cursor_elemento(p));
-   // impressao_de_galho_char(a, p, cursor_elemento(p));
    preorder_recursao(a, l, d + 1);
    preorder_recursao(a, r, d + 1);
 }
@@ -110,100 +158,7 @@ Set computa_alfabeto(void)
    return output;
 }
 
-void adicao_recursiva_de_mais_duas_folhas
-  (Set input, Tree out, Cursor* array, int cursor)
-{
-   const int N = length_set(input);
-   GenT X = NULL, Y = NULL;
-   size_t k = cursor;
-   auto rotina_recursiva = adicao_recursiva_de_mais_duas_folhas;
-   Cursor root = array[k];
-
-   if (length_set(input) < 2)
-      return;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   array[k + 1] = tree_adiciona_direita(out, root, Y);
-   array[k + 2] = tree_adiciona_esquerda(out, root, X);
-
-   rotina_recursiva(input, out, array, k + 1);
-}
-
-void despeja_conjunto_na_arvore_recursivo(Set input, Tree output)
-{
-   const int N = length_set(input);
-   Cursor adicoes[N];
-   Tree out = output;
-   GenT X = deleta_set(input);
-
-   adicoes[0] = tree_adiciona_raiz(out, X);
-   adicao_recursiva_de_mais_duas_folhas(input, out, adicoes, 0);
-} 
-
-void despeja_conjunto_na_arvore_manual(Set input, Tree output)
-{
-   const int N = length_set(input);
-   Cursor adicoes[N];
-   GenT X = NULL, Y = NULL;
-   Tree out = output;
-   int quantia = 0xdeadbeef,
-       cursor = 0x00000000,
-       raiz = 0x00000000;
-
-   X = deleta_set(input);
-   adicoes[0] = tree_adiciona_raiz(out, X);
-   cursor++;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[1] = tree_adiciona_direita(out, adicoes[0], Y);
-   adicoes[2] = tree_adiciona_esquerda(out, adicoes[0], X);
-   cursor += 2;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[3] = tree_adiciona_direita(out, adicoes[1], Y);
-   adicoes[4] = tree_adiciona_esquerda(out, adicoes[1], X);
-   cursor += 2;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[5] = tree_adiciona_direita(out, adicoes[2], Y);
-   adicoes[6] = tree_adiciona_esquerda(out, adicoes[2], X);
-   cursor += 2;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[7] = tree_adiciona_direita(out, adicoes[3], Y);
-   adicoes[8] = tree_adiciona_esquerda(out, adicoes[3], X);
-   cursor += 2;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[9] = tree_adiciona_direita(out, adicoes[4], Y);
-   adicoes[10] = tree_adiciona_esquerda(out, adicoes[4], X);
-   cursor += 2;
-
-   X = deleta_set(input);
-   Y = deleta_set(input);
-   adicoes[11] = tree_adiciona_direita(out, adicoes[5], Y);
-   adicoes[12] = tree_adiciona_esquerda(out, adicoes[5], X);
-   cursor += 2;
-   
-   raiz = 6;
-   while (length_set(input) > 2)
-   {
-      X = deleta_set(input);
-      Y = deleta_set(input);
-      adicoes[cursor + 1] = tree_adiciona_direita(out, adicoes[raiz], Y);
-      adicoes[cursor + 2] = tree_adiciona_esquerda(out, adicoes[raiz], X);
-      cursor += 2;
-      raiz++;
-   }
-}
-
-void despeja_conjunto_na_arvore_iterativa(Set input, Tree output)
+void algoritmo_de_despejo(Set input, Tree output)
 {
    const int N = length_set(input);
    Cursor adicoes[N];
@@ -254,7 +209,7 @@ void despeja_conjunto_na_arvore(Set a, Tree b)
    puts("O que será despejado na árvore:");
    print_set(a, debug_string);
    
-   despeja_conjunto_na_arvore_iterativa(a, b); 
+   algoritmo_de_despejo(a, b); 
    captura_visualizacao_da_arvore(b, visualiza_arvore);
 }
 static Set conjunto_variado_de_strings(void)
@@ -265,5 +220,17 @@ static Set conjunto_variado_de_strings(void)
    for (p = 0; p < BOYS_NAMES; p++)
       add_set(output, (char*)boys_names[p]);
 
+   return output;
+}
+
+static Set from_rawstring_to_set(const char* input)
+{
+   Set output = new_set(hash_char, eq_char);
+   const int TOTAL = strlen(input);
+   char *X = NULL;
+   int i = 0;
+
+   for (i = 0; i < TOTAL; i++)
+      add_set(output, box_char(input[i]));
    return output;
 }

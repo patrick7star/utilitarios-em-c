@@ -1,6 +1,6 @@
 #include "captura-stdout.h"
 // Módulos auxiliares:
-#include "reveste-arvore.h"
+#include "matrix.h"
 // Bibliotec padrão do C:
 #include <stdio.h>
 #include <string.h>
@@ -29,7 +29,7 @@ void captura_visualizacao_da_arvore(Tree arvore, ArvorePrint viewer)
    int lido, tubos[2];
    const int size = MAX * MAX;
    const int STDOUT_COPY = dup(STDOUT_FILENO);
-   char* buffer = string_buffer();
+   char* buffer = get_string_buffer();
    auto visualiza_arvore = viewer;
 
    ERRO_MSG(pipe(tubos));
@@ -42,12 +42,12 @@ void captura_visualizacao_da_arvore(Tree arvore, ArvorePrint viewer)
    ERRO_MSG(dup2(STDOUT_COPY, STDOUT_FILENO));
    ERRO_MSG(close(tubos[0]));
    ERRO_MSG(close(tubos[1]));
-   conteudo_capturada(lido);
+   // conteudo_capturada(lido);
 }
 
 static void conteudo_capturada(int lido)
 {
-   char* string = string_buffer();
+   char* string = get_string_buffer();
 
    printf("Foram lido %d bytes.\n", lido);
    printf("O que foi capturado:\n\t'''\n%s\n\t'''\n\n", string);
