@@ -94,4 +94,7 @@
  char*   rstrip                 (char* In, char* ptt);
  char*   strip_suffix           (char* In, char* ptt);
  char*   strip_prefix           (char* In, char* ptt);
+
+ ListStr split_matches
+   (const char* restrict In, const char* restrict PATTERN)
 #endif

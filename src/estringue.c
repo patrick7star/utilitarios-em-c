@@ -24,20 +24,37 @@ typedef struct posicoes_dos_padroes { ptrdiff_t* array; int size; }
 /* == == == == == == == == == == == == == == == == == == == == == == == ===
  *                      Métodos do Tipo Lista String
  * == == == == == == == == == == == == == == == == == == == == == == == ==*/
-void debug_lista_strings(ListaStrings* In) {
+void debug_lista_strings(ListaStrings* In)
+{
    const char* const SEP = "\t\b\b\b\b";
+   char** lista = (*In).lista;
+   int m = 0xdead, TOTAL = (*In).total;
 
-   printf(
-      "Lista Strings (%zu) {\n%s- '%s'\n%s- '%s'\n}\n",
-      (*In).total, SEP, (*In).lista[0], SEP, (*In).lista[1]
-   );
+   printf("Lista Strings[%d] {\n", TOTAL);
+
+   for (m = 0; m < TOTAL; m++)
+      printf("%s- '%s'\n", SEP, lista[m]);
+   puts("}\n");
 }
 
-void free_lista_strings(ListaStrings* In) {
+void free_lista_strings(ListaStrings* In)
+{
+   char** lista = (*In).lista;
+   const int TOTAL = (*In).total;
+
    // As strings provavelmente são as únicas coisas alocadas dinâmicamente.
    // Às vezes, nem todas listas do tipos tem itens com alocação dinâmica.
-   for (int n = 0; n < (*In).total; n++)
-      free((*In).lista[n]);
+   #ifdef __debug__
+   for (int n = 0; n < TOTAL; n++)
+   {
+      printf("O (%dº | '%s' ) foi liberado.\n", n + 1, lista[n]);
+      free(lista[n]);
+   }
+   #endif
+   free((*In).lista);
+   #ifdef __debug__
+   puts("Liberado a array de pointeiros (char**).");
+   #endif
 }
 
 /* == == == == == == == == == == == == == == == == == == == == == == == ===
@@ -171,6 +188,105 @@ ListaStrings split_once(const char* string, const char PADRAO) {
    return Out;
 }
 
+static char* ultima_ocorrencia
+  (const char* restrict s, const char* restrict p)
+{
+   char* ptr = strstr(s, p);
+   char* old = NULL;
+   int t = strlen(p);
+
+   while (ptr != NULL)
+      { old = ptr; ptr = strstr(ptr + t, p); }
+   return old;
+}
+
+static bool comeco_da_string_com_o_pattern
+  (const char* restrict s, const char* restrict p)
+   { return strstr(s, p) == s; }
+
+static bool fim_da_string_com_o_pattern
+  (const char* restrict s, const char* restrict p)
+{
+   // Encontra a primeira ocorrência da substring.
+   int t = strlen(p), n = strlen(s);
+   ptrdiff_t d = 0xdead;
+   char* ptr = ultima_ocorrencia(s, p);
+
+   d = ptr - s;
+   #ifdef __debug__
+   printf("diferença: %ld\nstrlen(p): %d\nlength: %d\n", d, t, n);
+   #endif
+   return d + t == n;
+}
+
+static bool argumentos_nao_aceitaveis
+  (const char* restrict s, const char* restrict p)
+   { return strcmp(s, "") == 0 || strcmp(p, "") == 0; }
+
+ListStr split_matches(const char* string, const char* PATTERN)
+{
+/*   O mesmo que qualquer acima, porém neste caso busca o padrão uma string
+ * apenas de um simples caractere ASCII. 
+ * A entrada padrão que esta função reparte é algo como:
+ * 
+ *    "casaPATTERNlojaPATTERNmáquina música PATTERN ... livroPATTERNCaixa"
+ *
+ *   Portanto, uma string que começa sem o padrão, e termina sem ele também.
+ * Qualque entrada que não siga tal normas, terá de algum jeito ser tratado
+ * antes do processamento, caso contrário o resultado não será o desejado.
+ *   O 'input' também não funciona no momento para funções que não tenha 
+ * vários padrões intercalados, ou seja, que a divisão não resulte em mais de
+ * três recortes.
+ */
+   /* Caso em que a string começa com o padrão. Enquanto não há uma solução
+    * tratável, não será aceito tal formatação. */
+   if (argumentos_nao_aceitaveis(string, PATTERN))
+   {
+      perror("Caso de entrada não é válido(argumentos 'vázios')!");
+      abort();
+   }
+
+   if ( fim_da_string_com_o_pattern(string, PATTERN) ||
+        comeco_da_string_com_o_pattern(string, PATTERN) 
+   ){
+      perror("Caso de entrada não é válido!");
+      abort();
+   }
+
+   const int N = strlen(string) + 1;
+   const int M = strlen(PATTERN);
+   // Posições dos 'padrões' e cursores necessários.
+   int posicoes[N], p = 0, m = 0, n = 0;
+   char* ptr = strstr(string, PATTERN);
+   const int size = sizeof(char**);
+   char* input = (char*)string;
+   ListStr output = {NULL, 0};
+
+   while (ptr != NULL)
+   {
+      // Computa a diferença desde o começo.
+      p = ptr - string; 
+      // Marca a posição depois do padrão.
+      posicoes[m++] = p + M;
+      // String agora começa depois do padrão encontrado.
+      ptr = strstr(ptr + M, PATTERN);
+   }
+
+   // Por enquanto, contagem apenas dos PATTERNs encontrados.
+   output.total = m;
+   output.lista = (char**)calloc(m, size);
+
+   for (n = 0; n < output.total - 1; n++)
+      output.lista[n] = copia_trecho(input, posicoes[n], posicoes[n + 1] - M);
+   // Incluindo o primeiro e último, que não são contabilizados pelo loop
+   // acima.
+   output.lista[n++] = copia_trecho(input, 0, posicoes[0] - M);
+   output.lista[n] = copia_trecho(input, posicoes[m - 1], N);
+   // Contabiliza última inserção.
+   output.total++;
+
+   return output;
+}
 
 char* concatena_strings(int quantia, ...)
 {
@@ -372,42 +488,6 @@ uint64_t total_substrings(char* str) {
  */
    uint64_t n = strlen(str);
    return (n * n - n) / 2;
-}
-
-char* copia_substring(size_t i, size_t f, char* str) {
-/* Dado um intervalo válido, ou seja, um valor inteiro menor e maior,
- * respectivamente; e um endereço do começo de alguma string, tal função
- * produz a copia de tal trecho.
- */
-   size_t t = strlen(str);
-   size_t total_de_bytes = sizeof(char) * t;
-   /* índices ultrapassam limites da string. */
-   bool transborda_string = (
-      (f - i) > (t - 1) ||
-      (f >= t) ||
-      (i >= t)
-   );
-	size_t tamanho = f - i;
-   char* copia = malloc(tamanho);
-   const char NULO = '\0';
-
-   memset(copia, NULO, total_de_bytes);
-
-   if (i > f)
-   // Caso esteja invertido, apenas conserta o mal entendido.
-      { return copia_substring(f, i, str); }
-
-   if (copia == NULL || transborda_string || i == f)
-   /* Nega cópia nos seguintes casos: O intervalo passado transborda os
-    * limites da string dada; a string é inválida; o intervalo dado é
-    * nulo. */
-      return NULL;
-
-   for(uint8_t p = i; p <= f; p++)
-   // Copiando caractére à caractére da posição dada.
-      { copia[p - i] = str[p]; }
-
-   return copia;
 }
 
 char* concatena_literais_str(int total, ...) {
@@ -879,7 +959,7 @@ char* strip(char* input, char* pattern)
 char* rstrip(char* input, char* pattern)
    { return strip_suffix(input, pattern); }
 
-#ifdef _UT_STRING
+#ifdef __unit_tests__
 /* === === === === === === === === === === === === === === === === === ==
  *                       Testes
  *                            Unitários
@@ -890,23 +970,24 @@ char* rstrip(char* input, char* pattern)
 #include "teste.h"
 #include "dados_testes.h"
 
-TESTE testes_basico_da_reparticao_em_palavras(void);
-TESTE visualizacao_da_reparticao_em_palavras(void);
-TESTE experimento_concatenacao_de_multiplas_strings(void);
-TESTE criacao_simples_de_uma_instancia_String(void);
-TESTE diversos_tipos_basicos_de_insercao_String(void);
-TESTE motor_de_busca_de_ocorrencias(void);
-TESTE preenchimento_da_string(void);
-TESTE fazendo_strings_maiusculas_e_minusculas(void);
-TESTE capitalizacao_das_strings(void);
-TESTE metodos_de_extracao(void);
-TESTE criacao_de_string_homogenea(void);
-TESTE buscando_por_padroes_na_estringue(void);
-TESTE metodo_de_substituicao_de_string(void);
-TESTE reparticao_da_strings_dado_padrao(void);
-TESTE reparticao_de_partes_do_ls_colors(void);
-TESTE unica_reparticao_ocorrendo(void);
-TESTE apara_pontas_das_strings(void);
+TESTE testes_basico_da_reparticao_em_palavras         (void);
+TESTE visualizacao_da_reparticao_em_palavras          (void);
+TESTE experimento_concatenacao_de_multiplas_strings   (void);
+TESTE criacao_simples_de_uma_instancia_String         (void);
+TESTE diversos_tipos_basicos_de_insercao_String       (void);
+TESTE motor_de_busca_de_ocorrencias                   (void);
+TESTE preenchimento_da_string                         (void);
+TESTE fazendo_strings_maiusculas_e_minusculas         (void);
+TESTE capitalizacao_das_strings                       (void);
+TESTE metodos_de_extracao                             (void);
+TESTE criacao_de_string_homogenea                     (void);
+TESTE buscando_por_padroes_na_estringue               (void);
+TESTE metodo_de_substituicao_de_string                (void);
+TESTE reparticao_da_strings_dado_padrao               (void);
+TESTE reparticao_de_partes_do_ls_colors               (void);
+TESTE unica_reparticao_ocorrendo                      (void);
+TESTE apara_pontas_das_strings                        (void);
+TESTE reparticao_baseado_numa_string_pattern          (void);
 
 int main(int qtd, char* args[], char* vars[])
 {
@@ -934,14 +1015,47 @@ int main(int qtd, char* args[], char* vars[])
    );
 
    executa_testes_b (
-     true, 4,
+     true, 5,
          Unit(reparticao_da_strings_dado_padrao, true),
          Unit(reparticao_de_partes_do_ls_colors, false),
          Unit(unica_reparticao_ocorrendo, true),
-         Unit(apara_pontas_das_strings, true)
+         Unit(apara_pontas_das_strings, true),
+         Unit(reparticao_baseado_numa_string_pattern, true)
    );
 
    return EXIT_SUCCESS;
+}
+
+TESTE reparticao_baseado_numa_string_pattern(void)
+{
+   char* input = 
+      "Laranja, Morango, Banana, Goiaba, Pera, FIgo, Melão, Lima, Uva, "
+      "Tomate, Jaca, Manga, Pêssego, Framboesa, Cereja, Maçã, Melância";
+   char* pattern = ", ";
+   ListStr output = split_matches(input, pattern);
+
+   puts("Resultado da divisão:");
+   debug_lista_strings(&output);
+   free_lista_strings(&output);
+
+   input = 
+      ", Laranja, Morango, Banana, Goiaba, Pera, FIgo, Melão, Lima, Uva, "
+      "Tomate, Jaca, Manga, Pêssego, Framboesa, Cereja, Maçã, Melância";
+   output = split_matches(input, pattern);
+   debug_lista_strings(&output);
+   free_lista_strings(&output);
+
+   pattern = "";
+   output = split_matches(input, pattern);
+   debug_lista_strings(&output);
+   free_lista_strings(&output);
+
+   input = 
+      "Laranja, Morango, Banana, Goiaba, Pera, FIgo, Melão, Lima, Uva, "
+      "Tomate, Jaca, Manga, Pêssego, Framboesa, Cereja, Maçã, Melância, ";
+   output = split_matches(input, pattern);
+   debug_lista_strings(&output);
+   free_lista_strings(&output);
 }
 
 TESTE apara_pontas_das_strings(void)

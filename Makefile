@@ -385,8 +385,6 @@ clean-tempo:
 # === === ===  === === === === === === === === === === === === === === ====
 # 									Modulo Estringue
 # === === ===  === === === === === === === === === === === === === === ====
-COMPILAR_STR = -D_PALAVRAS -D_UT_STRING -D_CONCATENA_STRINGS -D__debug__
-
 all-estringue: obj-estringue lib-estringue test-estringue
 
 obj-estringue:
@@ -406,7 +404,7 @@ lib-estringue: obj-lista-array-ref
 	@echo "Biblioteca estática 'libestringue.a' compilada."
 
 test-estringue:
-	@$(CC) -I$(HEADERS) -ggdb -O0 -Wall $(COMPILAR_STR) \
+	@$(CC) -I$(HEADERS) -ggdb -O0 -Wall -D__debug__ -D__unit_tests__ \
       -c -o build/estringue-test.o src/estringue.c
 	@$(CC) -I$(HEADERS) \
 		-o bin/tests/ut-estringue \
