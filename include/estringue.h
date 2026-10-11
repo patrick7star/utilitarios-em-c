@@ -16,7 +16,8 @@
 #include <stdbool.h>
 
  // Tupla contendo array de strings e a quantia disto.
- typedef struct { char** lista; size_t total; } ListaStrings, ListStr;
+ typedef struct { char** lista; size_t total; }
+   ListaStrings, ListStr, *ListStrRef;
 
  /* Uma representação de string já codificada como Unicode. */
  typedef struct string_dinamica {
