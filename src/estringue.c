@@ -1,3 +1,6 @@
+// Definições das funções abaixo:
+#include "estringue.h"
+// Biblioteca padrão do C:
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -7,8 +10,6 @@
 #include <stdint.h>
 #include <ctype.h>
 #include <stddef.h>
-// Definições das funções abaixo:
-#include "estringue.h"
 
 // macro para outra abordagem de retorno.
 #define CARACTERE_NAO_ENCONTRADO 10
@@ -39,12 +40,12 @@ void debug_lista_strings(ListaStrings* In)
 
 void free_lista_strings(ListaStrings* In)
 {
+   #ifdef __debug__
    char** lista = (*In).lista;
    const int TOTAL = (*In).total;
 
    // As strings provavelmente são as únicas coisas alocadas dinâmicamente.
    // Às vezes, nem todas listas do tipos tem itens com alocação dinâmica.
-   #ifdef __debug__
    for (int n = 0; n < TOTAL; n++)
    {
       printf("O (%dº | '%s' ) foi liberado.\n", n + 1, lista[n]);

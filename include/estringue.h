@@ -96,5 +96,5 @@
  char*   strip_prefix           (char* In, char* ptt);
 
  ListStr split_matches
-   (const char* restrict In, const char* restrict PATTERN)
+   (const char* restrict In, const char* restrict PATTERN);
 #endif
