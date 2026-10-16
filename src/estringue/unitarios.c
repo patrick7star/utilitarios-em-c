@@ -157,42 +157,40 @@ TESTE reparticao_baseado_numa_string_pattern(void)
 
 TESTE apara_pontas_das_strings(void)
 {
-   auto strip = strip_suffix;
    char* input = "nada-agora";
-   char* output = strip(input, "ra");
+   char* output = rstrip(input, "ra");
 
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
 
    input = "coffee";
-   output = strip(input, "fe");
+   output = rstrip(input, "fe");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
 
    input = "anaaaaa";
-   output = strip(input, "a");
+   output = rstrip(input, "a");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
 
    puts("\nMétodo de aparação na esquerda ...");
-   auto lstrip = strip_prefix;
 
    input = "banana";
-   output = lstrip(input, "ab");
+   output = strip(input, "ab");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
-   output = lstrip(input, "ba");
+   output = strip(input, "ba");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
 
    input = "abacaxi";
-   output = lstrip(input, "ab");
+   output = strip(input, "ab");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
-   output = lstrip(input, "ba");
+   output = strip(input, "ba");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
-   output = lstrip(input, "ac");
+   output = strip(input, "ac");
    printf("Input('%s') ===> Output('%s')\n", input, output);
    free(output);
 }
